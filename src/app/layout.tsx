@@ -1,3 +1,5 @@
+"server component";
+
 import { Providers } from "@/providers/Provaiders";
 import "./globals.css";
 
