@@ -11,18 +11,17 @@ datasource db {
 
 model Collaborator {
   id        String   @id @default(cuid())
-  name      String
-  sector    String?
-  role      String?
 
-  asos      AsoExam[]
-  trainings TrainingRecord[]
+  nome      String
+  setor     String
+  cargo     String
+  matricula String?  @unique
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([name])
-  @@index([sector])
+  @@index([nome])
+  @@index([setor])
 }
 
 model AsoExam {
