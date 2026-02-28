@@ -1,78 +1,128 @@
 generator client {
-  provider = "prisma-client"
-  output   = "./generated"
-
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-
 }
 
-model Collaborator {
-  id        String   @id @default(cuid())
-  name      String
-  sector    String?
-  role      String?
-  registration String? @unique
+enum NR {
+  NR_05
+  NR_06
+  NR_10
+  NR_11
+  NR_12
+  NR_18
+  NR_20
+  NR_33
+  NR_35
+}
 
-  asos      AsoExam[]
-  trainings TrainingRecord[]
+model Colaborador {
+  id        String  @id @default(cuid())
+  nome      String
+  setor     String
+  cargo     String
+  matricula String? @unique
+
+  asos        ASO[]
+  treinamentos Treinamento[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([name])
-  @@index([sector])
+  @@index([nome])
+  @@index([setor])
 }
 
-model AsoExam {
-  id             String   @id @default(cuid())
-  collaboratorId String
-  collaborator   Collaborator @relation(fields: [collaboratorId], references: [id], onDelete: Cascade)
+model TipoASO {
+  id            String  @id @default(cuid())
+  nome          String
+  validadeMeses Int?
+  descricao     String?
 
-  examDate       DateTime?
-  validUntil     DateTime?
-
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  @@index([collaboratorId])
-  @@index([validUntil])
-}
-
-model TrainingType {
-  id        String   @id @default(cuid())
-  nr        String
-  name      String
-
-  trainings TrainingRecord[]
+  asos ASO[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([nr, name])
+  @@unique([nome])
+}
+
+model ASO {
+  id String @id @default(cuid())
+
+  // Relação (Base44 não obriga, então fica opcional)
+  colaborador_id String?
+  colaborador    Colaborador? @relation(fields: [colaborador_id], references: [id], onDelete: SetNull)
+
+  // Cache/snapshot (Base44 exige colaborador_nome)
+  colaborador_nome String
+  setor            String?
+  cargo            String?
+
+  // TipoASO (opcional + cache)
+  tipoASO_id   String?
+  tipoASO      TipoASO? @relation(fields: [tipoASO_id], references: [id], onDelete: SetNull)
+  tipoASO_nome String?
+
+  data_aso     DateTime
+  validade_aso DateTime?
+
+  clinica    String?
+  observacao String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([colaborador_id])
+  @@index([tipoASO_id])
+  @@index([data_aso])
+  @@index([validade_aso])
+}
+
+model TipoTreinamento {
+  id            String  @id @default(cuid())
+  nome          String
+  nr            String
+  validadeMeses Int?
+  descricao     String?
+
+  treinamentos Treinamento[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([nr, nome])
   @@index([nr])
 }
 
-model TrainingRecord {
-  id             String   @id @default(cuid())
-  collaboratorId String
-  collaborator   Collaborator @relation(fields: [collaboratorId], references: [id], onDelete: Cascade)
+model Treinamento {
+  id String @id @default(cuid())
 
-  trainingTypeId String?
-  trainingType   TrainingType? @relation(fields: [trainingTypeId], references: [id], onDelete: SetNull)
+  // Relação (Base44 não obriga, então fica opcional)
+  colaborador_id String?
+  colaborador    Colaborador? @relation(fields: [colaborador_id], references: [id], onDelete: SetNull)
 
-  // fallback quando não houver tipo cadastrado
-  nrFallback     String?
+  // Cache/snapshot (Base44 exige colaborador_nome)
+  colaborador_nome String
 
-  trainingDate   DateTime?
-  validUntil     DateTime? // null => indeterminada / sem vencimento
+  // Relação com TipoTreinamento (no Base44 o campo se chama "tipoTreinamento")
+  tipoTreinamento String?
+  tipoTreinamentoRel TipoTreinamento? @relation(fields: [tipoTreinamento], references: [id], onDelete: SetNull)
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  // NR legado (enum fixo)
+  nr NR?
 
-  @@index([collaboratorId])
-  @@index([trainingTypeId])
-  @@index([validUntil])
+  data_treinamento DateTime
+  validade         DateTime?
+  carga_horaria    Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([colaborador_id])
+  @@index([tipoTreinamento])
+  @@index([validade])
+  @@index([data_treinamento])
 }
