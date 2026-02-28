@@ -1,7 +1,14 @@
-export type ColumnDef = { header: string; accessor: string };
+import type { ReactNode } from "react";
+
+export type ColumnDef<T extends Record<string, unknown>> = {
+  header: string;
+  accessor: keyof T;
+  render?: (row: T) => ReactNode;
+};
 
 export type AsoRecord = {
   id: string;
+  colaborador_id?: string | null;
   colaborador_nome?: string | null;
   setor?: string | null;
   cargo?: string | null;
@@ -11,15 +18,21 @@ export type AsoRecord = {
 
 export type TipoTreinamento = {
   id: string;
-  nr: string;
   nome: string;
+  nr: string;
+  validadeMeses?: number | null;
+  descricao?: string | null;
 };
 
 export type TreinamentoRecord = {
   id: string;
+  colaborador_id?: string | null;
   colaborador_nome?: string | null;
+
   tipoTreinamento?: string | null;
   nr?: string | null;
+
   data_treinamento?: string | null;
   validade?: string | null;
+  carga_horaria?: number | null;
 };

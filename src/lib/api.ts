@@ -4,37 +4,33 @@ import type {
   TreinamentoRecord,
 } from "@/types/dashboard";
 
-type JsonRequestInit = Omit<RequestInit, "body"> & {
-  json?: unknown;
-};
+type JsonInit = Omit<RequestInit, "body"> & { json?: unknown };
 
-async function requestJSON<T>(
-  url: string,
-  options?: JsonRequestInit,
-): Promise<T> {
+async function requestJSON<T>(url: string, init?: JsonInit): Promise<T> {
   const res = await fetch(url, {
     cache: "no-store",
+    ...init,
     headers: {
       "Content-Type": "application/json",
-      ...(options?.headers || {}),
+      ...(init?.headers ?? {}),
     },
-    ...options,
-    body:
-      options?.json !== undefined ? JSON.stringify(options.json) : undefined,
+    body: init?.json !== undefined ? JSON.stringify(init.json) : undefined,
   });
 
   if (!res.ok) {
-    const errorText = await res.text();
-    throw new Error(errorText || `Failed request: ${url}`);
+    const text = await res.text().catch(() => "");
+    throw new Error(text || `Failed request: ${res.status} ${url}`);
   }
+
+  // DELETE pode devolver vazio em alguns casos
+  const ct = res.headers.get("content-type") || "";
+  if (!ct.includes("application/json")) return {} as T;
 
   return res.json();
 }
 
 export const api = {
-  asos: {
-    list: () => requestJSON<AsoRecord[]>("/api/asos"),
-  },
+  asos: { list: () => requestJSON<AsoRecord[]>("/api/asos") },
 
   treinamentos: {
     list: () => requestJSON<TreinamentoRecord[]>("/api/treinamentos"),

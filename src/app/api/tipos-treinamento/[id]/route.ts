@@ -1,75 +1,100 @@
 import { prisma } from "@/lib/db";
 import { NextResponse } from "next/server";
 
-type Params = { params: { id: string } };
+type Ctx = { params: Promise<{ id: string }> };
 
-export async function GET(_req: Request, { params }: Params) {
-  const item = await prisma.tipoTreinamento.findUnique({
-    where: { id: params.id },
-  });
+export async function PATCH(req: Request, { params }: Ctx) {
+  try {
+    const { id } = await params;
+    if (!id) return NextResponse.json({ error: "id ausente" }, { status: 400 });
 
-  if (!item) {
-    return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
-  }
+    const body = await req.json();
 
-  return NextResponse.json(item);
-}
+    const data: {
+      nome?: string;
+      nr?: string;
+      validadeMeses?: number | null;
+      descricao?: string | null;
+    } = {};
 
-export async function PATCH(req: Request, { params }: Params) {
-  const body = await req.json();
-
-  const data: {
-    nome?: string;
-    nr?: string;
-    validadeMeses?: number | null;
-    descricao?: string | null;
-  } = {};
-
-  if (body.nome !== undefined) {
-    const nome = String(body.nome).trim();
-    if (!nome) {
-      return NextResponse.json({ error: "nome inválido" }, { status: 400 });
+    if (body.nome !== undefined) {
+      const v = String(body.nome).trim();
+      if (!v)
+        return NextResponse.json({ error: "nome inválido" }, { status: 400 });
+      data.nome = v;
     }
-    data.nome = nome;
-  }
 
-  if (body.nr !== undefined) {
-    const nr = String(body.nr).trim();
-    if (!nr) {
-      return NextResponse.json({ error: "nr inválido" }, { status: 400 });
+    if (body.nr !== undefined) {
+      const v = String(body.nr).trim();
+      if (!v)
+        return NextResponse.json({ error: "nr inválido" }, { status: 400 });
+      data.nr = v;
     }
-    data.nr = nr;
-  }
 
-  if (body.validadeMeses !== undefined) {
-    const n = Number(body.validadeMeses);
-    if (!Number.isFinite(n) || n < 0) {
+    if (body.validadeMeses !== undefined) {
+      if (body.validadeMeses === null || body.validadeMeses === "") {
+        data.validadeMeses = null;
+      } else {
+        const n = Number(body.validadeMeses);
+        if (!Number.isFinite(n) || n < 0) {
+          return NextResponse.json(
+            { error: "validadeMeses inválido" },
+            { status: 400 },
+          );
+        }
+        data.validadeMeses = n;
+      }
+    }
+
+    if (body.descricao !== undefined) {
+      const v = String(body.descricao).trim();
+      data.descricao = v ? v : null;
+    }
+
+    if (Object.keys(data).length === 0) {
       return NextResponse.json(
-        { error: "validadeMeses inválido" },
+        { error: "Nada para atualizar" },
         { status: 400 },
       );
     }
-    data.validadeMeses = n;
+
+    const exists = await prisma.tipoTreinamento.findUnique({ where: { id } });
+    if (!exists) {
+      return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
+    }
+
+    const updated = await prisma.tipoTreinamento.update({
+      where: { id },
+      data,
+    });
+
+    return NextResponse.json(updated);
+  } catch (err: any) {
+    console.error("PATCH /api/tipos-treinamento/[id] ->", err);
+    return NextResponse.json(
+      { error: "Erro interno", detail: err?.message ?? String(err) },
+      { status: 500 },
+    );
   }
-
-  if (body.descricao !== undefined) {
-    const d = String(body.descricao).trim();
-    data.descricao = d ? d : null;
-  }
-
-  if (Object.keys(data).length === 0) {
-    return NextResponse.json({ error: "Nada para atualizar" }, { status: 400 });
-  }
-
-  const updated = await prisma.tipoTreinamento.update({
-    where: { id: params.id },
-    data,
-  });
-
-  return NextResponse.json(updated);
 }
 
-export async function DELETE(_req: Request, { params }: Params) {
-  await prisma.tipoTreinamento.delete({ where: { id: params.id } });
-  return NextResponse.json({ ok: true });
+export async function DELETE(_req: Request, { params }: Ctx) {
+  try {
+    const { id } = await params;
+    if (!id) return NextResponse.json({ error: "id ausente" }, { status: 400 });
+
+    const exists = await prisma.tipoTreinamento.findUnique({ where: { id } });
+    if (!exists) {
+      return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
+    }
+
+    await prisma.tipoTreinamento.delete({ where: { id } });
+    return NextResponse.json({ ok: true });
+  } catch (err: any) {
+    console.error("DELETE /api/tipos-treinamento/[id] ->", err);
+    return NextResponse.json(
+      { error: "Erro interno", detail: err?.message ?? String(err) },
+      { status: 500 },
+    );
+  }
 }
