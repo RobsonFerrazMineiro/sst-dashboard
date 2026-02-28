@@ -6,7 +6,7 @@ function escapeCSV(value: unknown): string {
   return s;
 }
 
-export function exportToCSV<T extends Record<string, any>>(
+export function exportToCSV<T extends Record<string, unknown>>(
   rows: T[],
   filenameBase: string,
   columns: ColumnDef[],
