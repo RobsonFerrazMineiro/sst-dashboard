@@ -52,16 +52,16 @@ model TipoASO {
 model ASO {
   id String @id @default(cuid())
 
-  // Relação (Base44 não obriga, então fica opcional)
+
   colaborador_id String?
   colaborador    Colaborador? @relation(fields: [colaborador_id], references: [id], onDelete: SetNull)
 
-  // Cache/snapshot (Base44 exige colaborador_nome)
+  
   colaborador_nome String
   setor            String?
   cargo            String?
 
-  // TipoASO (opcional + cache)
+
   tipoASO_id   String?
   tipoASO      TipoASO? @relation(fields: [tipoASO_id], references: [id], onDelete: SetNull)
   tipoASO_nome String?
@@ -100,18 +100,16 @@ model TipoTreinamento {
 model Treinamento {
   id String @id @default(cuid())
 
-  // Relação (Base44 não obriga, então fica opcional)
+ 
   colaborador_id String?
   colaborador    Colaborador? @relation(fields: [colaborador_id], references: [id], onDelete: SetNull)
 
-  // Cache/snapshot (Base44 exige colaborador_nome)
   colaborador_nome String
 
-  // Relação com TipoTreinamento (no Base44 o campo se chama "tipoTreinamento")
+
   tipoTreinamento String?
   tipoTreinamentoRel TipoTreinamento? @relation(fields: [tipoTreinamento], references: [id], onDelete: SetNull)
 
-  // NR legado (enum fixo)
   nr NR?
 
   data_treinamento DateTime
