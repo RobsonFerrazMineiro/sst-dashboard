@@ -1,14 +1,74 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+model Collaborator {
+  id        String   @id @default(cuid())
+  name      String
+  sector    String?
+  role      String?
+
+  asos      AsoExam[]
+  trainings TrainingRecord[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([name])
+  @@index([sector])
+}
+
+model AsoExam {
+  id             String   @id @default(cuid())
+  collaboratorId String
+  collaborator   Collaborator @relation(fields: [collaboratorId], references: [id], onDelete: Cascade)
+
+  examDate       DateTime?
+  validUntil     DateTime?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([collaboratorId])
+  @@index([validUntil])
+}
+
+model TrainingType {
+  id        String   @id @default(cuid())
+  nr        String
+  name      String
+
+  trainings TrainingRecord[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([nr, name])
+  @@index([nr])
+}
+
+model TrainingRecord {
+  id             String   @id @default(cuid())
+  collaboratorId String
+  collaborator   Collaborator @relation(fields: [collaboratorId], references: [id], onDelete: Cascade)
+
+  trainingTypeId String?
+  trainingType   TrainingType? @relation(fields: [trainingTypeId], references: [id], onDelete: SetNull)
+
+  // fallback quando não houver tipo cadastrado
+  nrFallback     String?
+
+  trainingDate   DateTime?
+  validUntil     DateTime? // null => indeterminada / sem vencimento
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([collaboratorId])
+  @@index([trainingTypeId])
+  @@index([validUntil])
 }
