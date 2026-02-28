@@ -19,16 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
-
-type TipoTreinamento = {
-  id: string;
-  nome: string;
-  nr: string;
-  validadeMeses: number | null;
-  descricao: string | null;
-  createdAt?: string;
-  updatedAt?: string;
-};
+import type { TipoTreinamento } from "@/types/dashboard";
 
 export default function TiposTreinamentoPage() {
   const qc = useQueryClient();
