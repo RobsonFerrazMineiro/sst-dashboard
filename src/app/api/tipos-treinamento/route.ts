@@ -2,9 +2,50 @@ import { prisma } from "@/lib/db";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const rows = await prisma.tipoTreinamento.findMany({
+  const items = await prisma.tipoTreinamento.findMany({
     orderBy: [{ nr: "asc" }, { nome: "asc" }],
   });
+  return NextResponse.json(items);
+}
 
-  return NextResponse.json(rows);
+export async function POST(req: Request) {
+  const body = await req.json();
+
+  const nome = String(body?.nome ?? "").trim();
+  const nr = String(body?.nr ?? "").trim();
+  const validadeMesesRaw = body?.validadeMeses;
+  const descricaoRaw = body?.descricao;
+
+  if (!nome) {
+    return NextResponse.json({ error: "nome é obrigatório" }, { status: 400 });
+  }
+  if (!nr) {
+    return NextResponse.json({ error: "nr é obrigatório" }, { status: 400 });
+  }
+
+  const data: {
+    nome: string;
+    nr: string;
+    validadeMeses?: number | null;
+    descricao?: string | null;
+  } = { nome, nr };
+
+  if (validadeMesesRaw !== undefined) {
+    const n = Number(validadeMesesRaw);
+    if (!Number.isFinite(n) || n < 0) {
+      return NextResponse.json(
+        { error: "validadeMeses inválido" },
+        { status: 400 },
+      );
+    }
+    data.validadeMeses = n;
+  }
+
+  if (descricaoRaw !== undefined) {
+    const d = String(descricaoRaw).trim();
+    data.descricao = d ? d : null;
+  }
+
+  const created = await prisma.tipoTreinamento.create({ data });
+  return NextResponse.json(created, { status: 201 });
 }

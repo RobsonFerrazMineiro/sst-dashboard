@@ -11,15 +11,45 @@ import FilterBar from "./FilterBar";
 import Pagination from "./Pagination";
 import StatCard from "./StatCard";
 
-import { getAsoStatus } from "@/lib/validity";
 import type { AsoRecord, ColumnDef } from "@/types/dashboard";
 import { exportToCSV } from "@/utils/csvExport";
 
 type ProcessedAso = AsoRecord & {
-  status: string;
+  status: "Em dia" | "Prestes a vencer" | "Vencido" | "Pendente";
   data_aso_formatted: string;
   validade_aso_formatted: string;
 };
+
+function toDateSafe(value: unknown): Date | null {
+  if (!value) return null;
+  const d = new Date(String(value));
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function getStatus(
+  validadeStr?: string | null,
+  dataStr?: string | null,
+): ProcessedAso["status"] {
+  // Se não tem data_aso, consideramos pendente
+  if (!dataStr) return "Pendente";
+
+  // Se não tem validade, também é pendente (ou “Sem registro”, mas você usa Pendente)
+  if (!validadeStr) return "Pendente";
+
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  const validade = toDateSafe(validadeStr);
+  if (!validade) return "Pendente";
+
+  const diffDays = Math.ceil(
+    (validade.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24),
+  );
+
+  if (diffDays < 0) return "Vencido";
+  if (diffDays <= 30) return "Prestes a vencer";
+  return "Em dia";
+}
 
 export default function ASOPanel({
   data,
@@ -36,10 +66,34 @@ export default function ASOPanel({
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
+  // ✅ pega apenas o ASO mais recente por colaborador
   const processedData: ProcessedAso[] = useMemo(() => {
-    return data.map((aso) => ({
+    const grouped = new Map<string, AsoRecord>();
+
+    for (const aso of data) {
+      if (!aso.colaborador_id) continue;
+
+      const existing = grouped.get(aso.colaborador_id);
+      if (!existing) {
+        grouped.set(aso.colaborador_id, aso);
+        continue;
+      }
+
+      const currentDate = toDateSafe(aso.data_aso);
+      const existingDate = toDateSafe(existing.data_aso);
+
+      // Se o atual não tem data válida, ignora
+      if (!currentDate) continue;
+
+      // Se o existente não tem data válida, substitui
+      if (!existingDate || currentDate > existingDate) {
+        grouped.set(aso.colaborador_id, aso);
+      }
+    }
+
+    return Array.from(grouped.values()).map((aso) => ({
       ...aso,
-      status: getAsoStatus(aso.validade_aso, aso.data_aso),
+      status: getStatus(aso.validade_aso, aso.data_aso),
       data_aso_formatted: aso.data_aso
         ? format(parseISO(aso.data_aso), "dd/MM/yyyy", { locale: ptBR })
         : "Sem registro",
@@ -97,7 +151,6 @@ export default function ASOPanel({
     });
   }, [processedData, searchTerm, statusFilter, setorFilter, activeCard]);
 
-  // ✅ aqui é o lugar certo de resetar página
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, statusFilter, setorFilter, activeCard]);
@@ -105,11 +158,11 @@ export default function ASOPanel({
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     return filteredData.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredData, currentPage]);
+  }, [filteredData, currentPage, itemsPerPage]);
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
-  const columns: ColumnDef[] = [
+  const columns: ColumnDef<ProcessedAso>[] = [
     { header: "Colaborador", accessor: "colaborador_nome" },
     { header: "Setor", accessor: "setor" },
     { header: "Cargo", accessor: "cargo" },

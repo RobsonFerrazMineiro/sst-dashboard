@@ -1,21 +1,72 @@
 import type {
   AsoRecord,
+  TipoASO,
   TipoTreinamento,
   TreinamentoRecord,
 } from "@/types/dashboard";
 
-async function getJSON<T>(url: string): Promise<T> {
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) throw new Error(`Failed to fetch: ${url}`);
+type JsonInit = Omit<RequestInit, "body"> & { json?: unknown };
+
+async function requestJSON<T>(url: string, init?: JsonInit): Promise<T> {
+  const res = await fetch(url, {
+    cache: "no-store",
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...(init?.headers ?? {}),
+    },
+    body: init?.json !== undefined ? JSON.stringify(init.json) : undefined,
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(text || `Failed request: ${res.status} ${url}`);
+  }
+
+  // DELETE pode devolver vazio em alguns casos
+  const ct = res.headers.get("content-type") || "";
+  if (!ct.includes("application/json")) return {} as T;
+
   return res.json();
 }
 
 export const api = {
-  asos: { list: () => getJSON<AsoRecord[]>("/api/asos") },
-  treinamentos: {
-    list: () => getJSON<TreinamentoRecord[]>("/api/treinamentos"),
+  asos: { list: () => requestJSON<AsoRecord[]>("/api/asos") },
+
+  tiposASO: {
+    list: () => requestJSON<TipoASO[]>("/api/tipos-aso"),
+    create: (json: Partial<TipoASO>) =>
+      requestJSON<TipoASO>("/api/tipos-aso", { method: "POST", json }),
+    update: (id: string, json: Partial<TipoASO>) =>
+      requestJSON<TipoASO>(`/api/tipos-aso/${id}`, { method: "PATCH", json }),
+    remove: (id: string) =>
+      requestJSON<{ ok: boolean }>(`/api/tipos-aso/${id}`, {
+        method: "DELETE",
+      }),
   },
+
+  treinamentos: {
+    list: () => requestJSON<TreinamentoRecord[]>("/api/treinamentos"),
+  },
+
   tiposTreinamento: {
-    list: () => getJSON<TipoTreinamento[]>("/api/tipos-treinamento"),
+    list: () => requestJSON<TipoTreinamento[]>("/api/tipos-treinamento"),
+
+    create: (json: Partial<TipoTreinamento>) =>
+      requestJSON<TipoTreinamento>("/api/tipos-treinamento", {
+        method: "POST",
+        json,
+      }),
+
+    update: (id: string, json: Partial<TipoTreinamento>) =>
+      requestJSON<TipoTreinamento>(`/api/tipos-treinamento/${id}`, {
+        method: "PATCH",
+        json,
+      }),
+
+    remove: (id: string) =>
+      requestJSON<{ ok: boolean }>(`/api/tipos-treinamento/${id}`, {
+        method: "DELETE",
+      }),
   },
 };
