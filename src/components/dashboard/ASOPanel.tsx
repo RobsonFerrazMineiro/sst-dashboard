@@ -162,7 +162,7 @@ export default function ASOPanel({
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
-  const columns: ColumnDef[] = [
+  const columns: ColumnDef<ProcessedAso>[] = [
     { header: "Colaborador", accessor: "colaborador_nome" },
     { header: "Setor", accessor: "setor" },
     { header: "Cargo", accessor: "cargo" },

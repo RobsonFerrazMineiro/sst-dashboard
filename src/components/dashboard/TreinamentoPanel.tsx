@@ -192,7 +192,7 @@ export default function TreinamentoPanel({
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
-  const columns: ColumnDef[] = [
+  const columns: ColumnDef<ProcessedTreinamento>[] = [
     { header: "Colaborador", accessor: "colaborador_nome" },
     { header: "Treinamento / NR", accessor: "tipo_display" },
     { header: "Data Treinamento", accessor: "data_treinamento_formatted" },
