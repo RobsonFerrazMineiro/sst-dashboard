@@ -1,5 +1,6 @@
 import type {
   AsoRecord,
+  TipoASO,
   TipoTreinamento,
   TreinamentoRecord,
 } from "@/types/dashboard";
@@ -31,6 +32,18 @@ async function requestJSON<T>(url: string, init?: JsonInit): Promise<T> {
 
 export const api = {
   asos: { list: () => requestJSON<AsoRecord[]>("/api/asos") },
+
+  tiposASO: {
+    list: () => requestJSON<TipoASO[]>("/api/tipos-aso"),
+    create: (json: Partial<TipoASO>) =>
+      requestJSON<TipoASO>("/api/tipos-aso", { method: "POST", json }),
+    update: (id: string, json: Partial<TipoASO>) =>
+      requestJSON<TipoASO>(`/api/tipos-aso/${id}`, { method: "PATCH", json }),
+    remove: (id: string) =>
+      requestJSON<{ ok: boolean }>(`/api/tipos-aso/${id}`, {
+        method: "DELETE",
+      }),
+  },
 
   treinamentos: {
     list: () => requestJSON<TreinamentoRecord[]>("/api/treinamentos"),

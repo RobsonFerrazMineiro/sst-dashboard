@@ -16,6 +16,15 @@ export type AsoRecord = {
   validade_aso?: string | null;
 };
 
+export type TipoASO = {
+  id: string;
+  nome: string;
+  validadeMeses: number | null;
+  descricao: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
 export type TipoTreinamento = {
   id: string;
   nome: string;

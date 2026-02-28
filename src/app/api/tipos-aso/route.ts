@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   const items = await prisma.tipoASO.findMany({
-    orderBy: { nome: "asc" },
+    orderBy: [{ nome: "asc" }],
   });
   return NextResponse.json(items);
 }
@@ -11,36 +11,34 @@ export async function GET() {
 export async function POST(req: Request) {
   const body = await req.json();
 
-  const nome = String(body?.nome ?? "").trim();
-  const validadeMesesRaw = body?.validadeMeses;
-  const descricaoRaw = body?.descricao;
-
+  const nome = String(body.nome ?? "").trim();
   if (!nome) {
-    return NextResponse.json({ error: "nome é obrigatório" }, { status: 400 });
+    return NextResponse.json({ error: "nome inválido" }, { status: 400 });
   }
 
-  const data: {
-    nome: string;
-    validadeMeses?: number | null;
-    descricao?: string | null;
-  } = { nome };
-
-  if (validadeMesesRaw !== undefined) {
-    const n = Number(validadeMesesRaw);
+  let validadeMeses: number | null = null;
+  if (
+    body.validadeMeses !== undefined &&
+    body.validadeMeses !== null &&
+    body.validadeMeses !== ""
+  ) {
+    const n = Number(body.validadeMeses);
     if (!Number.isFinite(n) || n < 0) {
       return NextResponse.json(
         { error: "validadeMeses inválido" },
         { status: 400 },
       );
     }
-    data.validadeMeses = n;
+    validadeMeses = n;
   }
 
-  if (descricaoRaw !== undefined) {
-    const d = String(descricaoRaw).trim();
-    data.descricao = d ? d : null;
-  }
+  const descricaoRaw =
+    body.descricao !== undefined ? String(body.descricao).trim() : "";
+  const descricao = descricaoRaw ? descricaoRaw : null;
 
-  const created = await prisma.tipoASO.create({ data });
+  const created = await prisma.tipoASO.create({
+    data: { nome, validadeMeses, descricao },
+  });
+
   return NextResponse.json(created, { status: 201 });
 }
