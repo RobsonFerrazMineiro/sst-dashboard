@@ -11,7 +11,6 @@ import FilterBar from "./FilterBar";
 import Pagination from "./Pagination";
 import StatCard from "./StatCard";
 
-import { getTrainingStatus } from "@/lib/validity";
 import type {
   ColumnDef,
   TipoTreinamento,
@@ -19,13 +18,43 @@ import type {
 } from "@/types/dashboard";
 import { exportToCSV } from "@/utils/csvExport";
 
+type StatusTreino =
+  | "Em dia"
+  | "Prestes a vencer"
+  | "Vencido"
+  | "Sem vencimento";
+
 type ProcessedTreinamento = TreinamentoRecord & {
-  status: string;
+  status: StatusTreino;
   data_treinamento_formatted: string;
   validade_formatted: string;
   tipo_display: string;
   tipo_nr: string;
 };
+
+function toDateSafe(value: unknown): Date | null {
+  if (!value) return null;
+  const d = new Date(String(value));
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function getStatus(validadeStr?: string | null): StatusTreino {
+  if (!validadeStr) return "Sem vencimento";
+
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  const validade = toDateSafe(validadeStr);
+  if (!validade) return "Sem vencimento";
+
+  const diffDays = Math.ceil(
+    (validade.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24),
+  );
+
+  if (diffDays < 0) return "Vencido";
+  if (diffDays <= 30) return "Prestes a vencer";
+  return "Em dia";
+}
 
 export default function TreinamentoPanel({
   data,
@@ -52,15 +81,38 @@ export default function TreinamentoPanel({
     return map;
   }, [tiposTreinamento]);
 
+  // ✅ pega apenas o último treinamento por (colaborador + tipoTreinamento/nr)
   const processedData: ProcessedTreinamento[] = useMemo(() => {
-    return data.map((treinamento) => {
+    const grouped = new Map<string, TreinamentoRecord>();
+
+    for (const treinamento of data) {
+      if (!treinamento.colaborador_id) continue;
+
+      const key = `${treinamento.colaborador_id}-${treinamento.tipoTreinamento ?? treinamento.nr ?? "sem-tipo"}`;
+      const existing = grouped.get(key);
+
+      if (!existing) {
+        grouped.set(key, treinamento);
+        continue;
+      }
+
+      const currentDate = toDateSafe(treinamento.data_treinamento);
+      const existingDate = toDateSafe(existing.data_treinamento);
+
+      if (!currentDate) continue;
+      if (!existingDate || currentDate > existingDate) {
+        grouped.set(key, treinamento);
+      }
+    }
+
+    return Array.from(grouped.values()).map((treinamento) => {
       const tipo = treinamento.tipoTreinamento
         ? tiposMap[treinamento.tipoTreinamento]
         : null;
 
       return {
         ...treinamento,
-        status: getTrainingStatus(treinamento.validade),
+        status: getStatus(treinamento.validade),
         data_treinamento_formatted: treinamento.data_treinamento
           ? format(parseISO(treinamento.data_treinamento), "dd/MM/yyyy", {
               locale: ptBR,
@@ -73,8 +125,8 @@ export default function TreinamentoPanel({
           : "Indeterminada",
         tipo_display: tipo
           ? `${tipo.nr} – ${tipo.nome}`
-          : treinamento.nr || "-",
-        tipo_nr: tipo ? tipo.nr : treinamento.nr || "-",
+          : (treinamento.nr ?? "-"),
+        tipo_nr: tipo ? tipo.nr : (treinamento.nr ?? "-"),
       };
     });
   }, [data, tiposMap]);
@@ -136,7 +188,7 @@ export default function TreinamentoPanel({
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     return filteredData.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredData, currentPage]);
+  }, [filteredData, currentPage, itemsPerPage]);
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
