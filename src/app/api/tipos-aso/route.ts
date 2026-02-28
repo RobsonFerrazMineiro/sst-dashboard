@@ -1,50 +1,46 @@
 import { prisma } from "@/lib/db";
-import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const rows = await prisma.tipoASO.findMany({
+  const items = await prisma.tipoASO.findMany({
     orderBy: { nome: "asc" },
   });
-
-  return NextResponse.json(rows);
+  return NextResponse.json(items);
 }
 
 export async function POST(req: Request) {
   const body = await req.json();
 
-  const nome = String(body.nome ?? "").trim();
+  const nome = String(body?.nome ?? "").trim();
+  const validadeMesesRaw = body?.validadeMeses;
+  const descricaoRaw = body?.descricao;
+
   if (!nome) {
-    return NextResponse.json(
-      { error: "Campo obrigatório: nome" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "nome é obrigatório" }, { status: 400 });
   }
 
-  const validadeMeses =
-    body.validadeMeses !== undefined && body.validadeMeses !== null
-      ? Number(body.validadeMeses)
-      : null;
+  const data: {
+    nome: string;
+    validadeMeses?: number | null;
+    descricao?: string | null;
+  } = { nome };
 
-  if (validadeMeses !== null && Number.isNaN(validadeMeses)) {
-    return NextResponse.json(
-      { error: "validadeMeses inválido" },
-      { status: 400 },
-    );
+  if (validadeMesesRaw !== undefined) {
+    const n = Number(validadeMesesRaw);
+    if (!Number.isFinite(n) || n < 0) {
+      return NextResponse.json(
+        { error: "validadeMeses inválido" },
+        { status: 400 },
+      );
+    }
+    data.validadeMeses = n;
   }
 
-  const descricao =
-    body.descricao !== undefined && body.descricao !== null
-      ? String(body.descricao).trim()
-      : null;
-
-  const data: Prisma.TipoASOCreateInput = {
-    nome,
-    validadeMeses,
-    descricao,
-  };
+  if (descricaoRaw !== undefined) {
+    const d = String(descricaoRaw).trim();
+    data.descricao = d ? d : null;
+  }
 
   const created = await prisma.tipoASO.create({ data });
-
   return NextResponse.json(created, { status: 201 });
 }

@@ -1,53 +1,51 @@
 import { prisma } from "@/lib/db";
-import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const rows = await prisma.tipoTreinamento.findMany({
-    orderBy: { nome: "asc" },
+  const items = await prisma.tipoTreinamento.findMany({
+    orderBy: [{ nr: "asc" }, { nome: "asc" }],
   });
-
-  return NextResponse.json(rows);
+  return NextResponse.json(items);
 }
 
 export async function POST(req: Request) {
   const body = await req.json();
 
-  const nome = String(body.nome ?? "").trim();
-  const nr = String(body.nr ?? "").trim();
+  const nome = String(body?.nome ?? "").trim();
+  const nr = String(body?.nr ?? "").trim();
+  const validadeMesesRaw = body?.validadeMeses;
+  const descricaoRaw = body?.descricao;
 
-  if (!nome || !nr) {
-    return NextResponse.json(
-      { error: "Campos obrigatórios: nome e nr" },
-      { status: 400 },
-    );
+  if (!nome) {
+    return NextResponse.json({ error: "nome é obrigatório" }, { status: 400 });
+  }
+  if (!nr) {
+    return NextResponse.json({ error: "nr é obrigatório" }, { status: 400 });
   }
 
-  const validadeMeses =
-    body.validadeMeses !== undefined && body.validadeMeses !== null
-      ? Number(body.validadeMeses)
-      : null;
+  const data: {
+    nome: string;
+    nr: string;
+    validadeMeses?: number | null;
+    descricao?: string | null;
+  } = { nome, nr };
 
-  if (validadeMeses !== null && Number.isNaN(validadeMeses)) {
-    return NextResponse.json(
-      { error: "validadeMeses inválido" },
-      { status: 400 },
-    );
+  if (validadeMesesRaw !== undefined) {
+    const n = Number(validadeMesesRaw);
+    if (!Number.isFinite(n) || n < 0) {
+      return NextResponse.json(
+        { error: "validadeMeses inválido" },
+        { status: 400 },
+      );
+    }
+    data.validadeMeses = n;
   }
 
-  const descricao =
-    body.descricao !== undefined && body.descricao !== null
-      ? String(body.descricao).trim()
-      : null;
-
-  const data: Prisma.TipoTreinamentoCreateInput = {
-    nome,
-    nr,
-    validadeMeses,
-    descricao,
-  };
+  if (descricaoRaw !== undefined) {
+    const d = String(descricaoRaw).trim();
+    data.descricao = d ? d : null;
+  }
 
   const created = await prisma.tipoTreinamento.create({ data });
-
   return NextResponse.json(created, { status: 201 });
 }
