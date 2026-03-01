@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
+import { toast } from "sonner";
 
 type TipoASO = {
   id: string;
@@ -56,7 +57,13 @@ export default function TiposASOPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.tiposASO.remove(id),
     onSuccess: async () => {
+      toast.success("Tipo de ASO excluido!");
       await qc.invalidateQueries({ queryKey: ["tiposASO"] });
+    },
+    onError: (err: unknown) => {
+      toast.error(
+        err instanceof Error ? err.message : "Erro ao excluir tipo de ASO",
+      );
     },
   });
 

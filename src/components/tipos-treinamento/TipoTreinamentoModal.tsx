@@ -18,6 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 
 type Props = {
   open: boolean;
@@ -114,8 +115,16 @@ export default function TipoTreinamentoModal({
       return api.tiposTreinamento.create(payload);
     },
     onSuccess: async () => {
+      toast.success(
+        isEdit
+          ? "Tipo de treinamento atualizado!"
+          : "Tipo de treinamento criado!",
+      );
       await onSaved();
       onOpenChange(false);
+    },
+    onError: (err: unknown) => {
+      toast.error(err instanceof Error ? err.message : "Erro ao salvar tipo");
     },
   });
 

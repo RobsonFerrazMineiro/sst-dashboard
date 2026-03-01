@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
 import type { TipoTreinamento } from "@/types/dashboard";
+import { toast } from "sonner";
 
 export default function TiposTreinamentoPage() {
   const qc = useQueryClient();
@@ -51,7 +52,15 @@ export default function TiposTreinamentoPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.tiposTreinamento.remove(id),
     onSuccess: async () => {
+      toast.success("Tipo de treinamento excluido!");
       await qc.invalidateQueries({ queryKey: ["tiposTreinamento"] });
+    },
+    onError: (err: unknown) => {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "Erro ao excluir tipo de treinamento",
+      );
     },
   });
 

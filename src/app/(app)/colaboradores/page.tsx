@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
 import Link from "next/link";
+import { toast } from "sonner";
 
 export type Colaborador = {
   id: string;
@@ -65,10 +66,16 @@ export default function ColaboradoresPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.colaboradores.remove(id),
     onSuccess: async () => {
+      toast.success("Colaborador excluido!");
       await qc.invalidateQueries({ queryKey: ["colaboradores"] });
       // opcional: também atualiza dashboard, pq ASO/Treinamento dependem de colaborador
       await qc.invalidateQueries({ queryKey: ["asos"] });
       await qc.invalidateQueries({ queryKey: ["treinamentos"] });
+    },
+    onError: (err: unknown) => {
+      toast.error(
+        err instanceof Error ? err.message : "Erro ao excluir colaborador",
+      );
     },
   });
 

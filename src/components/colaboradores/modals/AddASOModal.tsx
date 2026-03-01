@@ -115,6 +115,9 @@ export default function AddASOModal({
       setClinica("");
       setObservacao("");
     },
+    onError: (err: unknown) => {
+      toast.error(err instanceof Error ? err.message : "Erro ao salvar ASO");
+    },
   });
 
   return (
