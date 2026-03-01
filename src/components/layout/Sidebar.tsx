@@ -1,6 +1,12 @@
 "use client";
 
-import { ClipboardList, LayoutDashboard, Shield, Tags } from "lucide-react";
+import {
+  ClipboardList,
+  LayoutDashboard,
+  Shield,
+  Tags,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -14,6 +20,7 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/colaboradores", label: "Colaboradores", icon: Users },
   {
     href: "/tipos-treinamento",
     label: "Tipos de Treinamento",

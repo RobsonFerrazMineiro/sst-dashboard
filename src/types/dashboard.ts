@@ -6,6 +6,16 @@ export type ColumnDef<T extends Record<string, unknown>> = {
   render?: (row: T) => ReactNode;
 };
 
+export type Colaborador = {
+  id: string;
+  nome: string;
+  setor: string;
+  cargo: string;
+  matricula?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
 export type AsoRecord = {
   id: string;
   colaborador_id?: string | null;

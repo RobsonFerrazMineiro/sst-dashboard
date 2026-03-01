@@ -15,20 +15,16 @@ function parseNR(value: unknown): NR | null {
   return NR[key] ?? null;
 }
 
-export async function GET() {
-  const rows = await prisma.treinamento.findMany({
-    orderBy: [{ validade: "desc" }, { data_treinamento: "desc" }],
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const colaboradorId = searchParams.get("colaboradorId");
+
+  const itens = await prisma.treinamento.findMany({
+    where: colaboradorId ? { colaborador_id: colaboradorId } : undefined,
+    orderBy: { data_treinamento: "desc" },
   });
 
-  return NextResponse.json(
-    rows.map((t) => ({
-      ...t,
-      data_treinamento: t.data_treinamento.toISOString(),
-      validade: t.validade ? t.validade.toISOString() : null,
-      // opcional: devolver string "NR-35" pro legado
-      nr: t.nr ? String(t.nr).replace("_", "-") : null,
-    })),
-  );
+  return NextResponse.json(itens);
 }
 
 export async function POST(req: Request) {

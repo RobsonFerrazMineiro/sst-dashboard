@@ -3,6 +3,25 @@ import { NextResponse } from "next/server";
 
 type Ctx = { params: Promise<{ id: string }> };
 
+export async function GET(_req: Request, ctx: Ctx) {
+  try {
+    const { id } = await ctx.params;
+    if (!id) return NextResponse.json({ error: "id ausente" }, { status: 400 });
+
+    const item = await prisma.colaborador.findUnique({ where: { id } });
+    if (!item)
+      return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
+
+    return NextResponse.json(item);
+  } catch (err: any) {
+    console.error("GET /api/colaboradores/[id] ->", err);
+    return NextResponse.json(
+      { error: "Erro interno", detail: err?.message ?? String(err) },
+      { status: 500 },
+    );
+  }
+}
+
 // PATCH
 export async function PATCH(req: Request, { params }: Ctx) {
   try {

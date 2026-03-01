@@ -16,30 +16,42 @@ export default function DashboardPage() {
   const {
     data: asos = [],
     isLoading: loadingASOs,
+    isError: isErrorASOs,
+    error: errorASOs,
     refetch: refetchASOs,
+    isFetching: fetchingASOs,
   } = useQuery({
     queryKey: ["asos"],
-    queryFn: api.asos.list,
+    queryFn: () => api.asos.list(), // ✅ wrapper
   });
 
   const {
     data: treinamentos = [],
     isLoading: loadingTreinamentos,
+    isError: isErrorTreinamentos,
+    error: errorTreinamentos,
     refetch: refetchTreinamentos,
+    isFetching: fetchingTreinamentos,
   } = useQuery({
     queryKey: ["treinamentos"],
-    queryFn: api.treinamentos.list,
+    queryFn: () => api.treinamentos.list(), // ✅ wrapper
   });
 
   const { data: tiposTreinamento = [] } = useQuery({
     queryKey: ["tipotreinamento"],
-    queryFn: api.tiposTreinamento.list,
+    queryFn: () => api.tiposTreinamento.list(), // ✅ wrapper (boa prática)
   });
 
-  const handleRefresh = () => {
-    refetchASOs();
-    refetchTreinamentos();
+  const handleRefresh = async () => {
+    await Promise.all([refetchASOs(), refetchTreinamentos()]);
   };
+
+  const hasError = isErrorASOs || isErrorTreinamentos;
+  const errorMessage =
+    (errorASOs as Error | undefined)?.message ||
+    (errorTreinamentos as Error | undefined)?.message;
+
+  const isRefreshing = fetchingASOs || fetchingTreinamentos;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -64,11 +76,23 @@ export default function DashboardPage() {
             variant="outline"
             onClick={handleRefresh}
             className="gap-2 self-start sm:self-auto"
+            disabled={isRefreshing}
           >
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw
+              className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`}
+            />
             Atualizar
           </Button>
         </div>
+
+        {hasError && (
+          <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-700">
+            <p className="font-semibold">Erro ao carregar dados</p>
+            <p className="text-sm mt-1">
+              {errorMessage || "Erro desconhecido"}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Tab Navigation */}

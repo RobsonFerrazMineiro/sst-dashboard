@@ -1,0 +1,554 @@
+"use client";
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import {
+  ArrowLeft,
+  BriefcaseBusiness,
+  Building2,
+  Hash,
+  Pencil,
+  Plus,
+  Trash2,
+  UserRound,
+} from "lucide-react";
+import Link from "next/link";
+import { useMemo, useState } from "react";
+
+import AddASOModal from "@/components/colaboradores/modals/AddASOModal";
+import AddTreinamentoModal from "@/components/colaboradores/modals/AddTreinamentoModal";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { api } from "@/lib/api";
+import type { AsoRecord, TreinamentoRecord } from "@/types/dashboard";
+
+function statusBadge(status: string) {
+  const map: Record<string, string> = {
+    "Em dia": "bg-emerald-100 text-emerald-700 border-emerald-200",
+    "Prestes a vencer": "bg-amber-100 text-amber-700 border-amber-200",
+    Vencido: "bg-rose-100 text-rose-700 border-rose-200",
+    Pendente: "bg-slate-100 text-slate-700 border-slate-200",
+    "Sem vencimento": "bg-blue-100 text-blue-700 border-blue-200",
+  };
+  return map[status] ?? "bg-slate-100 text-slate-700 border-slate-200";
+}
+
+function getStatus(validadeISO?: string | null) {
+  if (!validadeISO) return "Sem vencimento";
+
+  const hoje = new Date();
+  const validade = new Date(validadeISO);
+  const diffDays = Math.ceil(
+    (validade.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24),
+  );
+
+  if (diffDays < 0) return "Vencido";
+  if (diffDays <= 30) return "Prestes a vencer";
+  return "Em dia";
+}
+
+type TreinamentoProfileRow = TreinamentoRecord & {
+  status: string;
+  dataFmt: string;
+  validadeFmt: string;
+};
+
+type AsoProfileRow = AsoRecord & {
+  status: string;
+  dataFmt: string;
+  validadeFmt: string;
+};
+
+export default function ColaboradorProfile({ id }: { id: string }) {
+  const qc = useQueryClient();
+
+  const [openTreinamento, setOpenTreinamento] = useState(false);
+  const [openASO, setOpenASO] = useState(false);
+  const [editingTreinamento, setEditingTreinamento] =
+    useState<TreinamentoRecord | null>(null);
+  const [editingASO, setEditingASO] = useState<AsoRecord | null>(null);
+
+  const { data: colaborador, isLoading: loadingColab } = useQuery({
+    queryKey: ["colaborador", id],
+    queryFn: () => api.colaboradores.get(id),
+  });
+
+  const { data: treinamentos = [], isLoading: loadingTre } = useQuery({
+    queryKey: ["treinamentos", id],
+    queryFn: () => api.treinamentos.list(id),
+  });
+
+  const { data: asos = [], isLoading: loadingAso } = useQuery({
+    queryKey: ["asos", id],
+    queryFn: () => api.asos.list(id),
+  });
+
+  const { data: tiposTreinamento = [] } = useQuery({
+    queryKey: ["tiposTreinamento"],
+    queryFn: api.tiposTreinamento.list,
+  });
+
+  const { data: tiposASO = [] } = useQuery({
+    queryKey: ["tiposASO"],
+    queryFn: api.tiposASO.list,
+  });
+
+  const statusRank: Record<string, number> = {
+    Vencido: 0,
+    "Prestes a vencer": 1,
+    "Em dia": 2,
+    "Sem vencimento": 3,
+    Pendente: 4,
+  };
+
+  function byStatusThenDate(
+    aStatus: string,
+    aDate?: string | null,
+    bStatus?: string,
+    bDate?: string | null,
+  ) {
+    const ra = statusRank[aStatus] ?? 99;
+    const rb = statusRank[bStatus ?? ""] ?? 99;
+    if (ra !== rb) return ra - rb;
+
+    const da = aDate ? new Date(aDate).getTime() : 0;
+    const db = bDate ? new Date(bDate).getTime() : 0;
+    return db - da; // mais recente primeiro
+  }
+
+  const treinamentosDoColab = useMemo(() => {
+    return (treinamentos as TreinamentoRecord[])
+      .filter((t) => t.colaborador_id === id)
+      .map((t) => ({
+        ...t,
+        status: getStatus(t.validade ?? null),
+        dataFmt: t.data_treinamento
+          ? format(parseISO(t.data_treinamento), "dd/MM/yyyy", { locale: ptBR })
+          : "-",
+        validadeFmt: t.validade
+          ? format(parseISO(t.validade), "dd/MM/yyyy", { locale: ptBR })
+          : "Indeterminada",
+      }))
+      .sort((a, b) =>
+        byStatusThenDate(a.status, a.validadeFmt, b.status, b.validadeFmt),
+      );
+  }, [treinamentos, id]);
+
+  const asosDoColab = useMemo(() => {
+    return (asos as AsoRecord[])
+      .filter((a) => a.colaborador_id === id)
+      .map((a) => ({
+        ...a,
+        status: getStatus(a.validade_aso ?? null),
+        dataFmt: a.data_aso
+          ? format(parseISO(a.data_aso), "dd/MM/yyyy", { locale: ptBR })
+          : "-",
+        validadeFmt: a.validade_aso
+          ? format(parseISO(a.validade_aso), "dd/MM/yyyy", { locale: ptBR })
+          : "Indeterminada",
+      }));
+  }, [asos, id]);
+
+  const delTre = useMutation({
+    mutationFn: (treinamentoId: string) =>
+      api.treinamentos.remove(treinamentoId),
+    onSuccess: async () => qc.invalidateQueries({ queryKey: ["treinamentos"] }),
+  });
+
+  const delAso = useMutation({
+    mutationFn: (asoId: string) => api.asos.remove(asoId),
+    onSuccess: async () => qc.invalidateQueries({ queryKey: ["asos"] }),
+  });
+
+  if (loadingColab) {
+    return (
+      <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-slate-100">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="rounded-xl border border-slate-200 bg-white p-6 text-slate-500">
+            Carregando colaborador...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!colaborador) {
+    return (
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="rounded-xl border border-slate-200 bg-white p-6 space-y-3">
+          <p className="text-slate-600">Colaborador nao encontrado.</p>
+          <Link
+            href="/colaboradores"
+            className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Voltar para colaboradores
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      <header className="space-y-3">
+        <Link
+          href="/colaboradores"
+          className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Voltar para colaboradores
+        </Link>
+      </header>
+
+      <section className="rounded-xl border border-slate-200 bg-white p-6 grid grid-rows-2 grid-cols-1 gap-4">
+        <div className="flex items-center gap-3 mb-5">
+          <div className="p-2 bg-indigo-50 rounded-lg">
+            <UserRound className="w-6 h-6 text-indigo-600" />
+          </div>
+          <h1 className="text-2xl font-bold text-slate-900">
+            {colaborador.nome}
+          </h1>
+        </div>
+
+        <div className="flex gap-4 text-sm">
+          <div className="flex items-center gap-2 text-slate-600">
+            <Building2 className="w-4 h-4 text-slate-400" />
+            <span className="font-medium">Setor:</span>{" "}
+            {colaborador.setor || "-"}
+          </div>
+          <div className="flex items-center gap-2 text-slate-600">
+            <BriefcaseBusiness className="w-4 h-4 text-slate-400" />
+            <span className="font-medium">Cargo:</span>{" "}
+            {colaborador.cargo || "-"}
+          </div>
+          <div className="flex items-center gap-2 text-slate-600">
+            <Hash className="w-4 h-4 text-slate-400" />
+            <span className="font-medium">Matrícula:</span>{" "}
+            {colaborador.matricula ?? "-"}
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-semibold text-slate-900">
+            Treinamentos
+          </h2>
+          <Button onClick={() => setOpenTreinamento(true)} className="gap-2">
+            <Plus className="w-4 h-4" />
+            Adicionar treinamento
+          </Button>
+        </div>
+
+        <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+                    Treinamento / NR
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+                    Data
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+                    Validade
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+                    Carga (h)
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 text-right text-sm font-semibold text-slate-600">
+                    Acoes
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {loadingTre ? (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="px-4 py-10 text-center text-slate-500"
+                    >
+                      Carregando...
+                    </td>
+                  </tr>
+                ) : treinamentosDoColab.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="px-4 py-10 text-center text-slate-500"
+                    >
+                      Nenhum treinamento.
+                    </td>
+                  </tr>
+                ) : (
+                  treinamentosDoColab.map((t: TreinamentoProfileRow) => (
+                    <tr
+                      key={t.id}
+                      className="border-t border-slate-100 hover:bg-slate-50"
+                    >
+                      <td className="max-w-85 px-4 py-3 text-sm font-medium text-slate-900">
+                        {t.tipoTreinamento_nome ?? t.nr ?? "-"}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
+                        {t.dataFmt}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
+                        {t.validadeFmt}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
+                        {t.carga_horaria ?? "-"}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge
+                          variant="outline"
+                          className={`font-medium ${statusBadge(t.status)}`}
+                        >
+                          {t.status}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            title="Editar"
+                            onClick={() => {
+                              setEditingTreinamento(t);
+                              setOpenTreinamento(true);
+                            }}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="text-rose-600 hover:text-rose-700"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  Excluir treinamento?
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Essa acao e permanente.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => delTre.mutate(t.id)}
+                                  className="bg-rose-600 hover:bg-rose-700"
+                                >
+                                  Excluir
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-2xl font-semibold text-slate-900">ASOs</h2>
+          <Button onClick={() => setOpenASO(true)} className="gap-2">
+            <Plus className="w-4 h-4" />
+            Adicionar ASO
+          </Button>
+        </div>
+
+        <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+                    Tipo de ASO
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+                    Data
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+                    Validade
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+                    Clinica
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 text-right text-sm font-semibold text-slate-600">
+                    Acoes
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {loadingAso ? (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="px-4 py-10 text-center text-slate-500"
+                    >
+                      Carregando...
+                    </td>
+                  </tr>
+                ) : asosDoColab.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="px-4 py-10 text-center text-slate-500"
+                    >
+                      Nenhum ASO.
+                    </td>
+                  </tr>
+                ) : (
+                  asosDoColab.map((a: AsoProfileRow) => (
+                    <tr
+                      key={a.id}
+                      className="border-t border-slate-100 hover:bg-slate-50"
+                    >
+                      <td className="px-4 py-3 text-sm text-slate-900 whitespace-nowrap">
+                        {a.tipoASO_nome ?? "-"}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
+                        {a.dataFmt}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
+                        {a.validadeFmt}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
+                        {a.clinica ?? "-"}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge
+                          variant="outline"
+                          className={`font-medium ${statusBadge(a.status)}`}
+                        >
+                          {a.status}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            title="Editar"
+                            onClick={() => {
+                              setEditingASO(a);
+                              setOpenASO(true);
+                            }}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="text-rose-600 hover:text-rose-700"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  Excluir ASO?
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Essa acao e permanente.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => delAso.mutate(a.id)}
+                                  className="bg-rose-600 hover:bg-rose-700"
+                                >
+                                  Excluir
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <AddTreinamentoModal
+        open={openTreinamento}
+        onOpenChange={(v) => {
+          setOpenTreinamento(v);
+          if (!v) setEditingTreinamento(null);
+        }}
+        colaborador={{
+          id,
+          nome: colaborador.nome,
+          setor: colaborador.setor,
+          cargo: colaborador.cargo,
+        }}
+        tiposTreinamento={tiposTreinamento}
+        initial={editingTreinamento}
+        onSaved={async () => {
+          await qc.invalidateQueries({ queryKey: ["treinamentos"] });
+        }}
+      />
+
+      <AddASOModal
+        open={openASO}
+        onOpenChange={(v) => {
+          setOpenASO(v);
+          if (!v) setEditingASO(null);
+        }}
+        colaborador={{
+          id,
+          nome: colaborador.nome,
+          setor: colaborador.setor,
+          cargo: colaborador.cargo,
+        }}
+        tiposASO={tiposASO}
+        aso={editingASO}
+        onSaved={async () => {
+          await qc.invalidateQueries({ queryKey: ["asos"] });
+        }}
+      />
+    </div>
+  );
+}
