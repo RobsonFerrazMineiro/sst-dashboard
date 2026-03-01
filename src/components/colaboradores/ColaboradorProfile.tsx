@@ -336,13 +336,14 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                       <td className="px-4 py-2.5">
                         <div className="flex justify-end gap-2">
                           <Button
-                            variant="outline"
+                            variant="ghost"
                             size="icon"
                             title="Editar"
                             onClick={() => {
                               setEditingTreinamento(t);
                               setOpenTreinamento(true);
                             }}
+                            className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                           >
                             <Pencil className="w-4 h-4" />
                           </Button>
@@ -350,9 +351,9 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button
-                                variant="outline"
+                                variant="ghost"
                                 size="icon"
-                                className="text-rose-600 hover:text-rose-700"
+                                className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </Button>
@@ -470,13 +471,14 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                       <td className="px-4 py-2.5">
                         <div className="flex justify-end gap-2">
                           <Button
-                            variant="outline"
+                            variant="ghost"
                             size="icon"
                             title="Editar"
                             onClick={() => {
                               setEditingASO(a);
                               setOpenASO(true);
                             }}
+                            className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                           >
                             <Pencil className="w-4 h-4" />
                           </Button>
@@ -484,9 +486,9 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button
-                                variant="outline"
+                                variant="ghost"
                                 size="icon"
-                                className="text-rose-600 hover:text-rose-700"
+                                className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </Button>
