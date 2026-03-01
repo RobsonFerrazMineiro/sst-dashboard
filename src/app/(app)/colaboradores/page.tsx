@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
+import { Eye, Pencil, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import ColaboradorModal from "@/components/colaboradores/ColaboradorModal";
@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
+import Link from "next/link";
 
 export type Colaborador = {
   id: string;
@@ -187,6 +188,15 @@ export default function ColaboradoresPage() {
 
                       <td className="px-4 py-3">
                         <div className="flex justify-end gap-2">
+                          <Link href={`/colaboradores/${row.id}`}>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              title="Ver perfil"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          </Link>
                           <Button
                             variant="outline"
                             size="icon"

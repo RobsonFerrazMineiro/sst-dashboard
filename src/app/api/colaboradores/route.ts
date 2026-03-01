@@ -2,8 +2,18 @@ import { prisma } from "@/lib/db";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const rows = await prisma.colaborador.findMany({ orderBy: { nome: "asc" } });
-  return NextResponse.json(rows);
+  try {
+    const items = await prisma.colaborador.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+    return NextResponse.json(items);
+  } catch (err: any) {
+    console.error("GET /api/colaboradores ->", err);
+    return NextResponse.json(
+      { error: "Erro interno", detail: err?.message ?? String(err) },
+      { status: 500 },
+    );
+  }
 }
 
 export async function POST(req: Request) {

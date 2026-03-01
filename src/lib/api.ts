@@ -32,10 +32,9 @@ async function requestJSON<T>(url: string, init?: JsonInit): Promise<T> {
 }
 
 export const api = {
-  asos: { list: () => requestJSON<AsoRecord[]>("/api/asos") },
-
   colaboradores: {
     list: () => requestJSON<Colaborador[]>("/api/colaboradores"),
+    get: (id: string) => requestJSON<Colaborador>(`/api/colaboradores/${id}`),
 
     create: (json: Partial<Colaborador>) =>
       requestJSON<Colaborador>("/api/colaboradores", { method: "POST", json }),
@@ -65,7 +64,41 @@ export const api = {
   },
 
   treinamentos: {
-    list: () => requestJSON<TreinamentoRecord[]>("/api/treinamentos"),
+    list: (colaboradorId?: string) =>
+      requestJSON<TreinamentoRecord[]>(
+        colaboradorId
+          ? `/api/treinamentos?colaboradorId=${colaboradorId}`
+          : "/api/treinamentos",
+      ),
+    create: (json: Partial<TreinamentoRecord>) =>
+      requestJSON<TreinamentoRecord>("/api/treinamentos", {
+        method: "POST",
+        json,
+      }),
+    update: (id: string, json: Partial<TreinamentoRecord>) =>
+      requestJSON<TreinamentoRecord>(`/api/treinamentos/${id}`, {
+        method: "PATCH",
+        json,
+      }),
+    remove: (id: string) =>
+      requestJSON<{ ok: boolean }>(`/api/treinamentos/${id}`, {
+        method: "DELETE",
+      }),
+  },
+
+  asos: {
+    list: (colaboradorId?: string) =>
+      requestJSON<AsoRecord[]>(
+        colaboradorId
+          ? `/api/asos?colaboradorId=${colaboradorId}`
+          : "/api/asos",
+      ),
+    create: (json: Partial<AsoRecord>) =>
+      requestJSON<AsoRecord>("/api/asos", { method: "POST", json }),
+    update: (id: string, json: Partial<AsoRecord>) =>
+      requestJSON<AsoRecord>(`/api/asos/${id}`, { method: "PATCH", json }),
+    remove: (id: string) =>
+      requestJSON<{ ok: boolean }>(`/api/asos/${id}`, { method: "DELETE" }),
   },
 
   tiposTreinamento: {
