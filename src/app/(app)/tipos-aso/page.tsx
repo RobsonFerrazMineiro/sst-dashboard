@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
+import { Clock3, Pencil, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import TipoASOModal from "@/components/tipos-aso/TipoASOModal";
@@ -162,7 +162,10 @@ export default function TiposASOPage() {
                       {row.nome}
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
-                      {row.validadeMeses ?? "-"}
+                      <span className="inline-flex items-center gap-2">
+                        <Clock3 className="h-3.5 w-3.5 text-slate-400" />
+                        {row.validadeMeses ?? "-"}
+                      </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-600">
                       {row.descricao ?? "-"}

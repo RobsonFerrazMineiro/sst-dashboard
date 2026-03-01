@@ -7,6 +7,8 @@ import {
   ArrowLeft,
   BriefcaseBusiness,
   Building2,
+  CalendarDays,
+  Clock3,
   Hash,
   Pencil,
   Plus,
@@ -169,8 +171,10 @@ export default function ColaboradorProfile({ id }: { id: string }) {
       toast.success("Treinamento excluído!");
       await qc.invalidateQueries({ queryKey: ["treinamentos"] });
     },
-    onError: (err: any) =>
-      toast.error(err?.message || "Erro ao excluir treinamento"),
+    onError: (err: unknown) =>
+      toast.error(
+        err instanceof Error ? err.message : "Erro ao excluir treinamento",
+      ),
   });
 
   const delAso = useMutation({
@@ -179,7 +183,8 @@ export default function ColaboradorProfile({ id }: { id: string }) {
       toast.success("ASO excluído!");
       await qc.invalidateQueries({ queryKey: ["asos"] });
     },
-    onError: (err: any) => toast.error(err?.message || "Erro ao excluir ASO"),
+    onError: (err: unknown) =>
+      toast.error(err instanceof Error ? err.message : "Erro ao excluir ASO"),
   });
 
   if (loadingColab) {
@@ -314,13 +319,33 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                       className="border-t border-slate-100 hover:bg-slate-50"
                     >
                       <td className="max-w-85 px-4 py-2.5 text-sm font-medium text-slate-900">
-                        {t.tipoTreinamento_nome ?? t.nr ?? "-"}
+                        <div className="flex items-center gap-2">
+                          {t.tipoTreinamento_nome ? (
+                            <span>{t.tipoTreinamento_nome}</span>
+                          ) : null}
+                          {t.nr ? (
+                            <Badge
+                              variant="outline"
+                              className="border-sky-200 bg-sky-50 text-sky-700 shadow-none"
+                            >
+                              {t.nr}
+                            </Badge>
+                          ) : !t.tipoTreinamento_nome ? (
+                            <span>-</span>
+                          ) : null}
+                        </div>
                       </td>
                       <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
-                        {t.dataFmt}
+                        <span className="inline-flex items-center gap-2">
+                          <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
+                          {t.dataFmt}
+                        </span>
                       </td>
                       <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
-                        {t.validadeFmt}
+                        <span className="inline-flex items-center gap-2">
+                          <Clock3 className="h-3.5 w-3.5 text-slate-400" />
+                          {t.validadeFmt}
+                        </span>
                       </td>
                       <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
                         {t.carga_horaria ?? "-"}
@@ -452,10 +477,16 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                         {a.tipoASO_nome ?? "-"}
                       </td>
                       <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
-                        {a.dataFmt}
+                        <span className="inline-flex items-center gap-2">
+                          <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
+                          {a.dataFmt}
+                        </span>
                       </td>
                       <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
-                        {a.validadeFmt}
+                        <span className="inline-flex items-center gap-2">
+                          <Clock3 className="h-3.5 w-3.5 text-slate-400" />
+                          {a.validadeFmt}
+                        </span>
                       </td>
                       <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
                         {a.clinica ?? "-"}
