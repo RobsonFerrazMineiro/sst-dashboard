@@ -2,8 +2,15 @@
 
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { AlertTriangle, CheckCircle, FileDown, XCircle } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import {
+  AlertTriangle,
+  CalendarDays,
+  CheckCircle,
+  Clock3,
+  FileDown,
+  XCircle,
+} from "lucide-react";
+import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import DataTable from "./DataTable";
@@ -72,6 +79,21 @@ export default function TreinamentoPanel({
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value);
+    setCurrentPage(1);
+  };
+
+  const handleNrFilterChange = (value: string) => {
+    setNrFilter(value);
+    setCurrentPage(1);
+  };
 
   const tiposMap = useMemo(() => {
     const map: Record<string, TipoTreinamento> = {};
@@ -181,10 +203,6 @@ export default function TreinamentoPanel({
     });
   }, [processedData, searchTerm, statusFilter, nrFilter, activeCard]);
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, statusFilter, nrFilter, activeCard]);
-
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     return filteredData.slice(startIndex, startIndex + itemsPerPage);
@@ -195,16 +213,39 @@ export default function TreinamentoPanel({
   const columns: ColumnDef<ProcessedTreinamento>[] = [
     { header: "Colaborador", accessor: "colaborador_nome" },
     { header: "Treinamento / NR", accessor: "tipo_display" },
-    { header: "Data Treinamento", accessor: "data_treinamento_formatted" },
-    { header: "Validade", accessor: "validade_formatted" },
+    {
+      header: "Data Treinamento",
+      accessor: "data_treinamento_formatted",
+      render: (row) => (
+        <span className="inline-flex items-center gap-2">
+          <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
+          {row.data_treinamento_formatted}
+        </span>
+      ),
+    },
+    {
+      header: "Validade",
+      accessor: "validade_formatted",
+      render: (row) => (
+        <span className="inline-flex items-center gap-2">
+          <Clock3 className="h-3.5 w-3.5 text-slate-400" />
+          {row.validade_formatted}
+        </span>
+      ),
+    },
     { header: "Status", accessor: "status" },
   ];
 
   const filters = [
-    { value: nrFilter, onChange: setNrFilter, placeholder: "NR", options: nrs },
+    {
+      value: nrFilter,
+      onChange: handleNrFilterChange,
+      placeholder: "NR",
+      options: nrs,
+    },
     {
       value: statusFilter,
-      onChange: setStatusFilter,
+      onChange: handleStatusFilterChange,
       placeholder: "Status",
       options: [
         { value: "todos", label: "Todos os status" },
@@ -220,7 +261,10 @@ export default function TreinamentoPanel({
     exportToCSV(filteredData, "treinamentos", columns);
 
   const handleCardClick = (status: string) =>
-    setActiveCard(activeCard === status ? null : status);
+    {
+      setActiveCard(activeCard === status ? null : status);
+      setCurrentPage(1);
+    };
 
   const clearFilters = () => {
     setSearchTerm("");
@@ -274,7 +318,7 @@ export default function TreinamentoPanel({
 
       <FilterBar
         searchValue={searchTerm}
-        onSearchChange={setSearchTerm}
+        onSearchChange={handleSearchChange}
         searchPlaceholder="Buscar por nome do colaborador..."
         filters={filters}
         onClearFilters={clearFilters}

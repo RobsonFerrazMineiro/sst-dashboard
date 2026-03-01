@@ -7,6 +7,8 @@ import {
   ArrowLeft,
   BriefcaseBusiness,
   Building2,
+  CalendarDays,
+  Clock3,
   Hash,
   Pencil,
   Plus,
@@ -33,6 +35,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import type { AsoRecord, TreinamentoRecord } from "@/types/dashboard";
+import { toast } from "sonner";
 
 function statusBadge(status: string) {
   const map: Record<string, string> = {
@@ -57,6 +60,29 @@ function getStatus(validadeISO?: string | null) {
   if (diffDays < 0) return "Vencido";
   if (diffDays <= 30) return "Prestes a vencer";
   return "Em dia";
+}
+
+const statusRank: Record<string, number> = {
+  Vencido: 0,
+  "Prestes a vencer": 1,
+  "Em dia": 2,
+  "Sem vencimento": 3,
+  Pendente: 4,
+};
+
+function byStatusThenDate(
+  aStatus: string,
+  aDate?: string | null,
+  bStatus?: string,
+  bDate?: string | null,
+) {
+  const ra = statusRank[aStatus] ?? 99;
+  const rb = statusRank[bStatus ?? ""] ?? 99;
+  if (ra !== rb) return ra - rb;
+
+  const da = aDate ? new Date(aDate).getTime() : 0;
+  const db = bDate ? new Date(bDate).getTime() : 0;
+  return db - da; // mais recente primeiro
 }
 
 type TreinamentoProfileRow = TreinamentoRecord & {
@@ -105,29 +131,6 @@ export default function ColaboradorProfile({ id }: { id: string }) {
     queryFn: api.tiposASO.list,
   });
 
-  const statusRank: Record<string, number> = {
-    Vencido: 0,
-    "Prestes a vencer": 1,
-    "Em dia": 2,
-    "Sem vencimento": 3,
-    Pendente: 4,
-  };
-
-  function byStatusThenDate(
-    aStatus: string,
-    aDate?: string | null,
-    bStatus?: string,
-    bDate?: string | null,
-  ) {
-    const ra = statusRank[aStatus] ?? 99;
-    const rb = statusRank[bStatus ?? ""] ?? 99;
-    if (ra !== rb) return ra - rb;
-
-    const da = aDate ? new Date(aDate).getTime() : 0;
-    const db = bDate ? new Date(bDate).getTime() : 0;
-    return db - da; // mais recente primeiro
-  }
-
   const treinamentosDoColab = useMemo(() => {
     return (treinamentos as TreinamentoRecord[])
       .filter((t) => t.colaborador_id === id)
@@ -142,7 +145,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
           : "Indeterminada",
       }))
       .sort((a, b) =>
-        byStatusThenDate(a.status, a.validadeFmt, b.status, b.validadeFmt),
+        byStatusThenDate(a.status, a.validade, b.status, b.validade),
       );
   }, [treinamentos, id]);
 
@@ -164,12 +167,24 @@ export default function ColaboradorProfile({ id }: { id: string }) {
   const delTre = useMutation({
     mutationFn: (treinamentoId: string) =>
       api.treinamentos.remove(treinamentoId),
-    onSuccess: async () => qc.invalidateQueries({ queryKey: ["treinamentos"] }),
+    onSuccess: async () => {
+      toast.success("Treinamento excluído!");
+      await qc.invalidateQueries({ queryKey: ["treinamentos"] });
+    },
+    onError: (err: unknown) =>
+      toast.error(
+        err instanceof Error ? err.message : "Erro ao excluir treinamento",
+      ),
   });
 
   const delAso = useMutation({
     mutationFn: (asoId: string) => api.asos.remove(asoId),
-    onSuccess: async () => qc.invalidateQueries({ queryKey: ["asos"] }),
+    onSuccess: async () => {
+      toast.success("ASO excluído!");
+      await qc.invalidateQueries({ queryKey: ["asos"] });
+    },
+    onError: (err: unknown) =>
+      toast.error(err instanceof Error ? err.message : "Erro ao excluir ASO"),
   });
 
   if (loadingColab) {
@@ -215,8 +230,8 @@ export default function ColaboradorProfile({ id }: { id: string }) {
 
       <section className="rounded-xl border border-slate-200 bg-white p-6 grid grid-rows-2 grid-cols-1 gap-4">
         <div className="flex items-center gap-3 mb-5">
-          <div className="p-2 bg-indigo-50 rounded-lg">
-            <UserRound className="w-6 h-6 text-indigo-600" />
+          <div className="p-2 bg-emerald-50 rounded-lg">
+            <UserRound className="w-6 h-6 text-slate-700" />
           </div>
           <h1 className="text-2xl font-bold text-slate-900">
             {colaborador.nome}
@@ -258,22 +273,22 @@ export default function ColaboradorProfile({ id }: { id: string }) {
             <table className="w-full">
               <thead className="bg-slate-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+                  <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
                     Treinamento / NR
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+                  <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
                     Data
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+                  <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
                     Validade
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+                  <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
                     Carga (h)
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+                  <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
                     Status
                   </th>
-                  <th className="px-4 py-3 text-right text-sm font-semibold text-slate-600">
+                  <th className="px-4 py-2.5 text-right text-sm font-semibold text-slate-600">
                     Acoes
                   </th>
                 </tr>
@@ -283,7 +298,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                   <tr>
                     <td
                       colSpan={6}
-                      className="px-4 py-10 text-center text-slate-500"
+                      className="px-4 py-8 text-center text-slate-500"
                     >
                       Carregando...
                     </td>
@@ -292,7 +307,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                   <tr>
                     <td
                       colSpan={6}
-                      className="px-4 py-10 text-center text-slate-500"
+                      className="px-4 py-8 text-center text-slate-500"
                     >
                       Nenhum treinamento.
                     </td>
@@ -303,19 +318,39 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                       key={t.id}
                       className="border-t border-slate-100 hover:bg-slate-50"
                     >
-                      <td className="max-w-85 px-4 py-3 text-sm font-medium text-slate-900">
-                        {t.tipoTreinamento_nome ?? t.nr ?? "-"}
+                      <td className="max-w-85 px-4 py-2.5 text-sm font-medium text-slate-900">
+                        <div className="flex items-center gap-2">
+                          {t.tipoTreinamento_nome ? (
+                            <span>{t.tipoTreinamento_nome}</span>
+                          ) : null}
+                          {t.nr ? (
+                            <Badge
+                              variant="outline"
+                              className="border-sky-200 bg-sky-50 text-sky-700 shadow-none"
+                            >
+                              {t.nr}
+                            </Badge>
+                          ) : !t.tipoTreinamento_nome ? (
+                            <span>-</span>
+                          ) : null}
+                        </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
-                        {t.dataFmt}
+                      <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                        <span className="inline-flex items-center gap-2">
+                          <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
+                          {t.dataFmt}
+                        </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
-                        {t.validadeFmt}
+                      <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                        <span className="inline-flex items-center gap-2">
+                          <Clock3 className="h-3.5 w-3.5 text-slate-400" />
+                          {t.validadeFmt}
+                        </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
+                      <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
                         {t.carga_horaria ?? "-"}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-2.5">
                         <Badge
                           variant="outline"
                           className={`font-medium ${statusBadge(t.status)}`}
@@ -323,16 +358,17 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                           {t.status}
                         </Badge>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-2.5">
                         <div className="flex justify-end gap-2">
                           <Button
-                            variant="outline"
+                            variant="ghost"
                             size="icon"
                             title="Editar"
                             onClick={() => {
                               setEditingTreinamento(t);
                               setOpenTreinamento(true);
                             }}
+                            className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                           >
                             <Pencil className="w-4 h-4" />
                           </Button>
@@ -340,9 +376,9 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button
-                                variant="outline"
+                                variant="ghost"
                                 size="icon"
-                                className="text-rose-600 hover:text-rose-700"
+                                className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </Button>
@@ -392,22 +428,22 @@ export default function ColaboradorProfile({ id }: { id: string }) {
             <table className="w-full">
               <thead className="bg-slate-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+                  <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
                     Tipo de ASO
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+                  <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
                     Data
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+                  <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
                     Validade
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+                  <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
                     Clinica
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+                  <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
                     Status
                   </th>
-                  <th className="px-4 py-3 text-right text-sm font-semibold text-slate-600">
+                  <th className="px-4 py-2.5 text-right text-sm font-semibold text-slate-600">
                     Acoes
                   </th>
                 </tr>
@@ -417,7 +453,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                   <tr>
                     <td
                       colSpan={6}
-                      className="px-4 py-10 text-center text-slate-500"
+                      className="px-4 py-8 text-center text-slate-500"
                     >
                       Carregando...
                     </td>
@@ -426,7 +462,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                   <tr>
                     <td
                       colSpan={6}
-                      className="px-4 py-10 text-center text-slate-500"
+                      className="px-4 py-8 text-center text-slate-500"
                     >
                       Nenhum ASO.
                     </td>
@@ -437,19 +473,34 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                       key={a.id}
                       className="border-t border-slate-100 hover:bg-slate-50"
                     >
-                      <td className="px-4 py-3 text-sm text-slate-900 whitespace-nowrap">
-                        {a.tipoASO_nome ?? "-"}
+                      <td className="px-4 py-2.5 text-sm text-slate-900 whitespace-nowrap">
+                        {a.tipoASO_nome ? (
+                          <Badge
+                            variant="outline"
+                            className="border-emerald-200 bg-emerald-50 text-emerald-700 shadow-none"
+                          >
+                            {a.tipoASO_nome}
+                          </Badge>
+                        ) : (
+                          "-"
+                        )}
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
-                        {a.dataFmt}
+                      <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                        <span className="inline-flex items-center gap-2">
+                          <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
+                          {a.dataFmt}
+                        </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
-                        {a.validadeFmt}
+                      <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                        <span className="inline-flex items-center gap-2">
+                          <Clock3 className="h-3.5 w-3.5 text-slate-400" />
+                          {a.validadeFmt}
+                        </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
+                      <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
                         {a.clinica ?? "-"}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-2.5">
                         <Badge
                           variant="outline"
                           className={`font-medium ${statusBadge(a.status)}`}
@@ -457,16 +508,17 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                           {a.status}
                         </Badge>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-2.5">
                         <div className="flex justify-end gap-2">
                           <Button
-                            variant="outline"
+                            variant="ghost"
                             size="icon"
                             title="Editar"
                             onClick={() => {
                               setEditingASO(a);
                               setOpenASO(true);
                             }}
+                            className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                           >
                             <Pencil className="w-4 h-4" />
                           </Button>
@@ -474,9 +526,9 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button
-                                variant="outline"
+                                variant="ghost"
                                 size="icon"
-                                className="text-rose-600 hover:text-rose-700"
+                                className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </Button>

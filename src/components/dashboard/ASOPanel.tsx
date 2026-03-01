@@ -2,8 +2,15 @@
 
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { AlertTriangle, CheckCircle, FileDown, XCircle } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import {
+  AlertTriangle,
+  CalendarDays,
+  CheckCircle,
+  Clock3,
+  FileDown,
+  XCircle,
+} from "lucide-react";
+import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import DataTable from "./DataTable";
@@ -65,6 +72,21 @@ export default function ASOPanel({
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value);
+    setCurrentPage(1);
+  };
+
+  const handleSetorFilterChange = (value: string) => {
+    setSetorFilter(value);
+    setCurrentPage(1);
+  };
 
   // ✅ pega apenas o ASO mais recente por colaborador
   const processedData: ProcessedAso[] = useMemo(() => {
@@ -151,10 +173,6 @@ export default function ASOPanel({
     });
   }, [processedData, searchTerm, statusFilter, setorFilter, activeCard]);
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, statusFilter, setorFilter, activeCard]);
-
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     return filteredData.slice(startIndex, startIndex + itemsPerPage);
@@ -166,15 +184,33 @@ export default function ASOPanel({
     { header: "Colaborador", accessor: "colaborador_nome" },
     { header: "Setor", accessor: "setor" },
     { header: "Cargo", accessor: "cargo" },
-    { header: "Data ASO", accessor: "data_aso_formatted" },
-    { header: "Validade", accessor: "validade_aso_formatted" },
+    {
+      header: "Data ASO",
+      accessor: "data_aso_formatted",
+      render: (row) => (
+        <span className="inline-flex items-center gap-2">
+          <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
+          {row.data_aso_formatted}
+        </span>
+      ),
+    },
+    {
+      header: "Validade",
+      accessor: "validade_aso_formatted",
+      render: (row) => (
+        <span className="inline-flex items-center gap-2">
+          <Clock3 className="h-3.5 w-3.5 text-slate-400" />
+          {row.validade_aso_formatted}
+        </span>
+      ),
+    },
     { header: "Status", accessor: "status" },
   ];
 
   const filters = [
     {
       value: statusFilter,
-      onChange: setStatusFilter,
+      onChange: handleStatusFilterChange,
       placeholder: "Status",
       options: [
         { value: "todos", label: "Todos os status" },
@@ -186,7 +222,7 @@ export default function ASOPanel({
     },
     {
       value: setorFilter,
-      onChange: setSetorFilter,
+      onChange: handleSetorFilterChange,
       placeholder: "Setor",
       options: setores,
     },
@@ -195,7 +231,10 @@ export default function ASOPanel({
   const handleExportCSV = () => exportToCSV(filteredData, "asos", columns);
 
   const handleCardClick = (status: string) =>
-    setActiveCard(activeCard === status ? null : status);
+    {
+      setActiveCard(activeCard === status ? null : status);
+      setCurrentPage(1);
+    };
 
   const clearFilters = () => {
     setSearchTerm("");
@@ -249,7 +288,7 @@ export default function ASOPanel({
 
       <FilterBar
         searchValue={searchTerm}
-        onSearchChange={setSearchTerm}
+        onSearchChange={handleSearchChange}
         searchPlaceholder="Buscar por nome do colaborador..."
         filters={filters}
         onClearFilters={clearFilters}

@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 type Colaborador = {
   id: string;
@@ -81,12 +82,17 @@ export default function ColaboradorModal({
       return api.colaboradores.create(payload);
     },
     onSuccess: async () => {
+      toast.success(
+        isEdit ? "Colaborador atualizado!" : "Colaborador criado!",
+      );
       await qc.invalidateQueries({ queryKey: ["colaboradores"] });
       onOpenChange(false);
       await onSaved?.();
     },
-    onError: (err: any) => {
-      setError(err?.message ?? "Erro ao salvar");
+    onError: (err: unknown) => {
+      const message = err instanceof Error ? err.message : "Erro ao salvar";
+      setError(message);
+      toast.error(message);
     },
   });
 

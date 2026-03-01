@@ -1,7 +1,15 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Eye, Pencil, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
+import {
+  Eye,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Search,
+  Trash2,
+  Users,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 
 import ColaboradorModal from "@/components/colaboradores/ColaboradorModal";
@@ -16,10 +24,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
 import Link from "next/link";
+import { toast } from "sonner";
 
 export type Colaborador = {
   id: string;
@@ -65,10 +75,16 @@ export default function ColaboradoresPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.colaboradores.remove(id),
     onSuccess: async () => {
+      toast.success("Colaborador excluido!");
       await qc.invalidateQueries({ queryKey: ["colaboradores"] });
       // opcional: também atualiza dashboard, pq ASO/Treinamento dependem de colaborador
       await qc.invalidateQueries({ queryKey: ["asos"] });
       await qc.invalidateQueries({ queryKey: ["treinamentos"] });
+    },
+    onError: (err: unknown) => {
+      toast.error(
+        err instanceof Error ? err.message : "Erro ao excluir colaborador",
+      );
     },
   });
 
@@ -87,7 +103,14 @@ export default function ColaboradoresPage() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Colaboradores</h1>
+            <div className="flex items-center gap-3">
+              <div className="rounded-xl bg-emerald-50 p-2.5 text-slate-700">
+                <Users className="h-8 w-8" />
+              </div>
+              <h1 className="text-2xl font-bold text-slate-900">
+                Colaboradores
+              </h1>
+            </div>
             <p className="text-slate-500 mt-1">
               Cadastre e gerencie os colaboradores usados em ASOs e
               Treinamentos.
@@ -130,19 +153,19 @@ export default function ColaboradoresPage() {
             <table className="w-full">
               <thead className="bg-slate-50">
                 <tr>
-                  <th className="text-left text-sm font-semibold text-slate-600 px-4 py-3">
+                  <th className="text-left text-sm font-semibold text-slate-600 px-4 py-2.5">
                     Nome
                   </th>
-                  <th className="text-left text-sm font-semibold text-slate-600 px-4 py-3">
+                  <th className="text-left text-sm font-semibold text-slate-600 px-4 py-2.5">
                     Setor
                   </th>
-                  <th className="text-left text-sm font-semibold text-slate-600 px-4 py-3">
+                  <th className="text-left text-sm font-semibold text-slate-600 px-4 py-2.5">
                     Cargo
                   </th>
-                  <th className="text-left text-sm font-semibold text-slate-600 px-4 py-3">
+                  <th className="text-left text-sm font-semibold text-slate-600 px-4 py-2.5">
                     Matrícula
                   </th>
-                  <th className="text-right text-sm font-semibold text-slate-600 px-4 py-3">
+                  <th className="text-right text-sm font-semibold text-slate-600 px-4 py-2.5">
                     Ações
                   </th>
                 </tr>
@@ -153,7 +176,7 @@ export default function ColaboradoresPage() {
                   <tr>
                     <td
                       colSpan={5}
-                      className="px-4 py-10 text-center text-slate-500"
+                      className="px-4 py-8 text-center text-slate-500"
                     >
                       Carregando...
                     </td>
@@ -162,7 +185,7 @@ export default function ColaboradoresPage() {
                   <tr>
                     <td
                       colSpan={5}
-                      className="px-4 py-10 text-center text-slate-500"
+                      className="px-4 py-8 text-center text-slate-500"
                     >
                       Nenhum colaborador encontrado.
                     </td>
@@ -173,34 +196,41 @@ export default function ColaboradoresPage() {
                       key={row.id}
                       className="border-t border-slate-100 hover:bg-slate-50"
                     >
-                      <td className="px-4 py-3 text-sm text-slate-900 whitespace-nowrap">
+                      <td className="px-4 py-2.5 text-sm text-slate-900 whitespace-nowrap">
                         {row.nome}
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
-                        {row.setor}
+                      <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                        <Badge
+                          variant="outline"
+                          className="border-slate-200 bg-slate-100 text-slate-700 shadow-none"
+                        >
+                          {row.setor}
+                        </Badge>
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
+                      <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
                         {row.cargo}
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">
+                      <td className="px-4 py-2.5 text-sm text-slate-600 whitespace-nowrap">
                         {row.matricula ?? "-"}
                       </td>
 
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-2.5">
                         <div className="flex justify-end gap-2">
                           <Link href={`/colaboradores/${row.id}`}>
                             <Button
-                              variant="outline"
+                              variant="ghost"
                               size="icon"
                               title="Ver perfil"
+                              className="text-sky-600 hover:bg-sky-50 hover:text-sky-700"
                             >
                               <Eye className="w-4 h-4" />
                             </Button>
                           </Link>
                           <Button
-                            variant="outline"
+                            variant="ghost"
                             size="icon"
                             onClick={() => onEdit(row)}
+                            className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                           >
                             <Pencil className="w-4 h-4" />
                           </Button>
@@ -208,9 +238,9 @@ export default function ColaboradoresPage() {
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button
-                                variant="outline"
+                                variant="ghost"
                                 size="icon"
-                                className="text-rose-600 hover:text-rose-700"
+                                className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
                                 disabled={deleteMutation.isPending}
                               >
                                 <Trash2 className="w-4 h-4" />

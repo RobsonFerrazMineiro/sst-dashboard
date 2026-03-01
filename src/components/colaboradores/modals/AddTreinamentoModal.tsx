@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
 import type { TipoTreinamento, TreinamentoRecord } from "@/types/dashboard";
+import { toast } from "sonner";
 
 export default function AddTreinamentoModal({
   open,
@@ -100,8 +101,14 @@ export default function AddTreinamentoModal({
       return api.treinamentos.create(payload);
     },
     onSuccess: async () => {
+      toast.success(
+        initial?.id ? "Treinamento atualizado!" : "Treinamento criado!",
+      );
       await onSaved();
       onOpenChange(false);
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || "Erro ao salvar treinamento");
     },
   });
 

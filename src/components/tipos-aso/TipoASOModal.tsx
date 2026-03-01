@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
+import { toast } from "sonner";
 
 type TipoASO = {
   id: string;
@@ -80,9 +81,13 @@ export default function TipoASOModal({
       return api.tiposASO.create(payload);
     },
     onSuccess: async () => {
+      toast.success(isEdit ? "Tipo de ASO atualizado!" : "Tipo de ASO criado!");
       await qc.invalidateQueries({ queryKey: ["tiposASO"] });
       await onSaved();
       onOpenChange(false);
+    },
+    onError: (err: unknown) => {
+      toast.error(err instanceof Error ? err.message : "Erro ao salvar tipo");
     },
   });
 
