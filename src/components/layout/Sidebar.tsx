@@ -3,7 +3,7 @@
 import {
   ClipboardList,
   LayoutDashboard,
-  Shield,
+  ShieldCheck,
   Tags,
   Users,
 } from "lucide-react";
@@ -46,8 +46,8 @@ export default function Sidebar({
       )}
     >
       <div className="h-16 px-4 flex items-center gap-3 border-b border-slate-200">
-        <div className="p-2 rounded-xl bg-linear-to-br from-emerald-500 to-green-600 shadow-lg shadow-emerald-200">
-          <Shield className="w-5 h-5 text-white" />
+        <div className="p-1 rounded-xl bg-linear-to-br from-green-900 via-emerald-600 to-emerald-300 shadow-md shadow-emerald-200">
+          <ShieldCheck className="w-7 h-7 text-white" />
         </div>
         <div className="leading-tight">
           <p className="font-semibold text-slate-900">Gestão SST</p>
@@ -77,7 +77,7 @@ export default function Sidebar({
               <Icon
                 className={cn(
                   "w-4 h-4",
-                  isActive ? "text-indigo-600" : "text-slate-400",
+                  isActive ? "text-emerald-700" : "text-slate-400",
                 )}
               />
               {item.label}

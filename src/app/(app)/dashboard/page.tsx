@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { RefreshCw, Shield } from "lucide-react";
+import { RefreshCw, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 
 import ASOPanel from "@/components/dashboard/ASOPanel";
@@ -59,8 +59,8 @@ export default function DashboardPage() {
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-linear-to-br from-emerald-500 to-green-600 rounded-xl shadow-lg shadow-emerald-200">
-              <Shield className="w-8 h-8 text-white" />
+            <div className="p-2 rounded-xl bg-linear-to-br from-green-900 via-emerald-600 to-emerald-300 shadow-md shadow-emerald-200">
+              <ShieldCheck className="w-14 h-14 text-white" />
             </div>
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
