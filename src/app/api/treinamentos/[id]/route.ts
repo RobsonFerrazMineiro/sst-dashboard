@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { NR } from "@prisma/client";
+import { NR, Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -25,7 +25,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
 
     const body = await req.json();
 
-    const data: any = {};
+    const data: Prisma.TreinamentoUncheckedUpdateInput = {};
 
     if (body.data_treinamento !== undefined) {
       const d = parseDateOrNull(body.data_treinamento);
@@ -113,10 +113,28 @@ export async function PATCH(req: Request, { params }: Ctx) {
     });
 
     return NextResponse.json(updated);
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("PATCH /api/treinamentos/[id] ->", err);
     return NextResponse.json(
-      { error: "Erro interno", detail: err?.message },
+      { error: "Erro interno", detail: err instanceof Error ? err.message : String(err) },
+      { status: 500 },
+    );
+  }
+}
+
+// DELETE
+export async function DELETE(_req: Request, { params }: Ctx) {
+  try {
+    const { id } = await params;
+    if (!id) return NextResponse.json({ error: "id ausente" }, { status: 400 });
+
+    await prisma.treinamento.delete({ where: { id } });
+
+    return NextResponse.json({ ok: true });
+  } catch (err: unknown) {
+    console.error("DELETE /api/treinamentos/[id] ->", err);
+    return NextResponse.json(
+      { error: "Erro interno", detail: err instanceof Error ? err.message : String(err) },
       { status: 500 },
     );
   }
