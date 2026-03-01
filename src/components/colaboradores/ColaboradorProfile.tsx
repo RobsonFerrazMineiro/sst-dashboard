@@ -33,6 +33,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import type { AsoRecord, TreinamentoRecord } from "@/types/dashboard";
+import { toast } from "sonner";
 
 function statusBadge(status: string) {
   const map: Record<string, string> = {
@@ -105,28 +106,28 @@ export default function ColaboradorProfile({ id }: { id: string }) {
     queryFn: api.tiposASO.list,
   });
 
-  const statusRank: Record<string, number> = {
-    Vencido: 0,
-    "Prestes a vencer": 1,
-    "Em dia": 2,
-    "Sem vencimento": 3,
-    Pendente: 4,
-  };
+  // const statusRank: Record<string, number> = {
+  //   Vencido: 0,
+  //   "Prestes a vencer": 1,
+  //   "Em dia": 2,
+  //   "Sem vencimento": 3,
+  //   Pendente: 4,
+  // };
 
-  function byStatusThenDate(
-    aStatus: string,
-    aDate?: string | null,
-    bStatus?: string,
-    bDate?: string | null,
-  ) {
-    const ra = statusRank[aStatus] ?? 99;
-    const rb = statusRank[bStatus ?? ""] ?? 99;
-    if (ra !== rb) return ra - rb;
+  // function byStatusThenDate(
+  //   aStatus: string,
+  //   aDate?: string | null,
+  //   bStatus?: string,
+  //   bDate?: string | null,
+  // ) {
+  //   const ra = statusRank[aStatus] ?? 99;
+  //   const rb = statusRank[bStatus ?? ""] ?? 99;
+  //   if (ra !== rb) return ra - rb;
 
-    const da = aDate ? new Date(aDate).getTime() : 0;
-    const db = bDate ? new Date(bDate).getTime() : 0;
-    return db - da; // mais recente primeiro
-  }
+  //   const da = aDate ? new Date(aDate).getTime() : 0;
+  //   const db = bDate ? new Date(bDate).getTime() : 0;
+  //   return db - da; // mais recente primeiro
+  // }
 
   const treinamentosDoColab = useMemo(() => {
     return (treinamentos as TreinamentoRecord[])
@@ -140,10 +141,10 @@ export default function ColaboradorProfile({ id }: { id: string }) {
         validadeFmt: t.validade
           ? format(parseISO(t.validade), "dd/MM/yyyy", { locale: ptBR })
           : "Indeterminada",
-      }))
-      .sort((a, b) =>
-        byStatusThenDate(a.status, a.validadeFmt, b.status, b.validadeFmt),
-      );
+      }));
+    // .sort((a, b) =>
+    //   byStatusThenDate(a.status, a.validadeFmt, b.status, b.validadeFmt),
+    // );
   }, [treinamentos, id]);
 
   const asosDoColab = useMemo(() => {
@@ -164,12 +165,21 @@ export default function ColaboradorProfile({ id }: { id: string }) {
   const delTre = useMutation({
     mutationFn: (treinamentoId: string) =>
       api.treinamentos.remove(treinamentoId),
-    onSuccess: async () => qc.invalidateQueries({ queryKey: ["treinamentos"] }),
+    onSuccess: async () => {
+      toast.success("Treinamento excluído!");
+      await qc.invalidateQueries({ queryKey: ["treinamentos"] });
+    },
+    onError: (err: any) =>
+      toast.error(err?.message || "Erro ao excluir treinamento"),
   });
 
   const delAso = useMutation({
     mutationFn: (asoId: string) => api.asos.remove(asoId),
-    onSuccess: async () => qc.invalidateQueries({ queryKey: ["asos"] }),
+    onSuccess: async () => {
+      toast.success("ASO excluído!");
+      await qc.invalidateQueries({ queryKey: ["asos"] });
+    },
+    onError: (err: any) => toast.error(err?.message || "Erro ao excluir ASO"),
   });
 
   if (loadingColab) {

@@ -22,6 +22,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
 import type { TipoASO } from "@/types/dashboard";
+import { toast } from "sonner";
 
 type ASOEdit = {
   id: string;
@@ -104,6 +105,7 @@ export default function AddASOModal({
         : api.asos.create(payload as any);
     },
     onSuccess: async () => {
+      toast.success(aso?.id ? "ASO atualizado!" : "ASO criado!");
       await onSaved();
       onOpenChange(false);
       // limpa
