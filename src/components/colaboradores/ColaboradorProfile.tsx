@@ -62,6 +62,29 @@ function getStatus(validadeISO?: string | null) {
   return "Em dia";
 }
 
+const statusRank: Record<string, number> = {
+  Vencido: 0,
+  "Prestes a vencer": 1,
+  "Em dia": 2,
+  "Sem vencimento": 3,
+  Pendente: 4,
+};
+
+function byStatusThenDate(
+  aStatus: string,
+  aDate?: string | null,
+  bStatus?: string,
+  bDate?: string | null,
+) {
+  const ra = statusRank[aStatus] ?? 99;
+  const rb = statusRank[bStatus ?? ""] ?? 99;
+  if (ra !== rb) return ra - rb;
+
+  const da = aDate ? new Date(aDate).getTime() : 0;
+  const db = bDate ? new Date(bDate).getTime() : 0;
+  return db - da; // mais recente primeiro
+}
+
 type TreinamentoProfileRow = TreinamentoRecord & {
   status: string;
   dataFmt: string;
@@ -108,29 +131,6 @@ export default function ColaboradorProfile({ id }: { id: string }) {
     queryFn: api.tiposASO.list,
   });
 
-  // const statusRank: Record<string, number> = {
-  //   Vencido: 0,
-  //   "Prestes a vencer": 1,
-  //   "Em dia": 2,
-  //   "Sem vencimento": 3,
-  //   Pendente: 4,
-  // };
-
-  // function byStatusThenDate(
-  //   aStatus: string,
-  //   aDate?: string | null,
-  //   bStatus?: string,
-  //   bDate?: string | null,
-  // ) {
-  //   const ra = statusRank[aStatus] ?? 99;
-  //   const rb = statusRank[bStatus ?? ""] ?? 99;
-  //   if (ra !== rb) return ra - rb;
-
-  //   const da = aDate ? new Date(aDate).getTime() : 0;
-  //   const db = bDate ? new Date(bDate).getTime() : 0;
-  //   return db - da; // mais recente primeiro
-  // }
-
   const treinamentosDoColab = useMemo(() => {
     return (treinamentos as TreinamentoRecord[])
       .filter((t) => t.colaborador_id === id)
@@ -143,10 +143,10 @@ export default function ColaboradorProfile({ id }: { id: string }) {
         validadeFmt: t.validade
           ? format(parseISO(t.validade), "dd/MM/yyyy", { locale: ptBR })
           : "Indeterminada",
-      }));
-    // .sort((a, b) =>
-    //   byStatusThenDate(a.status, a.validadeFmt, b.status, b.validadeFmt),
-    // );
+      }))
+      .sort((a, b) =>
+        byStatusThenDate(a.status, a.validade, b.status, b.validade),
+      );
   }, [treinamentos, id]);
 
   const asosDoColab = useMemo(() => {
