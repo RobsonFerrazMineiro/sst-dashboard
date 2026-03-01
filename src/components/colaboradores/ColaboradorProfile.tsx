@@ -268,22 +268,22 @@ export default function ColaboradorProfile({ id }: { id: string }) {
             <table className="w-full">
               <thead className="bg-slate-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+                  <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
                     Treinamento / NR
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+                  <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
                     Data
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+                  <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
                     Validade
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+                  <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
                     Carga (h)
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+                  <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
                     Status
                   </th>
-                  <th className="px-4 py-3 text-right text-sm font-semibold text-slate-600">
+                  <th className="px-4 py-2.5 text-right text-sm font-semibold text-slate-600">
                     Acoes
                   </th>
                 </tr>
@@ -293,7 +293,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                   <tr>
                     <td
                       colSpan={6}
-                      className="px-4 py-10 text-center text-slate-500"
+                      className="px-4 py-8 text-center text-slate-500"
                     >
                       Carregando...
                     </td>
@@ -302,7 +302,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                   <tr>
                     <td
                       colSpan={6}
-                      className="px-4 py-10 text-center text-slate-500"
+                      className="px-4 py-8 text-center text-slate-500"
                     >
                       Nenhum treinamento.
                     </td>
@@ -313,19 +313,19 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                       key={t.id}
                       className="border-t border-slate-100 hover:bg-slate-50"
                     >
-                      <td className="max-w-85 px-4 py-3 text-sm font-medium text-slate-900">
+                      <td className="max-w-85 px-4 py-2.5 text-sm font-medium text-slate-900">
                         {t.tipoTreinamento_nome ?? t.nr ?? "-"}
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
+                      <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
                         {t.dataFmt}
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
+                      <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
                         {t.validadeFmt}
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
+                      <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
                         {t.carga_horaria ?? "-"}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-2.5">
                         <Badge
                           variant="outline"
                           className={`font-medium ${statusBadge(t.status)}`}
@@ -333,7 +333,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                           {t.status}
                         </Badge>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-2.5">
                         <div className="flex justify-end gap-2">
                           <Button
                             variant="outline"
@@ -402,22 +402,22 @@ export default function ColaboradorProfile({ id }: { id: string }) {
             <table className="w-full">
               <thead className="bg-slate-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+                  <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
                     Tipo de ASO
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+                  <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
                     Data
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+                  <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
                     Validade
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+                  <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
                     Clinica
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-600">
+                  <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
                     Status
                   </th>
-                  <th className="px-4 py-3 text-right text-sm font-semibold text-slate-600">
+                  <th className="px-4 py-2.5 text-right text-sm font-semibold text-slate-600">
                     Acoes
                   </th>
                 </tr>
@@ -427,7 +427,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                   <tr>
                     <td
                       colSpan={6}
-                      className="px-4 py-10 text-center text-slate-500"
+                      className="px-4 py-8 text-center text-slate-500"
                     >
                       Carregando...
                     </td>
@@ -436,7 +436,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                   <tr>
                     <td
                       colSpan={6}
-                      className="px-4 py-10 text-center text-slate-500"
+                      className="px-4 py-8 text-center text-slate-500"
                     >
                       Nenhum ASO.
                     </td>
@@ -447,19 +447,19 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                       key={a.id}
                       className="border-t border-slate-100 hover:bg-slate-50"
                     >
-                      <td className="px-4 py-3 text-sm text-slate-900 whitespace-nowrap">
+                      <td className="px-4 py-2.5 text-sm text-slate-900 whitespace-nowrap">
                         {a.tipoASO_nome ?? "-"}
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
+                      <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
                         {a.dataFmt}
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
+                      <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
                         {a.validadeFmt}
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
+                      <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
                         {a.clinica ?? "-"}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-2.5">
                         <Badge
                           variant="outline"
                           className={`font-medium ${statusBadge(a.status)}`}
@@ -467,7 +467,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                           {a.status}
                         </Badge>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-2.5">
                         <div className="flex justify-end gap-2">
                           <Button
                             variant="outline"

@@ -137,19 +137,19 @@ export default function ColaboradoresPage() {
             <table className="w-full">
               <thead className="bg-slate-50">
                 <tr>
-                  <th className="text-left text-sm font-semibold text-slate-600 px-4 py-3">
+                  <th className="text-left text-sm font-semibold text-slate-600 px-4 py-2.5">
                     Nome
                   </th>
-                  <th className="text-left text-sm font-semibold text-slate-600 px-4 py-3">
+                  <th className="text-left text-sm font-semibold text-slate-600 px-4 py-2.5">
                     Setor
                   </th>
-                  <th className="text-left text-sm font-semibold text-slate-600 px-4 py-3">
+                  <th className="text-left text-sm font-semibold text-slate-600 px-4 py-2.5">
                     Cargo
                   </th>
-                  <th className="text-left text-sm font-semibold text-slate-600 px-4 py-3">
+                  <th className="text-left text-sm font-semibold text-slate-600 px-4 py-2.5">
                     Matrícula
                   </th>
-                  <th className="text-right text-sm font-semibold text-slate-600 px-4 py-3">
+                  <th className="text-right text-sm font-semibold text-slate-600 px-4 py-2.5">
                     Ações
                   </th>
                 </tr>
@@ -160,7 +160,7 @@ export default function ColaboradoresPage() {
                   <tr>
                     <td
                       colSpan={5}
-                      className="px-4 py-10 text-center text-slate-500"
+                      className="px-4 py-8 text-center text-slate-500"
                     >
                       Carregando...
                     </td>
@@ -169,7 +169,7 @@ export default function ColaboradoresPage() {
                   <tr>
                     <td
                       colSpan={5}
-                      className="px-4 py-10 text-center text-slate-500"
+                      className="px-4 py-8 text-center text-slate-500"
                     >
                       Nenhum colaborador encontrado.
                     </td>
@@ -180,20 +180,20 @@ export default function ColaboradoresPage() {
                       key={row.id}
                       className="border-t border-slate-100 hover:bg-slate-50"
                     >
-                      <td className="px-4 py-3 text-sm text-slate-900 whitespace-nowrap">
+                      <td className="px-4 py-2.5 text-sm text-slate-900 whitespace-nowrap">
                         {row.nome}
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
+                      <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
                         {row.setor}
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
+                      <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
                         {row.cargo}
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">
+                      <td className="px-4 py-2.5 text-sm text-slate-600 whitespace-nowrap">
                         {row.matricula ?? "-"}
                       </td>
 
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-2.5">
                         <div className="flex justify-end gap-2">
                           <Link href={`/colaboradores/${row.id}`}>
                             <Button
