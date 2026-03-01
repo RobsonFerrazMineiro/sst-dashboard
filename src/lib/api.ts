@@ -1,5 +1,6 @@
 import type {
   AsoRecord,
+  Colaborador,
   TipoASO,
   TipoTreinamento,
   TreinamentoRecord,
@@ -32,6 +33,24 @@ async function requestJSON<T>(url: string, init?: JsonInit): Promise<T> {
 
 export const api = {
   asos: { list: () => requestJSON<AsoRecord[]>("/api/asos") },
+
+  colaboradores: {
+    list: () => requestJSON<Colaborador[]>("/api/colaboradores"),
+
+    create: (json: Partial<Colaborador>) =>
+      requestJSON<Colaborador>("/api/colaboradores", { method: "POST", json }),
+
+    update: (id: string, json: Partial<Colaborador>) =>
+      requestJSON<Colaborador>(`/api/colaboradores/${id}`, {
+        method: "PATCH",
+        json,
+      }),
+
+    remove: (id: string) =>
+      requestJSON<{ ok: boolean }>(`/api/colaboradores/${id}`, {
+        method: "DELETE",
+      }),
+  },
 
   tiposASO: {
     list: () => requestJSON<TipoASO[]>("/api/tipos-aso"),
