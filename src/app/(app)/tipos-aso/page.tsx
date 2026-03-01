@@ -1,7 +1,15 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Clock3, Pencil, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
+import {
+  Clock3,
+  HeartPulse,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Search,
+  Trash2,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 
 import TipoASOModal from "@/components/tipos-aso/TipoASOModal";
@@ -16,6 +24,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
@@ -81,7 +90,12 @@ export default function TiposASOPage() {
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Tipos de ASO</h1>
+          <div className="flex items-center gap-3">
+            <div className="rounded-xl bg-emerald-50 p-2.5 text-emerald-700">
+              <HeartPulse className="h-8 w-8" />
+            </div>
+            <h1 className="text-2xl font-bold text-slate-900">Tipos de ASO</h1>
+          </div>
           <p className="text-slate-500 mt-1">
             Cadastre e gerencie os tipos de ASO e suas validades.
           </p>
@@ -159,7 +173,12 @@ export default function TiposASOPage() {
                     className="border-t border-slate-100 hover:bg-slate-50"
                   >
                     <td className="px-4 py-3 text-sm text-slate-900 whitespace-nowrap">
-                      {row.nome}
+                      <Badge
+                        variant="outline"
+                        className="border-emerald-200 bg-emerald-50 text-emerald-700 shadow-none"
+                      >
+                        {row.nome}
+                      </Badge>
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
                       <span className="inline-flex items-center gap-2">
@@ -173,9 +192,10 @@ export default function TiposASOPage() {
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-2">
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="icon"
                           onClick={() => onEdit(row)}
+                          className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                         >
                           <Pencil className="w-4 h-4" />
                         </Button>
@@ -183,9 +203,9 @@ export default function TiposASOPage() {
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button
-                              variant="outline"
+                              variant="ghost"
                               size="icon"
-                              className="text-rose-600 hover:text-rose-700"
+                              className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>

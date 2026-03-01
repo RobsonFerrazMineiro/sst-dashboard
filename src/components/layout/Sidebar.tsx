@@ -46,7 +46,7 @@ export default function Sidebar({
       )}
     >
       <div className="h-16 px-4 flex items-center gap-3 border-b border-slate-200">
-        <div className="p-2 rounded-xl bg-linear-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-200">
+        <div className="p-2 rounded-xl bg-linear-to-br from-emerald-500 to-green-600 shadow-lg shadow-emerald-200">
           <Shield className="w-5 h-5 text-white" />
         </div>
         <div className="leading-tight">

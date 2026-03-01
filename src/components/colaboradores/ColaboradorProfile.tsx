@@ -230,8 +230,8 @@ export default function ColaboradorProfile({ id }: { id: string }) {
 
       <section className="rounded-xl border border-slate-200 bg-white p-6 grid grid-rows-2 grid-cols-1 gap-4">
         <div className="flex items-center gap-3 mb-5">
-          <div className="p-2 bg-indigo-50 rounded-lg">
-            <UserRound className="w-6 h-6 text-indigo-600" />
+          <div className="p-2 bg-emerald-50 rounded-lg">
+            <UserRound className="w-6 h-6 text-slate-700" />
           </div>
           <h1 className="text-2xl font-bold text-slate-900">
             {colaborador.nome}
@@ -474,7 +474,16 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                       className="border-t border-slate-100 hover:bg-slate-50"
                     >
                       <td className="px-4 py-2.5 text-sm text-slate-900 whitespace-nowrap">
-                        {a.tipoASO_nome ?? "-"}
+                        {a.tipoASO_nome ? (
+                          <Badge
+                            variant="outline"
+                            className="border-emerald-200 bg-emerald-50 text-emerald-700 shadow-none"
+                          >
+                            {a.tipoASO_nome}
+                          </Badge>
+                        ) : (
+                          "-"
+                        )}
                       </td>
                       <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
                         <span className="inline-flex items-center gap-2">

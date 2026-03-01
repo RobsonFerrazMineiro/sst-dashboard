@@ -1,7 +1,15 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Eye, Pencil, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
+import {
+  Eye,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Search,
+  Trash2,
+  Users,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 
 import ColaboradorModal from "@/components/colaboradores/ColaboradorModal";
@@ -95,7 +103,14 @@ export default function ColaboradoresPage() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Colaboradores</h1>
+            <div className="flex items-center gap-3">
+              <div className="rounded-xl bg-emerald-50 p-2.5 text-slate-700">
+                <Users className="h-8 w-8" />
+              </div>
+              <h1 className="text-2xl font-bold text-slate-900">
+                Colaboradores
+              </h1>
+            </div>
             <p className="text-slate-500 mt-1">
               Cadastre e gerencie os colaboradores usados em ASOs e
               Treinamentos.
