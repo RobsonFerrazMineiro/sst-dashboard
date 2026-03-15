@@ -13,6 +13,7 @@
 ### 1. **Helpers Reutilizáveis** (Lines 23-65)
 
 #### `getDateTime(dateISO?: string | null): number`
+
 ```typescript
 function getDateTime(dateISO?: string | null): number {
   if (!dateISO) return 0;
@@ -23,18 +24,21 @@ function getDateTime(dateISO?: string | null): number {
   }
 }
 ```
+
 - Converte data ISO para timestamp
 - Retorna 0 (epoch) se inválida ou nula
 - Usada para ordenação em `splitLatestByKey`
 
 #### `splitLatestByKey<T>(records, keyField, dateField)`
+
 ```typescript
 function splitLatestByKey<T extends Record<string, unknown>>(
   records: T[],
   keyField: keyof T,
   dateField: keyof T,
-): { atual: T[]; historico: T[] }
+): { atual: T[]; historico: T[] };
 ```
+
 - Separa registros em dois grupos: **Atual** e **Histórico**
 - **Atual** = primeiro registro único por chave (mais recente por data)
 - **Histórico** = todos os demais registros
@@ -45,6 +49,7 @@ function splitLatestByKey<T extends Record<string, unknown>>(
 ### 2. **Separação de Treinamentos** (Lines 188-220)
 
 #### Antes (uma única lista):
+
 ```tsx
 const treinamentosDoColab = useMemo(() => {
   return [...].filter(...).map(...).sort(...);
@@ -52,6 +57,7 @@ const treinamentosDoColab = useMemo(() => {
 ```
 
 #### Depois (duas listas):
+
 ```tsx
 const treinamentosDoColab = useMemo(() => {
   const filtered = [...].filter(...).map(...).sort(...);
@@ -73,6 +79,7 @@ const { atual: treinamentosAtuais, historico: treinamentosHistorico } =
 ```
 
 **Lógica:**
+
 - Todos os treinamentos filtrados → `treinamentosDoColab`
 - Mais recente **por tipoTreinamento** → `treinamentosAtuais`
 - Todos os demais → `treinamentosHistorico`
@@ -83,12 +90,13 @@ const { atual: treinamentosAtuais, historico: treinamentosHistorico } =
 ### 3. **Separação de ASOs** (Lines 238-247)
 
 #### Mesmo padrão para ASOs:
+
 ```tsx
 const { atual: asosAtuais, historico: asosHistorico } = useMemo(() => {
   const result = splitLatestByKey(
     asosDoColab,
-    "tipoASO_nome" as const,      // Agrupado por tipo
-    "data_aso" as const,          // Ordenado por data
+    "tipoASO_nome" as const, // Agrupado por tipo
+    "data_aso" as const, // Ordenado por data
   );
   return {
     atual: result.atual,
@@ -102,6 +110,7 @@ const { atual: asosAtuais, historico: asosHistorico } = useMemo(() => {
 ### 4. **Renderização com Dois Blocos** (Lines 343-640)
 
 #### Estrutura:
+
 ```
 Section "Treinamentos"
 ├─ Subsection "Atuais" [Badge verde]
@@ -117,18 +126,23 @@ Section "ASOs"
 ```
 
 #### Visual:
+
 - **Atuais:** `bg-emerald-100 text-emerald-700` (destaque verde)
 - **Histórico:** `bg-slate-100 text-slate-700` + `opacity-75` (mais suave)
 
 #### Renderização Condicional:
+
 ```tsx
-{treinamentosHistorico.length > 0 && (
-  <div className="space-y-2">
-    <h3>Histórico Badge</h3>
-    <table>...</table>
-  </div>
-)}
+{
+  treinamentosHistorico.length > 0 && (
+    <div className="space-y-2">
+      <h3>Histórico Badge</h3>
+      <table>...</table>
+    </div>
+  );
+}
 ```
+
 - Histórico só aparece se houver registros
 
 ---
@@ -136,13 +150,14 @@ Section "ASOs"
 ### 5. **Atualizações de Types** (src/types/dashboard.ts)
 
 #### TreinamentoRecord:
+
 ```typescript
 export type TreinamentoRecord = {
   id: string;
   colaborador_id?: string | null;
   colaborador_nome?: string | null;
   tipoTreinamento?: string | null;
-  tipoTreinamento_nome?: string | null;  // ✨ NOVO
+  tipoTreinamento_nome?: string | null; // ✨ NOVO
   nr?: string | null;
   data_treinamento?: string | null;
   validade?: string | null;
@@ -151,6 +166,7 @@ export type TreinamentoRecord = {
 ```
 
 #### AsoRecord:
+
 ```typescript
 export type AsoRecord = {
   id: string;
@@ -158,9 +174,9 @@ export type AsoRecord = {
   colaborador_nome?: string | null;
   setor?: string | null;
   cargo?: string | null;
-  tipoASO_id?: string | null;           // ✨ NOVO
-  tipoASO_nome?: string | null;         // ✨ NOVO
-  clinica?: string | null;              // ✨ NOVO
+  tipoASO_id?: string | null; // ✨ NOVO
+  tipoASO_nome?: string | null; // ✨ NOVO
+  clinica?: string | null; // ✨ NOVO
   data_aso?: string | null;
   validade_aso?: string | null;
 };
@@ -171,17 +187,20 @@ export type AsoRecord = {
 ## 🚀 Funcionalidades Preservadas
 
 ✅ **Todos os CRUD Operations:**
+
 - ✅ Adicionar treinamento / ASO
 - ✅ Editar treinamento / ASO
 - ✅ Deletar treinamento / ASO
 - ✅ Toast feedback em todas as ações
 
 ✅ **Modals:**
+
 - ✅ AddTreinamentoModal (sem mudanças)
 - ✅ AddASOModal (sem mudanças)
 - ✅ AlertDialog para confirmação de delete
 
 ✅ **Visuais:**
+
 - ✅ Status badges (Em dia, Prestes a vencer, Vencido, etc.)
 - ✅ Icones (CalendarDays, Clock3, etc.)
 - ✅ Responsive design (mobile + desktop)
@@ -191,8 +210,9 @@ export type AsoRecord = {
 ## 📊 Exemplos de Dados
 
 ### Cenário 1: 3 Treinamentos de NR1200 (diferentes datas)
+
 ```
-Entrada: 
+Entrada:
 - ID:1, tipoTreinamento: 'NR1200', data: '2024-01-15' ← mais recente
 - ID:2, tipoTreinamento: 'NR1200', data: '2023-06-10'
 - ID:3, tipoTreinamento: 'NR1200', data: '2022-12-20'
@@ -203,6 +223,7 @@ treinamentosHistorico: [ID:2, ID:3]
 ```
 
 ### Cenário 2: 2 ASOs de CLINICA_X (diferentes datas)
+
 ```
 Entrada:
 - ID:a, tipoASO_nome: 'CLINICA_X', data_aso: '2024-02-20' ← mais recente
@@ -218,6 +239,7 @@ asosHistorico: [ID:b]
 ## 🔍 Testes Recomendados
 
 ### Test 1: Adicionar Novo Treinamento
+
 - [ ] Clicar "Adicionar treinamento"
 - [ ] Modal abre corretamente
 - [ ] Preencer tipo, data, validade
@@ -226,12 +248,14 @@ asosHistorico: [ID:b]
 - [ ] ✅ Toast: "Treinamento adicionado!"
 
 ### Test 2: Histórico Aparece Automaticamente
+
 - [ ] Ter 2+ treinamentos do mesmo tipo
 - [ ] ✅ Primeiro (mais recente) em "Atuais"
 - [ ] ✅ Demais em "Histórico" (com opacity-75)
 - [ ] ✅ Badge "Histórico" aparece
 
 ### Test 3: Editar Histórico
+
 - [ ] Clicar editar em registro de histórico
 - [ ] Modal abre com dados corretos
 - [ ] Modificar data para ser MAIS recente
@@ -240,6 +264,7 @@ asosHistorico: [ID:b]
 - [ ] ✅ Antigo anterior vai para "Histórico"
 
 ### Test 4: Deletar com Confirmação
+
 - [ ] Clicar lixeira em qualquer registro
 - [ ] AlertDialog aparece: "Excluir treinamento?"
 - [ ] Confirmar
@@ -247,6 +272,7 @@ asosHistorico: [ID:b]
 - [ ] ✅ Toast: "Treinamento excluído!"
 
 ### Test 5: ASOs Funcionando Igual
+
 - [ ] Repetir testes 1-4 com ASOs
 - [ ] ✅ Mesma lógica de histórico
 - [ ] ✅ Badges aparecem corretamente
@@ -297,12 +323,15 @@ Possibilidades de melhorias futuras:
 ## 🐛 Troubleshooting
 
 ### P: Por que um registro não aparece em "Atuais"?
+
 **R:** Se houver outro registro do mesmo tipo com data mais recente, ele fica em histórico. Edite a data para ser a mais recente.
 
 ### P: Como entro em histórico se todo registro deletado é removido?
+
 **R:** Histórico é apenas para registros que NÃO são os mais recentes. Não há soft-delete; deletar remove permanentemente.
 
 ### P: E se tipoTreinamento for null?
+
 **R:** Null é uma "chave única", então haverá apenas um registro com tipoTreinamento=null em "Atuais".
 
 ---

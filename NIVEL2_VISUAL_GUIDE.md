@@ -3,6 +3,7 @@
 ## Antes vs Depois
 
 ### ANTES (Uma única tabela)
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │ TREINAMENTOS                          [+ Adicionar]         │
@@ -15,12 +16,13 @@
 │ NR 1050  │ 01/03/2024 │ 01/03/2025 │  4h   │ Vencido │ ✏ 🗑│
 └─────────────────────────────────────────────────────────────┘
 
-Problema: 
+Problema:
 - NR 1200 aparece 2x (não fica claro qual é o "atual")
 - Difícil rastrear histórico de renovações
 ```
 
 ### DEPOIS (Duas tabelas separadas)
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │ TREINAMENTOS                          [+ Adicionar]         │
@@ -53,26 +55,28 @@ Benefícios:
 ## 🎯 Lógica de Separação
 
 ### Para Treinamentos:
+
 ```
 Entrada (banco de dados):
   └─ Todos os treinamentos do colaborador
-  
+
 Filtro 1: Por colaborador_id ✓
   └─ Apenas do colaborador logado
-  
+
 Filtro 2: Formatar (data, status, etc) ✓
   └─ Adicionar dataFmt, validadeFmt, status
-  
+
 Filtro 3: Agrupar por tipo ⭐ NOVO
   └─ Pegar apenas o MAIS RECENTE por tipoTreinamento
   └─ Resto vai para histórico
-  
+
 Saída:
   ├─ treinamentosAtuais (N linhas) → Tabela verde
   └─ treinamentosHistorico (M linhas) → Tabela cinza
 
 Pseudocódigo:
 ```
+
 ```typescript
 // Agrupar por tipo, pegar o mais recente
 for each treinamento in sorted_by_date_desc {
@@ -86,6 +90,7 @@ for each treinamento in sorted_by_date_desc {
 ```
 
 ### Para ASOs:
+
 ```
 Mesma lógica, mas agrupado por tipoASO_nome em vez de tipoTreinamento
 ```
@@ -99,7 +104,7 @@ Mesma lógica, mas agrupado por tipoASO_nome em vez de tipoTreinamento
 ```
 Section "Treinamentos"
   └─ Header com título + botão [+ Adicionar]
-  
+
   ├─ SubSection "Atuais" [Badge Verde]
   │  └─ Tabela renderizada com map(treinamentosAtuais)
   │     └─ Se vazio: "Nenhum treinamento atual"
@@ -113,6 +118,7 @@ Section "Treinamentos"
 ```
 
 ### Renderização de ASOs:
+
 ```
 Idêntico ao treinamentos, apenas com asosAtuais/asosHistorico
 ```
@@ -122,6 +128,7 @@ Idêntico ao treinamentos, apenas com asosAtuais/asosHistorico
 ## 💾 Mudanças de Dados
 
 ### Antes (Types)
+
 ```typescript
 // Tipos não tinham info de qual era "tipo"
 export type TreinamentoRecord = {
@@ -139,21 +146,22 @@ export type AsoRecord = {
 ```
 
 ### Depois (Types)
+
 ```typescript
 // Adicionados campos de "nome" para melhor identificação
 export type TreinamentoRecord = {
   id: string;
   tipoTreinamento?: string | null;
-  tipoTreinamento_nome?: string | null;  // ✨ NOVO
+  tipoTreinamento_nome?: string | null; // ✨ NOVO
   nr?: string | null;
   // ... resto
 };
 
 export type AsoRecord = {
   id: string;
-  tipoASO_id?: string | null;           // ✨ NOVO
-  tipoASO_nome?: string | null;         // ✨ NOVO
-  clinica?: string | null;              // ✨ NOVO (antes sem tipo)
+  tipoASO_id?: string | null; // ✨ NOVO
+  tipoASO_nome?: string | null; // ✨ NOVO
+  clinica?: string | null; // ✨ NOVO (antes sem tipo)
   // ... resto
 };
 ```
@@ -165,24 +173,30 @@ export type AsoRecord = {
 ### Badges de Seção:
 
 **Atuais (Verde - destaque):**
+
 ```html
 <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
   Atuais
 </Badge>
 ```
+
 - Cor quente para indicar "ativo"
 - Contraste alto para chamar atenção
 - Hover efeito nas linhas
 
 **Histórico (Cinza - suave):**
+
 ```html
 <Badge className="bg-slate-100 text-slate-700 border-slate-200">
   Histórico
 </Badge>
 
 <!-- Linhas da tabela -->
-<tr className="...opacity-75">  {/* ← mais suave */}
+<tr className="...opacity-75">
+  {/* ← mais suave */}
+</tr>
 ```
+
 - Cor neutra para não distrair
 - Opacidade reduzida (75%) para indicar "menos importante"
 - Mesma funcionalidade (edit/delete)
@@ -194,6 +208,7 @@ export type AsoRecord = {
 ### Cenário: Colaborador com 3 registros de NR1200
 
 **Estado Inicial:**
+
 ```
 Banco de dados (pelo ID):
   [1] NR1200, data: 01/12/2024  ← mais recente
@@ -202,12 +217,14 @@ Banco de dados (pelo ID):
 ```
 
 **Após splitLatestByKey:**
+
 ```
 treinamentosAtuais = [[1]]  ← Apenas o mais recente
 treinamentosHistorico = [[2], [3]]  ← Os antigos
 ```
 
 **Na Tela:**
+
 ```
 ┌─ ATUAIS 🟢
 │  [1] NR1200 | 01/12/2024 | 01/12/2025 | Em dia
@@ -218,6 +235,7 @@ treinamentosHistorico = [[2], [3]]  ← Os antigos
 ```
 
 **Usuário clica [Editar] em [2] (histórico):**
+
 ```
 1. Modal abre com dados de [2]
 2. Usuário muda data para 25/12/2024 (mais recente que [1])

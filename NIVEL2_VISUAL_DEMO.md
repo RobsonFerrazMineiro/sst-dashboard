@@ -3,6 +3,7 @@
 ## 🖼️ ANTES (Uma única tabela confusa)
 
 ### Visual na Tela:
+
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │ TREINAMENTOS                         [+ Adicionar treinamento]│
@@ -18,13 +19,15 @@
 ```
 
 ### Problemas:
+
 ❌ NR 1200 aparece 2x (qual é o mais recente?)  
 ❌ NR 1050 aparece 2x (qual é o vigente?)  
 ❌ Impossível saber qual é o "atual" olhando  
 ❌ Histórico misturado com atuais  
-❌ Confuso para o usuário final  
+❌ Confuso para o usuário final
 
 ### Quem sabe qual é o atual?
+
 - 👨‍💻 Desenvolvedor: "Olho para a data"
 - 👤 Usuário: "🤷 Qual é o correto?"
 
@@ -56,13 +59,15 @@
 ```
 
 ### Benefícios:
+
 ✅ Claro qual é o "atual" de cada tipo  
 ✅ Histórico bem separado e identificado  
 ✅ Verde = ativo, Cinza = histórico  
 ✅ Fácil rastrear renovações  
-✅ Excelente UX  
+✅ Excelente UX
 
 ### Quem sabe qual é o atual?
+
 - 👨‍💻 Desenvolvedor: ✅ Óbvio (primeira tabela)
 - 👤 Usuário: ✅ Óbvio (badge verde + visual claro)
 
@@ -73,6 +78,7 @@
 ### Badges:
 
 **ATUAIS:**
+
 ```
 ┌─────────────┐
 │ 🟢 ATUAIS   │
@@ -80,13 +86,14 @@
   bg-emerald-100
   text-emerald-700
   border-emerald-200
-  
+
   → Cor quente (ativa)
   → Alto contraste (chama atenção)
   → Indica "vigente/atual"
 ```
 
 **HISTÓRICO:**
+
 ```
 ┌─────────────┐
 │ ⚪ HISTÓRICO│
@@ -94,9 +101,9 @@
   bg-slate-100
   text-slate-700
   border-slate-200
-  
+
   + opacity-75 nas linhas
-  
+
   → Cor neutra (não distrai)
   → Transparência (menos importante)
   → Indica "anterior/antigo"
@@ -108,11 +115,11 @@
 
 ### Cenário 1: Ver Registros
 
-| Ação | Antes | Depois |
-|------|-------|--------|
-| Abrir página | 4 linhas misturadas | 3 em Atuais + 2 em Histórico |
-| Entender qual é atual | 🤔 Confuso | ✅ Óbvio (tabela verde) |
-| Rastrear histórico | ❌ Não dá | ✅ Fácil |
+| Ação                  | Antes               | Depois                       |
+| --------------------- | ------------------- | ---------------------------- |
+| Abrir página          | 4 linhas misturadas | 3 em Atuais + 2 em Histórico |
+| Entender qual é atual | 🤔 Confuso          | ✅ Óbvio (tabela verde)      |
+| Rastrear histórico    | ❌ Não dá           | ✅ Fácil                     |
 
 ---
 
@@ -123,6 +130,7 @@
 **Ação:** Adicionar novo NR1200 com data 15/03/2025
 
 #### Antes:
+
 ```
 Resultado: 3 linhas de NR1200
 │ NR 1200 │ 15/03/25 │ ...  (qual é o atual?)
@@ -133,6 +141,7 @@ Resultado: 3 linhas de NR1200
 ```
 
 #### Depois:
+
 ```
 ATUAIS:
 │ NR 1200 │ 15/03/25 │ ... ✅ Novo é o atual
@@ -148,13 +157,15 @@ HISTÓRICO:
 
 ### Cenário 3: Editar Registro de Histórico
 
-**Situação:** 
+**Situação:**
+
 - Atuais: NR1200 (01/12/2024)
 - Histórico: NR1200 (01/06/2024)
 
 **Ação:** Editar o de histórico (01/06) para data 25/12/2024
 
 #### Antes:
+
 ```
 Antes de salvar: 2 linhas confusas
 Depois de salvar: 2 linhas AINDA confusas
@@ -165,6 +176,7 @@ Depois de salvar: 2 linhas AINDA confusas
 ```
 
 #### Depois:
+
 ```
 Depois de salvar automaticamente se reorganiza:
 
@@ -186,6 +198,7 @@ HISTÓRICO:
 **Ação:** Deletar o de Histórico
 
 #### Antes:
+
 ```
 1 linha desaparece, mas fica estranho
 │ NR 1200 │ 01/12/24 │ ... (continua em algum lugar)
@@ -194,6 +207,7 @@ HISTÓRICO:
 ```
 
 #### Depois:
+
 ```
 ATUAIS:
 │ NR 1200 │ 01/12/24 │ ... ✅ Continua aqui
@@ -294,26 +308,27 @@ historico = [
 
 ### Métrica: Tempo para Entender "Qual é o Atual"
 
-| Versão | Tempo | Confiança |
-|--------|-------|-----------|
-| Antes | ⏱️ 30s | 😕 50% ("é este? ou aquele?") |
-| Depois | ⏱️ 1s | 😊 100% ("vejo na tabela verde") |
+| Versão | Tempo  | Confiança                        |
+| ------ | ------ | -------------------------------- |
+| Antes  | ⏱️ 30s | 😕 50% ("é este? ou aquele?")    |
+| Depois | ⏱️ 1s  | 😊 100% ("vejo na tabela verde") |
 
 ---
 
 ### Métrica: Erros ao Navegar
 
-| Tarefa | Antes | Depois |
-|--------|-------|--------|
-| Identificar atual | ❌ Alto | ✅ Zero |
-| Achar histórico | ❌ Não existe | ✅ Claro |
-| Encontrar renovação | ❌ Difícil | ✅ Fácil |
+| Tarefa              | Antes         | Depois   |
+| ------------------- | ------------- | -------- |
+| Identificar atual   | ❌ Alto       | ✅ Zero  |
+| Achar histórico     | ❌ Não existe | ✅ Claro |
+| Encontrar renovação | ❌ Difícil    | ✅ Fácil |
 
 ---
 
 ## 📱 Responsividade
 
 ### Desktop (1920px):
+
 ```
 ┌─ ATUAIS ─────────┬─ HISTÓRICO ──────┐
 │ Tabela           │ Tabela           │
@@ -322,6 +337,7 @@ historico = [
 ```
 
 ### Tablet (768px):
+
 ```
 ┌─ ATUAIS ───────────┐
 │ Tabela            │
@@ -337,6 +353,7 @@ historico = [
 ```
 
 ### Mobile (375px):
+
 ```
 ┌─ ATUAIS ───┐
 │ Tabela    │
@@ -361,7 +378,7 @@ Ao abrir ColaboradorProfile:
 □ Vejo "Treinamentos" (título)
   └─ Vejo badge "🟢 ATUAIS" em verde
   └─ Vejo tabela com dados
-  
+
   └─ Se houver histórico:
      └─ Vejo badge "⚪ HISTÓRICO" em cinza
      └─ Vejo tabela com opacity-75
@@ -385,11 +402,13 @@ Ao abrir ColaboradorProfile:
 ## 🎬 GIF Mental (Fluxo Real)
 
 ### 1. Abrir página
+
 ```
 Carregando... → [Spinner] → Dados carregam
 ```
 
 ### 2. Ver dados separados
+
 ```
 ┌─ ATUAIS 🟢      ┐
 │ NR1200          │ ← Destaca-se
@@ -403,6 +422,7 @@ Carregando... → [Spinner] → Dados carregam
 ```
 
 ### 3. Editar um de histórico
+
 ```
 Clica ✏ → Modal abre → Muda data → [Salvar]
                         ↓

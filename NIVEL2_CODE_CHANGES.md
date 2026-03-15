@@ -5,6 +5,7 @@
 ### ✨ Novo: Helpers (Lines 23-65)
 
 **ADICIONADO após imports:**
+
 ```typescript
 // ==================== HELPERS PARA NÍVEL 2 ====================
 
@@ -33,9 +34,9 @@ function splitLatestByKey<T extends Record<string, unknown>>(
   const atual: T[] = [];
 
   // Ordena por data DESC (mais recente primeiro)
-  const sorted = [...records].sort((a, b) =>
-    getDateTime(b[dateField] as string) -
-    getDateTime(a[dateField] as string),
+  const sorted = [...records].sort(
+    (a, b) =>
+      getDateTime(b[dateField] as string) - getDateTime(a[dateField] as string),
   );
 
   // Coleta apenas o primeiro registro por chave
@@ -61,6 +62,7 @@ function splitLatestByKey<T extends Record<string, unknown>>(
 ### 🔄 Refatorado: useMemo dos Treinamentos (Lines 188-220)
 
 **ANTES:**
+
 ```typescript
 const treinamentosDoColab = useMemo(() => {
   return (treinamentos as TreinamentoRecord[])
@@ -82,6 +84,7 @@ const treinamentosDoColab = useMemo(() => {
 ```
 
 **DEPOIS:**
+
 ```typescript
 const treinamentosDoColab = useMemo(() => {
   const filtered = (treinamentos as TreinamentoRecord[])
@@ -107,11 +110,7 @@ const { atual: treinamentosAtuais, historico: treinamentosHistorico } =
     const keyField = "tipoTreinamento" as const;
     const dateField = "data_treinamento" as const;
 
-    const result = splitLatestByKey(
-      treinamentosDoColab,
-      keyField,
-      dateField,
-    );
+    const result = splitLatestByKey(treinamentosDoColab, keyField, dateField);
 
     return {
       atual: result.atual.sort((a, b) =>
@@ -129,6 +128,7 @@ const { atual: treinamentosAtuais, historico: treinamentosHistorico } =
 ### 🔄 Refatorado: useMemo dos ASOs (Lines 238-247)
 
 **ANTES:**
+
 ```typescript
 const asosDoColab = useMemo(() => {
   return (asos as AsoRecord[])
@@ -147,6 +147,7 @@ const asosDoColab = useMemo(() => {
 ```
 
 **DEPOIS:**
+
 ```typescript
 const asosDoColab = useMemo(() => {
   return (asos as AsoRecord[])
@@ -183,12 +184,11 @@ const { atual: asosAtuais, historico: asosHistorico } = useMemo(() => {
 **ANTES:** Uma única tabela com `treinamentosDoColab`
 
 **DEPOIS:** Duas tabelas com badges:
+
 ```tsx
 <section className="space-y-4">
   <div className="flex items-center justify-between">
-    <h2 className="text-2xl font-semibold text-slate-900">
-      Treinamentos
-    </h2>
+    <h2 className="text-2xl font-semibold text-slate-900">Treinamentos</h2>
     <Button onClick={() => setOpenTreinamento(true)} className="gap-2">
       <Plus className="w-4 h-4" />
       Adicionar treinamento
@@ -237,6 +237,7 @@ const { atual: asosAtuais, historico: asosHistorico } = useMemo(() => {
 **ANTES:** Uma única tabela com `asosDoColab`
 
 **DEPOIS:** Duas tabelas (mesmo padrão que treinamentos):
+
 ```tsx
 <section className="space-y-4">
   {/* Header */}
@@ -244,18 +245,14 @@ const { atual: asosAtuais, historico: asosHistorico } = useMemo(() => {
   {/* Tabela ATUAIS verde */}
   <div className="space-y-2">
     <Badge className="bg-emerald-100...">Atuais</Badge>
-    <table>
-      {/* map(asosAtuais) */}
-    </table>
+    <table>{/* map(asosAtuais) */}</table>
   </div>
 
   {/* Tabela HISTÓRICO cinza (condicional) */}
   {asosHistorico.length > 0 && (
     <div className="space-y-2">
       <Badge className="bg-slate-100...">Histórico</Badge>
-      <table>
-        {/* map(asosHistorico) com opacity-75 */}
-      </table>
+      <table>{/* map(asosHistorico) com opacity-75 */}</table>
     </div>
   )}
 </section>
@@ -268,6 +265,7 @@ const { atual: asosAtuais, historico: asosHistorico } = useMemo(() => {
 ### ✨ Novo: Campos em TreinamentoRecord
 
 **ANTES:**
+
 ```typescript
 export type TreinamentoRecord = {
   id: string;
@@ -284,6 +282,7 @@ export type TreinamentoRecord = {
 ```
 
 **DEPOIS:**
+
 ```typescript
 export type TreinamentoRecord = {
   id: string;
@@ -291,7 +290,7 @@ export type TreinamentoRecord = {
   colaborador_nome?: string | null;
 
   tipoTreinamento?: string | null;
-  tipoTreinamento_nome?: string | null;  // ✨ NOVO
+  tipoTreinamento_nome?: string | null; // ✨ NOVO
   nr?: string | null;
 
   data_treinamento?: string | null;
@@ -305,6 +304,7 @@ export type TreinamentoRecord = {
 ### ✨ Novo: Campos em AsoRecord
 
 **ANTES:**
+
 ```typescript
 export type AsoRecord = {
   id: string;
@@ -318,6 +318,7 @@ export type AsoRecord = {
 ```
 
 **DEPOIS:**
+
 ```typescript
 export type AsoRecord = {
   id: string;
@@ -325,9 +326,9 @@ export type AsoRecord = {
   colaborador_nome?: string | null;
   setor?: string | null;
   cargo?: string | null;
-  tipoASO_id?: string | null;           // ✨ NOVO
-  tipoASO_nome?: string | null;         // ✨ NOVO
-  clinica?: string | null;              // ✨ NOVO
+  tipoASO_id?: string | null; // ✨ NOVO
+  tipoASO_nome?: string | null; // ✨ NOVO
+  clinica?: string | null; // ✨ NOVO
   data_aso?: string | null;
   validade_aso?: string | null;
 };
@@ -338,6 +339,7 @@ export type AsoRecord = {
 ## 📊 Sumário de Mudanças
 
 ### Linhas Adicionadas:
+
 ```
 ColaboradorProfile.tsx:
   - Helpers: 45 linhas
@@ -354,6 +356,7 @@ dashboard.ts:
 ```
 
 ### Mudanças Lógicas:
+
 ```
 1. ✅ Adicionou helpers getDateTime() e splitLatestByKey()
 2. ✅ Refatorou treinamentosDoColab para gerar atual/histórico
@@ -366,6 +369,7 @@ dashboard.ts:
 ```
 
 ### Funcionalidades Mantidas:
+
 ```
 ✅ Todos os CRUD (sem mudanças)
 ✅ Modals (sem mudanças)
@@ -392,6 +396,7 @@ a9ac1e2 docs: Adicionar resumo final do Nível 2
 ## ✅ Validação
 
 ### TypeScript:
+
 ```
 ✅ Sem erros de tipo
 ✅ getDateTime() tipado corretamente
@@ -401,6 +406,7 @@ a9ac1e2 docs: Adicionar resumo final do Nível 2
 ```
 
 ### Runtime:
+
 ```
 ✅ Helpers executam corretamente
 ✅ useMemo recalcula quando necessário
