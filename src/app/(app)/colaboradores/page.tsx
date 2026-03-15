@@ -1,7 +1,15 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Eye, Pencil, Plus, RefreshCw, Search, Trash2, Users } from "lucide-react";
+import {
+  Eye,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Search,
+  Trash2,
+  Users,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 
 import ColaboradorModal from "@/components/colaboradores/ColaboradorModal";
@@ -110,8 +118,8 @@ export default function ColaboradoresPage() {
           </div>
 
           <div className="flex flex-wrap gap-2 sm:justify-end">
-            <Button 
-              onClick={() => refetch()} 
+            <Button
+              onClick={() => refetch()}
               disabled={isFetching}
               className="gap-2"
             >
