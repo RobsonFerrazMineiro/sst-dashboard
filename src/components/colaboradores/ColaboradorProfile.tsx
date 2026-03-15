@@ -64,9 +64,9 @@ function splitLatestByKey<T extends Record<string, unknown>>(
   const atual: T[] = [];
 
   // Ordena por data DESC (mais recente primeiro)
-  const sorted = [...records].sort((a, b) =>
-    getDateTime(b[dateField] as string) -
-    getDateTime(a[dateField] as string),
+  const sorted = [...records].sort(
+    (a, b) =>
+      getDateTime(b[dateField] as string) - getDateTime(a[dateField] as string),
   );
 
   // Coleta apenas o primeiro registro por chave
@@ -204,11 +204,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
       const keyField = "tipoTreinamento" as const;
       const dateField = "data_treinamento" as const;
 
-      const result = splitLatestByKey(
-        treinamentosDoColab,
-        keyField,
-        dateField,
-      );
+      const result = splitLatestByKey(treinamentosDoColab, keyField, dateField);
 
       return {
         atual: result.atual.sort((a, b) =>
@@ -483,7 +479,9 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogCancel>
+                                    Cancelar
+                                  </AlertDialogCancel>
                                   <AlertDialogAction
                                     onClick={() => delTre.mutate(t.id)}
                                     className="bg-rose-600 hover:bg-rose-700"
@@ -618,7 +616,9 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogCancel>
+                                    Cancelar
+                                  </AlertDialogCancel>
                                   <AlertDialogAction
                                     onClick={() => delTre.mutate(t.id)}
                                     className="bg-rose-600 hover:bg-rose-700"
@@ -776,7 +776,9 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogCancel>
+                                    Cancelar
+                                  </AlertDialogCancel>
                                   <AlertDialogAction
                                     onClick={() => delAso.mutate(a.id)}
                                     className="bg-rose-600 hover:bg-rose-700"
@@ -906,7 +908,9 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogCancel>
+                                    Cancelar
+                                  </AlertDialogCancel>
                                   <AlertDialogAction
                                     onClick={() => delAso.mutate(a.id)}
                                     className="bg-rose-600 hover:bg-rose-700"
