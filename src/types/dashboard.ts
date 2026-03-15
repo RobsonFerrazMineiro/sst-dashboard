@@ -22,6 +22,9 @@ export type AsoRecord = {
   colaborador_nome?: string | null;
   setor?: string | null;
   cargo?: string | null;
+  tipoASO_id?: string | null;
+  tipoASO_nome?: string | null;
+  clinica?: string | null;
   data_aso?: string | null;
   validade_aso?: string | null;
 };
@@ -49,6 +52,7 @@ export type TreinamentoRecord = {
   colaborador_nome?: string | null;
 
   tipoTreinamento?: string | null;
+  tipoTreinamento_nome?: string | null;
   nr?: string | null;
 
   data_treinamento?: string | null;
