@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Eye, Pencil, Plus, Search, Trash2, Users } from "lucide-react";
+import { Eye, Pencil, Plus, RefreshCw, Search, Trash2, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import ColaboradorModal from "@/components/colaboradores/ColaboradorModal";
@@ -19,7 +19,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import RefreshButton from "@/components/ui/refresh-button";
 import { api } from "@/lib/api";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -111,7 +110,14 @@ export default function ColaboradoresPage() {
           </div>
 
           <div className="flex flex-wrap gap-2 sm:justify-end">
-            <RefreshButton isLoading={isFetching} onClick={() => refetch()} />
+            <Button 
+              onClick={() => refetch()} 
+              disabled={isFetching}
+              className="gap-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Atualizar
+            </Button>
 
             <Button onClick={onNew} className="gap-2">
               <Plus className="w-4 h-4" />
