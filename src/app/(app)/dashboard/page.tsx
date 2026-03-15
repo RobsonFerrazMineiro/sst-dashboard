@@ -1,13 +1,13 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ShieldCheck } from "lucide-react";
+import { RefreshCw, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 
 import ASOPanel from "@/components/dashboard/ASOPanel";
 import TabNavigation from "@/components/dashboard/TabNavigation";
 import TreinamentoPanel from "@/components/dashboard/TreinamentoPanel";
-import RefreshButton from "@/components/ui/refresh-button";
+import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 
 export default function DashboardPage() {
@@ -72,11 +72,14 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <RefreshButton
-            isLoading={isRefreshing}
+          <Button
             onClick={handleRefresh}
-            className="self-start sm:self-auto"
-          />
+            disabled={isRefreshing}
+            className="gap-2 self-start sm:self-auto"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Atualizar
+          </Button>
         </div>
 
         {hasError && (

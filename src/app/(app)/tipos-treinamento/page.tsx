@@ -5,6 +5,7 @@ import {
   Clock3,
   Pencil,
   Plus,
+  RefreshCw,
   Search,
   ShieldCheck,
   Trash2,
@@ -26,7 +27,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import RefreshButton from "@/components/ui/refresh-button";
 import { api } from "@/lib/api";
 import type { TipoTreinamento } from "@/types/dashboard";
 import { toast } from "sonner";
@@ -101,7 +101,14 @@ export default function TiposTreinamentoPage() {
         </div>
 
         <div className="flex flex-wrap gap-2 sm:justify-end">
-          <RefreshButton isLoading={isFetching} onClick={() => refetch()} />
+          <Button 
+            onClick={() => refetch()} 
+            disabled={isFetching}
+            className="gap-2"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Atualizar
+          </Button>
           <Button onClick={onNew} className="gap-2">
             <Plus className="w-4 h-4" />
             Novo tipo

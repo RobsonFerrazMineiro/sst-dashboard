@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Clock3, HeartPulse, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { Clock3, HeartPulse, Pencil, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import TipoASOModal from "@/components/tipos-aso/TipoASOModal";
@@ -19,7 +19,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import RefreshButton from "@/components/ui/refresh-button";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 
@@ -95,7 +94,14 @@ export default function TiposASOPage() {
         </div>
 
         <div className="flex gap-2">
-          <RefreshButton isLoading={isFetching} onClick={() => refetch()} />
+          <Button 
+            onClick={() => refetch()} 
+            disabled={isFetching}
+            className="gap-2"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Atualizar
+          </Button>
           <Button onClick={onNew} className="gap-2">
             <Plus className="w-4 h-4" />
             Novo tipo
