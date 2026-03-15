@@ -1,15 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  Clock3,
-  HeartPulse,
-  Pencil,
-  Plus,
-  RefreshCw,
-  Search,
-  Trash2,
-} from "lucide-react";
+import { Clock3, HeartPulse, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import TipoASOModal from "@/components/tipos-aso/TipoASOModal";
@@ -27,6 +19,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import RefreshButton from "@/components/ui/refresh-button";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 
@@ -102,12 +95,7 @@ export default function TiposASOPage() {
         </div>
 
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => refetch()} className="gap-2">
-            <RefreshCw
-              className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`}
-            />
-            Atualizar
-          </Button>
+          <RefreshButton isLoading={isFetching} onClick={() => refetch()} />
           <Button onClick={onNew} className="gap-2">
             <Plus className="w-4 h-4" />
             Novo tipo
@@ -129,10 +117,10 @@ export default function TiposASOPage() {
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-215">
             <thead className="bg-slate-50">
               <tr>
-                <th className="text-left text-sm font-semibold text-slate-600 px-4 py-3">
+                <th className="text-left text-sm font-semibold text-slate-600 px-4 py-3 min-w-65">
                   Nome
                 </th>
                 <th className="text-left text-sm font-semibold text-slate-600 px-4 py-3">
@@ -172,7 +160,7 @@ export default function TiposASOPage() {
                     key={row.id}
                     className="border-t border-slate-100 hover:bg-slate-50"
                   >
-                    <td className="px-4 py-3 text-sm text-slate-900 whitespace-nowrap">
+                    <td className="px-4 py-3 text-sm text-slate-900 whitespace-nowrap min-w-65">
                       <Badge
                         variant="outline"
                         className="border-emerald-200 bg-emerald-50 text-emerald-700 shadow-none"

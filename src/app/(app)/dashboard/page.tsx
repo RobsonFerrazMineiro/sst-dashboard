@@ -1,13 +1,13 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { RefreshCw, ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import { useState } from "react";
 
 import ASOPanel from "@/components/dashboard/ASOPanel";
 import TabNavigation from "@/components/dashboard/TabNavigation";
 import TreinamentoPanel from "@/components/dashboard/TreinamentoPanel";
-import { Button } from "@/components/ui/button";
+import RefreshButton from "@/components/ui/refresh-button";
 import { api } from "@/lib/api";
 
 export default function DashboardPage() {
@@ -59,7 +59,7 @@ export default function DashboardPage() {
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="p-2 rounded-xl bg-linear-to-br from-green-900 via-emerald-600 to-emerald-300 shadow-md shadow-emerald-200">
+            <div className="p-2 rounded-xl bg-linear-to-br from-teal-800 via-teal-300 to-lime-200 shadow-md shadow-emerald-200">
               <ShieldCheck className="w-14 h-14 text-white" />
             </div>
             <div>
@@ -72,17 +72,11 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <Button
-            variant="outline"
+          <RefreshButton
+            isLoading={isRefreshing}
             onClick={handleRefresh}
-            className="gap-2 self-start sm:self-auto"
-            disabled={isRefreshing}
-          >
-            <RefreshCw
-              className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`}
-            />
-            Atualizar
-          </Button>
+            className="self-start sm:self-auto"
+          />
         </div>
 
         {hasError && (

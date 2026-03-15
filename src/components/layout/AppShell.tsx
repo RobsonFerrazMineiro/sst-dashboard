@@ -20,7 +20,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {/* Desktop layout */}
       <div className="hidden md:flex min-h-screen">
         <Sidebar className="sticky top-0 h-screen" />
-        <main className="flex-1">{children}</main>
+        <main className="flex-1 min-w-0">{children}</main>
       </div>
 
       {/* Mobile layout */}
@@ -44,7 +44,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </SheetContent>
         </Sheet>
 
-        <main>{children}</main>
+        <main className="min-w-0">{children}</main>
       </div>
     </div>
   );

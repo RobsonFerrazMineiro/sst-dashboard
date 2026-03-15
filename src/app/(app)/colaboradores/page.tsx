@@ -1,15 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  Eye,
-  Pencil,
-  Plus,
-  RefreshCw,
-  Search,
-  Trash2,
-  Users,
-} from "lucide-react";
+import { Eye, Pencil, Plus, Search, Trash2, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import ColaboradorModal from "@/components/colaboradores/ColaboradorModal";
@@ -27,6 +19,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import RefreshButton from "@/components/ui/refresh-button";
 import { api } from "@/lib/api";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -101,8 +94,8 @@ export default function ColaboradoresPage() {
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-slate-100">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
+        <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
             <div className="flex items-center gap-3">
               <div className="rounded-xl bg-emerald-50 p-2.5 text-slate-700">
                 <Users className="h-8 w-8" />
@@ -117,17 +110,8 @@ export default function ColaboradoresPage() {
             </p>
           </div>
 
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => refetch()}
-              className="gap-2"
-            >
-              <RefreshCw
-                className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`}
-              />
-              Atualizar
-            </Button>
+          <div className="flex flex-wrap gap-2 sm:justify-end">
+            <RefreshButton isLoading={isFetching} onClick={() => refetch()} />
 
             <Button onClick={onNew} className="gap-2">
               <Plus className="w-4 h-4" />
@@ -150,7 +134,7 @@ export default function ColaboradoresPage() {
 
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-230">
               <thead className="bg-slate-50">
                 <tr>
                   <th className="text-left text-sm font-semibold text-slate-600 px-4 py-2.5">
@@ -159,7 +143,7 @@ export default function ColaboradoresPage() {
                   <th className="text-left text-sm font-semibold text-slate-600 px-4 py-2.5">
                     Setor
                   </th>
-                  <th className="text-left text-sm font-semibold text-slate-600 px-4 py-2.5">
+                  <th className="text-left text-sm font-semibold text-slate-600 px-4 py-2.5 min-w-70">
                     Cargo
                   </th>
                   <th className="text-left text-sm font-semibold text-slate-600 px-4 py-2.5">
@@ -207,7 +191,7 @@ export default function ColaboradoresPage() {
                           {row.setor}
                         </Badge>
                       </td>
-                      <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                      <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap min-w-70">
                         {row.cargo}
                       </td>
                       <td className="px-4 py-2.5 text-sm text-slate-600 whitespace-nowrap">
