@@ -84,6 +84,34 @@ function splitLatestByKey<T extends Record<string, unknown>>(
   return { atual, historico };
 }
 
+/**
+ * Separa registros em "Atual" (apenas o mais recente) e "Histórico"
+ * Usado para ASOs onde queremos apenas 1 registro "Atual"
+ */
+function splitLatestSingle<T extends Record<string, unknown>>(
+  records: T[],
+  dateField: keyof T,
+): { atual: T[]; historico: T[] } {
+  // Se vazio, retorna vazio
+  if (records.length === 0) {
+    return { atual: [], historico: [] };
+  }
+
+  // Ordena por data DESC (mais recente primeiro)
+  const sorted = [...records].sort(
+    (a, b) =>
+      getDateTime(b[dateField] as string) - getDateTime(a[dateField] as string),
+  );
+
+  // Atual = apenas o primeiro (mais recente)
+  const atual = [sorted[0]];
+
+  // Histórico = todos os demais
+  const historico = sorted.slice(1);
+
+  return { atual, historico };
+}
+
 // =========== FIM DOS HELPERS PARA NÍVEL 2 ===========
 
 function statusBadge(status: string) {
@@ -232,10 +260,11 @@ export default function ColaboradorProfile({ id }: { id: string }) {
   }, [asos, id]);
 
   const { atual: asosAtuais, historico: asosHistorico } = useMemo(() => {
-    const keyField = "tipoASO_nome" as const;
+    // Nova regra: apenas o registro mais recente em "Atual"
+    // Todos os demais em "Histórico", independentemente do tipo de ASO
     const dateField = "data_aso" as const;
 
-    const result = splitLatestByKey(asosDoColab, keyField, dateField);
+    const result = splitLatestSingle(asosDoColab, dateField);
 
     return {
       atual: result.atual,
