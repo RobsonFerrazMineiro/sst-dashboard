@@ -794,6 +794,39 @@ export default function ColaboradorProfile({ id }: { id: string }) {
           </Button>
         </div>
 
+        {/* Filtros de ASOs */}
+        <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <input
+              type="text"
+              placeholder="Buscar por tipo ou clínica..."
+              value={asoBusca}
+              onChange={(e) => setAsoBusca(e.target.value)}
+              className="px-3 py-2 rounded-lg border border-slate-300 bg-slate-50 text-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
+            />
+            <select
+              value={asoStatusFiltro ?? ""}
+              onChange={(e) => setAsoStatusFiltro(e.target.value || null)}
+              className="px-3 py-2 rounded-lg border border-slate-300 bg-slate-50 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
+            >
+              <option value="">Todos os status</option>
+              <option value="Em dia">Em dia</option>
+              <option value="Prestes a vencer">Prestes a vencer</option>
+              <option value="Vencido">Vencido</option>
+              <option value="Pendente">Pendente</option>
+            </select>
+            <select
+              value={asoVisualizacao}
+              onChange={(e) => setAsoVisualizacao(e.target.value as "todos" | "atuais" | "historico")}
+              className="px-3 py-2 rounded-lg border border-slate-300 bg-slate-50 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
+            >
+              <option value="todos">Todos</option>
+              <option value="atuais">Apenas Atuais</option>
+              <option value="historico">Apenas Histórico</option>
+            </select>
+          </div>
+        </div>
+
         {/* ASOs Atuais */}
         <div className="space-y-2">
           <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
@@ -836,17 +869,17 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                         Carregando...
                       </td>
                     </tr>
-                  ) : asosAtuais.length === 0 ? (
+                  ) : asosFiltrados.length === 0 ? (
                     <tr>
                       <td
                         colSpan={6}
                         className="px-4 py-8 text-center text-slate-500"
                       >
-                        Nenhum ASO atual.
+                        Nenhum ASO encontrado.
                       </td>
                     </tr>
                   ) : (
-                    asosAtuais.map((a: AsoProfileRow) => (
+                    asosFiltrados.map((a: AsoProfileRow) => (
                       <tr
                         key={a.id}
                         className="border-t border-slate-100 hover:bg-slate-50"
