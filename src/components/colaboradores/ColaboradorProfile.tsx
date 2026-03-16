@@ -183,6 +183,20 @@ export default function ColaboradorProfile({ id }: { id: string }) {
     useState<TreinamentoRecord | null>(null);
   const [editingASO, setEditingASO] = useState<AsoRecord | null>(null);
 
+  // ==================== ESTADOS DE FILTRO ====================
+  
+  // Filtros para Treinamentos
+  const [treinamentoBusca, setTreinamentoBusca] = useState("");
+  const [treinamentoStatusFiltro, setTreinamentoStatusFiltro] = useState<string | null>(null);
+  const [treinamentoVisualizacao, setTreinamentoVisualizacao] = useState<"todos" | "atuais" | "historico">("todos");
+
+  // Filtros para ASOs
+  const [asoBusca, setAsoBusca] = useState("");
+  const [asoStatusFiltro, setAsoStatusFiltro] = useState<string | null>(null);
+  const [asoVisualizacao, setAsoVisualizacao] = useState<"todos" | "atuais" | "historico">("todos");
+
+  // ==================== FIM ESTADOS DE FILTRO ====================
+
   const { data: colaborador, isLoading: loadingColab } = useQuery({
     queryKey: ["colaborador", id],
     queryFn: () => api.colaboradores.get(id),
@@ -271,6 +285,70 @@ export default function ColaboradorProfile({ id }: { id: string }) {
       historico: result.historico,
     };
   }, [asosDoColab]);
+
+  // ==================== FILTROS PARA TREINAMENTOS ====================
+
+  const treinamentosFiltrados = useMemo(() => {
+    // Combina atuais e histórico, aplica filtros
+    const todos = [...treinamentosAtuais, ...treinamentosHistorico];
+    
+    let resultado = todos.filter((t) => {
+      // Filtro de status
+      if (treinamentoStatusFiltro && t.status !== treinamentoStatusFiltro) return false;
+
+      // Filtro de busca
+      if (treinamentoBusca.trim()) {
+        const needle = treinamentoBusca.toLowerCase();
+        const nome = (t.tipoTreinamento_nome ?? "").toLowerCase();
+        const nr = (t.nr ?? "").toLowerCase();
+        if (!nome.includes(needle) && !nr.includes(needle)) return false;
+      }
+
+      return true;
+    });
+
+    // Aplica filtro de visualização
+    if (treinamentoVisualizacao === "atuais") {
+      resultado = resultado.filter((t) => treinamentosAtuais.includes(t));
+    } else if (treinamentoVisualizacao === "historico") {
+      resultado = resultado.filter((t) => treinamentosHistorico.includes(t));
+    }
+
+    return resultado;
+  }, [treinamentosAtuais, treinamentosHistorico, treinamentoBusca, treinamentoStatusFiltro, treinamentoVisualizacao]);
+
+  // ==================== FILTROS PARA ASOs ====================
+
+  const asosFiltrados = useMemo(() => {
+    // Combina atuais e histórico, aplica filtros
+    const todos = [...asosAtuais, ...asosHistorico];
+    
+    let resultado = todos.filter((a) => {
+      // Filtro de status
+      if (asoStatusFiltro && a.status !== asoStatusFiltro) return false;
+
+      // Filtro de busca
+      if (asoBusca.trim()) {
+        const needle = asoBusca.toLowerCase();
+        const nome = (a.tipoASO_nome ?? "").toLowerCase();
+        const clinica = (a.clinica ?? "").toLowerCase();
+        if (!nome.includes(needle) && !clinica.includes(needle)) return false;
+      }
+
+      return true;
+    });
+
+    // Aplica filtro de visualização
+    if (asoVisualizacao === "atuais") {
+      resultado = resultado.filter((a) => asosAtuais.includes(a));
+    } else if (asoVisualizacao === "historico") {
+      resultado = resultado.filter((a) => asosHistorico.includes(a));
+    }
+
+    return resultado;
+  }, [asosAtuais, asosHistorico, asoBusca, asoStatusFiltro, asoVisualizacao]);
+
+  // ==================== FIM DOS FILTROS ====================
 
   const delTre = useMutation({
     mutationFn: (treinamentoId: string) =>
@@ -376,6 +454,44 @@ export default function ColaboradorProfile({ id }: { id: string }) {
           </Button>
         </div>
 
+        {/* Controles de Filtro para Treinamentos */}
+        <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {/* Busca */}
+            <input
+              type="text"
+              placeholder="Buscar por nome ou NR..."
+              value={treinamentoBusca}
+              onChange={(e) => setTreinamentoBusca(e.target.value)}
+              className="px-3 py-2 rounded-lg border border-slate-300 bg-slate-50 text-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            />
+
+            {/* Filtro de Status */}
+            <select
+              value={treinamentoStatusFiltro ?? ""}
+              onChange={(e) => setTreinamentoStatusFiltro(e.target.value || null)}
+              className="px-3 py-2 rounded-lg border border-slate-300 bg-slate-50 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            >
+              <option value="">Todos os status</option>
+              <option value="Em dia">Em dia</option>
+              <option value="Prestes a vencer">Prestes a vencer</option>
+              <option value="Vencido">Vencido</option>
+              <option value="Pendente">Pendente</option>
+            </select>
+
+            {/* Filtro de Visualização */}
+            <select
+              value={treinamentoVisualizacao}
+              onChange={(e) => setTreinamentoVisualizacao(e.target.value as "todos" | "atuais" | "historico")}
+              className="px-3 py-2 rounded-lg border border-slate-300 bg-slate-50 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            >
+              <option value="todos">Todos</option>
+              <option value="atuais">Apenas Atuais</option>
+              <option value="historico">Apenas Histórico</option>
+            </select>
+          </div>
+        </div>
+
         {/* Treinamentos Atuais */}
         <div className="space-y-2">
           <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
@@ -418,17 +534,17 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                         Carregando...
                       </td>
                     </tr>
-                  ) : treinamentosAtuais.length === 0 ? (
+                  ) : treinamentosFiltrados.length === 0 ? (
                     <tr>
                       <td
                         colSpan={6}
                         className="px-4 py-8 text-center text-slate-500"
                       >
-                        Nenhum treinamento atual.
+                        Nenhum treinamento encontrado.
                       </td>
                     </tr>
                   ) : (
-                    treinamentosAtuais.map((t: TreinamentoProfileRow) => (
+                    treinamentosFiltrados.map((t: TreinamentoProfileRow) => (
                       <tr
                         key={t.id}
                         className="border-t border-slate-100 hover:bg-slate-50"
