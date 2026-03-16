@@ -1,17 +1,21 @@
 # 🔧 Solução: Module not found: Can't resolve '@/components/ui/refresh-button'
 
 ## Problema
+
 Mesmo após remover todas as referências a `@/components/ui/refresh-button`, o erro persiste durante a execução.
 
 ## Causa
+
 Cache do Next.js e Node.js contém referências antigas ao módulo importado.
 
 ## Solução (Execute na ordem abaixo)
 
 ### 1️⃣ Parar a aplicação
+
 Se está rodando `npm run dev`, pressione `Ctrl+C` para parar.
 
 ### 2️⃣ Limpar todos os caches
+
 ```bash
 # Remover cache do Next.js
 rm -r .next
@@ -25,6 +29,7 @@ Remove-Item -Path "node_modules/.cache" -Recurse -Force -ErrorAction SilentlyCon
 ```
 
 ### 3️⃣ Reinstalar dependências (opcional mas recomendado)
+
 ```bash
 npm install
 # ou
@@ -32,11 +37,13 @@ npm ci
 ```
 
 ### 4️⃣ Iniciar a aplicação novamente
+
 ```bash
 npm run dev
 ```
 
 ### 5️⃣ Acessar a aplicação
+
 - Abra http://localhost:3000
 - Navegue para http://localhost:3000/colaboradores
 - O erro deve ter desaparecido
@@ -49,6 +56,7 @@ npm run dev
 ✅ **TypeScript:** 0 erros
 
 ## Conteúdo Verificado
+
 ```tsx
 // ✅ Import correto de lucide-react COM RefreshCw
 import {
@@ -65,29 +73,28 @@ import {
 // ❌ import RefreshButton from "@/components/ui/refresh-button"; // REMOVIDO
 
 // ✅ Uso correto do Button
-<Button
-  onClick={() => refetch()}
-  disabled={isFetching}
-  className="gap-2"
->
+<Button onClick={() => refetch()} disabled={isFetching} className="gap-2">
   <RefreshCw className="w-4 h-4" />
   Atualizar
-</Button>
+</Button>;
 ```
 
 ## Se o erro persistir
 
 1. **Verificar git diff:**
+
    ```bash
    git diff src/app/\(app\)/colaboradores/page.tsx
    ```
 
 2. **Descartar mudanças locais e usar commit official:**
+
    ```bash
    git checkout src/app/\(app\)/colaboradores/page.tsx
    ```
 
 3. **Verificar branches:**
+
    ```bash
    git branch -a
    # Confirme que está em feature/colaborador-profile-nivel2
@@ -102,11 +109,13 @@ import {
    ```
 
 ## Status Final
+
 ✅ Branch: `feature/colaborador-profile-nivel2`
 ✅ Commits: 9 totais para Nível 2
 ✅ Remote: Sincronizado
 ✅ Pronto para: Staging/Testing/Merge
 
 ---
+
 **Data:** 15 de março de 2026  
 **Status:** ✅ RESOLVIDO COM SUCESSO
