@@ -75,6 +75,7 @@ export default function DashboardPage() {
           <Button
             onClick={handleRefresh}
             disabled={isRefreshing}
+            variant="outline"
             className="gap-2 self-start sm:self-auto"
           >
             <RefreshCw className="w-4 h-4" />

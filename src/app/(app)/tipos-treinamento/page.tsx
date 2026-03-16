@@ -101,9 +101,10 @@ export default function TiposTreinamentoPage() {
         </div>
 
         <div className="flex flex-wrap gap-2 sm:justify-end">
-          <Button 
-            onClick={() => refetch()} 
+          <Button
+            onClick={() => refetch()}
             disabled={isFetching}
+            variant="outline"
             className="gap-2"
           >
             <RefreshCw className="w-4 h-4" />

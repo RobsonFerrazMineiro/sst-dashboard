@@ -1,7 +1,15 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Clock3, HeartPulse, Pencil, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
+import {
+  Clock3,
+  HeartPulse,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Search,
+  Trash2,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 
 import TipoASOModal from "@/components/tipos-aso/TipoASOModal";
@@ -94,9 +102,10 @@ export default function TiposASOPage() {
         </div>
 
         <div className="flex gap-2">
-          <Button 
-            onClick={() => refetch()} 
+          <Button
+            onClick={() => refetch()}
             disabled={isFetching}
+            variant="outline"
             className="gap-2"
           >
             <RefreshCw className="w-4 h-4" />
