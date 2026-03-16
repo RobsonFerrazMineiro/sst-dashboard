@@ -11,22 +11,29 @@
 ### ✅ Filtros para Treinamentos
 
 **Estados adicionados:**
+
 ```typescript
 // Filtros para Treinamentos
 const [treinamentoBusca, setTreinamentoBusca] = useState("");
-const [treinamentoStatusFiltro, setTreinamentoStatusFiltro] = useState<string | null>(null);
-const [treinamentoVisualizacao, setTreinamentoVisualizacao] = useState<"todos" | "atuais" | "historico">("todos");
+const [treinamentoStatusFiltro, setTreinamentoStatusFiltro] = useState<
+  string | null
+>(null);
+const [treinamentoVisualizacao, setTreinamentoVisualizacao] = useState<
+  "todos" | "atuais" | "historico"
+>("todos");
 ```
 
 **useMemo para aplicar filtros:**
+
 ```typescript
 const treinamentosFiltrados = useMemo(() => {
   // Combina atuais e histórico, aplica filtros
   const todos = [...treinamentosAtuais, ...treinamentosHistorico];
-  
+
   let resultado = todos.filter((t) => {
     // Filtro de status
-    if (treinamentoStatusFiltro && t.status !== treinamentoStatusFiltro) return false;
+    if (treinamentoStatusFiltro && t.status !== treinamentoStatusFiltro)
+      return false;
 
     // Filtro de busca
     if (treinamentoBusca.trim()) {
@@ -47,10 +54,17 @@ const treinamentosFiltrados = useMemo(() => {
   }
 
   return resultado;
-}, [treinamentosAtuais, treinamentosHistorico, treinamentoBusca, treinamentoStatusFiltro, treinamentoVisualizacao]);
+}, [
+  treinamentosAtuais,
+  treinamentosHistorico,
+  treinamentoBusca,
+  treinamentoStatusFiltro,
+  treinamentoVisualizacao,
+]);
 ```
 
 **UI Controles de Filtro:**
+
 ```tsx
 <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -85,6 +99,7 @@ const treinamentosFiltrados = useMemo(() => {
 ### ❌ ASOs - Sem Filtros (Por Design)
 
 ASOs **não possuem filtros avançados** porque:
+
 - Cada colaborador tem apenas **1 ASO atual** (pela regra `splitLatestSingle()`)
 - Filtros de "Todos/Atuais/Histórico" não fazem sentido com um único registro
 - Histórico de ASOs é mostrado em seção separada abaixo
@@ -95,17 +110,20 @@ ASOs **não possuem filtros avançados** porque:
 ## 🎯 Funcionalidades Implementadas
 
 ### 1. Busca por Texto
+
 - **Para Treinamentos:** busca em `tipoTreinamento_nome` e `nr`
 - **Para ASOs:** busca em `tipoASO_nome` e `clinica`
 - Case-insensitive
 - Busca parcial (substring)
 
 ### 2. Filtro por Status
+
 - **Opções:** "Em dia", "Prestes a vencer", "Vencido", "Pendente"
 - Filtra registros que correspondem ao status selecionado
 - Opção "Todos os status" para remover filtro
 
 ### 3. Controle de Visualização
+
 - **Todos:** Mostra atuais + histórico
 - **Apenas Atuais:** Mostra apenas registros "Atuais"
 - **Apenas Histórico:** Mostra apenas registros "Histórico"
@@ -115,16 +133,19 @@ ASOs **não possuem filtros avançados** porque:
 ## 🔧 Características Técnicas
 
 ### Performance
+
 - ✅ Usa `useMemo` para evitar recálculos desnecessários
 - ✅ Filtros aplicados apenas quando dependencies mudam
 - ✅ Sem impacto em outras partes do código
 
 ### Manutenibilidade
+
 - ✅ Helpers bem documentados
 - ✅ Estados claramente nomeados
 - ✅ Lógica de filtro isolada
 
 ### UX/UI
+
 - ✅ Inputs com placeholder descritivo
 - ✅ Grid responsivo (1 coluna em mobile, 3 em desktop)
 - ✅ Styling consistente com Tailwind CSS
@@ -137,6 +158,7 @@ ASOs **não possuem filtros avançados** porque:
 ### Nenhuma mudança adicional necessária!
 
 A implementação está **completa e otimizada**:
+
 - ✅ Treinamentos: Filtros implementados e funcionando
 - ✅ ASOs: Estrutura simples mantida (ASO único é mais apropriado)
 - ✅ Tudo testado e sincronizado
@@ -146,6 +168,7 @@ A implementação está **completa e otimizada**:
 ## 🧪 Casos de Teste
 
 ### Teste 1: Busca Básica
+
 ```
 1. Digitar "NR 15" no campo de busca
 2. Resultado: Mostra apenas treinamentos que contêm "NR 15"
@@ -153,6 +176,7 @@ A implementação está **completa e otimizada**:
 ```
 
 ### Teste 2: Filtro de Status
+
 ```
 1. Selecionar "Vencido"
 2. Resultado: Mostra apenas treinamentos vencidos
@@ -160,6 +184,7 @@ A implementação está **completa e otimizada**:
 ```
 
 ### Teste 3: Visualização Combinada
+
 ```
 1. Selecionar "Apenas Atuais" + Status "Em dia"
 2. Resultado: Mostra apenas treinamentos atuais que estão em dia
@@ -167,6 +192,7 @@ A implementação está **completa e otimizada**:
 ```
 
 ### Teste 4: Sem Resultados
+
 ```
 1. Buscar por algo que não existe: "XXXXXX"
 2. Resultado: "Nenhum treinamento encontrado."
@@ -178,16 +204,19 @@ A implementação está **completa e otimizada**:
 ## 📦 Próximas Etapas
 
 ### Curto Prazo
+
 1. Integrar filtros também para ASOs
 2. Adicionar indicador de resultados
 3. Testar em staging
 
 ### Médio Prazo
+
 1. Adicionar botão "Limpar Filtros"
 2. Mejorar UX com ícones
 3. Adicionar tooltip com ajuda
 
 ### Longo Prazo
+
 1. Persistência de filtros
 2. Filtros avançados (por data range, etc)
 3. Exportação de dados filtrados
@@ -197,18 +226,22 @@ A implementação está **completa e otimizada**:
 ## 🔗 Referência
 
 **Arquivo modificado:**
+
 - `src/components/colaboradores/ColaboradorProfile.tsx`
 
 **Linhas adicionadas:**
+
 - Lines 189-196: Estados de filtro
 - Lines 291-323: useMemo para filtros (Treinamentos e ASOs)
 - Lines 455-485: UI Controles de Filtro (Treinamentos)
 - Lines 536: Uso de `treinamentosFiltrados` na tabela
 
 **Commit:**
+
 - `5f3e55d` - feat(Filtros): Adicionar filtros avançados no ColaboradorProfile para Treinamentos
 
 **Branch:**
+
 - `feature/colaborador-profile-nivel2`
 
 ---

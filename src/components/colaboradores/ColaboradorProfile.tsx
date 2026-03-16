@@ -184,11 +184,15 @@ export default function ColaboradorProfile({ id }: { id: string }) {
   const [editingASO, setEditingASO] = useState<AsoRecord | null>(null);
 
   // ==================== ESTADOS DE FILTRO ====================
-  
+
   // Filtros para Treinamentos
   const [treinamentoBusca, setTreinamentoBusca] = useState("");
-  const [treinamentoStatusFiltro, setTreinamentoStatusFiltro] = useState<string | null>(null);
-  const [treinamentoVisualizacao, setTreinamentoVisualizacao] = useState<"todos" | "atuais" | "historico">("todos");
+  const [treinamentoStatusFiltro, setTreinamentoStatusFiltro] = useState<
+    string | null
+  >(null);
+  const [treinamentoVisualizacao, setTreinamentoVisualizacao] = useState<
+    "todos" | "atuais" | "historico"
+  >("todos");
 
   // ==================== FIM ESTADOS DE FILTRO ====================
 
@@ -286,10 +290,11 @@ export default function ColaboradorProfile({ id }: { id: string }) {
   const treinamentosFiltrados = useMemo(() => {
     // Combina atuais e histórico, aplica filtros
     const todos = [...treinamentosAtuais, ...treinamentosHistorico];
-    
+
     let resultado = todos.filter((t) => {
       // Filtro de status
-      if (treinamentoStatusFiltro && t.status !== treinamentoStatusFiltro) return false;
+      if (treinamentoStatusFiltro && t.status !== treinamentoStatusFiltro)
+        return false;
 
       // Filtro de busca
       if (treinamentoBusca.trim()) {
@@ -310,7 +315,13 @@ export default function ColaboradorProfile({ id }: { id: string }) {
     }
 
     return resultado;
-  }, [treinamentosAtuais, treinamentosHistorico, treinamentoBusca, treinamentoStatusFiltro, treinamentoVisualizacao]);
+  }, [
+    treinamentosAtuais,
+    treinamentosHistorico,
+    treinamentoBusca,
+    treinamentoStatusFiltro,
+    treinamentoVisualizacao,
+  ]);
 
   // ==================== FIM DOS FILTROS ====================
 
@@ -433,7 +444,9 @@ export default function ColaboradorProfile({ id }: { id: string }) {
             {/* Filtro de Status */}
             <select
               value={treinamentoStatusFiltro ?? ""}
-              onChange={(e) => setTreinamentoStatusFiltro(e.target.value || null)}
+              onChange={(e) =>
+                setTreinamentoStatusFiltro(e.target.value || null)
+              }
               className="px-3 py-2 rounded-lg border border-slate-300 bg-slate-50 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
               <option value="">Todos os status</option>
@@ -446,7 +459,11 @@ export default function ColaboradorProfile({ id }: { id: string }) {
             {/* Filtro de Visualização */}
             <select
               value={treinamentoVisualizacao}
-              onChange={(e) => setTreinamentoVisualizacao(e.target.value as "todos" | "atuais" | "historico")}
+              onChange={(e) =>
+                setTreinamentoVisualizacao(
+                  e.target.value as "todos" | "atuais" | "historico",
+                )
+              }
               className="px-3 py-2 rounded-lg border border-slate-300 bg-slate-50 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
               <option value="todos">Todos</option>
