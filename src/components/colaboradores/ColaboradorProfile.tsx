@@ -190,11 +190,6 @@ export default function ColaboradorProfile({ id }: { id: string }) {
   const [treinamentoStatusFiltro, setTreinamentoStatusFiltro] = useState<string | null>(null);
   const [treinamentoVisualizacao, setTreinamentoVisualizacao] = useState<"todos" | "atuais" | "historico">("todos");
 
-  // Filtros para ASOs
-  const [asoBusca, setAsoBusca] = useState("");
-  const [asoStatusFiltro, setAsoStatusFiltro] = useState<string | null>(null);
-  const [asoVisualizacao, setAsoVisualizacao] = useState<"todos" | "atuais" | "historico">("todos");
-
   // ==================== FIM ESTADOS DE FILTRO ====================
 
   const { data: colaborador, isLoading: loadingColab } = useQuery({
@@ -316,37 +311,6 @@ export default function ColaboradorProfile({ id }: { id: string }) {
 
     return resultado;
   }, [treinamentosAtuais, treinamentosHistorico, treinamentoBusca, treinamentoStatusFiltro, treinamentoVisualizacao]);
-
-  // ==================== FILTROS PARA ASOs ====================
-
-  const asosFiltrados = useMemo(() => {
-    // Combina atuais e histórico, aplica filtros
-    const todos = [...asosAtuais, ...asosHistorico];
-    
-    let resultado = todos.filter((a) => {
-      // Filtro de status
-      if (asoStatusFiltro && a.status !== asoStatusFiltro) return false;
-
-      // Filtro de busca
-      if (asoBusca.trim()) {
-        const needle = asoBusca.toLowerCase();
-        const nome = (a.tipoASO_nome ?? "").toLowerCase();
-        const clinica = (a.clinica ?? "").toLowerCase();
-        if (!nome.includes(needle) && !clinica.includes(needle)) return false;
-      }
-
-      return true;
-    });
-
-    // Aplica filtro de visualização
-    if (asoVisualizacao === "atuais") {
-      resultado = resultado.filter((a) => asosAtuais.includes(a));
-    } else if (asoVisualizacao === "historico") {
-      resultado = resultado.filter((a) => asosHistorico.includes(a));
-    }
-
-    return resultado;
-  }, [asosAtuais, asosHistorico, asoBusca, asoStatusFiltro, asoVisualizacao]);
 
   // ==================== FIM DOS FILTROS ====================
 
@@ -794,39 +758,6 @@ export default function ColaboradorProfile({ id }: { id: string }) {
           </Button>
         </div>
 
-        {/* Filtros de ASOs */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <input
-              type="text"
-              placeholder="Buscar por tipo ou clínica..."
-              value={asoBusca}
-              onChange={(e) => setAsoBusca(e.target.value)}
-              className="px-3 py-2 rounded-lg border border-slate-300 bg-slate-50 text-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
-            />
-            <select
-              value={asoStatusFiltro ?? ""}
-              onChange={(e) => setAsoStatusFiltro(e.target.value || null)}
-              className="px-3 py-2 rounded-lg border border-slate-300 bg-slate-50 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
-            >
-              <option value="">Todos os status</option>
-              <option value="Em dia">Em dia</option>
-              <option value="Prestes a vencer">Prestes a vencer</option>
-              <option value="Vencido">Vencido</option>
-              <option value="Pendente">Pendente</option>
-            </select>
-            <select
-              value={asoVisualizacao}
-              onChange={(e) => setAsoVisualizacao(e.target.value as "todos" | "atuais" | "historico")}
-              className="px-3 py-2 rounded-lg border border-slate-300 bg-slate-50 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
-            >
-              <option value="todos">Todos</option>
-              <option value="atuais">Apenas Atuais</option>
-              <option value="historico">Apenas Histórico</option>
-            </select>
-          </div>
-        </div>
-
         {/* ASOs Atuais */}
         <div className="space-y-2">
           <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
@@ -869,17 +800,17 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                         Carregando...
                       </td>
                     </tr>
-                  ) : asosFiltrados.length === 0 ? (
+                  ) : asosAtuais.length === 0 ? (
                     <tr>
                       <td
                         colSpan={6}
                         className="px-4 py-8 text-center text-slate-500"
                       >
-                        Nenhum ASO encontrado.
+                        Nenhum ASO atual.
                       </td>
                     </tr>
                   ) : (
-                    asosFiltrados.map((a: AsoProfileRow) => (
+                    asosAtuais.map((a: AsoProfileRow) => (
                       <tr
                         key={a.id}
                         className="border-t border-slate-100 hover:bg-slate-50"
