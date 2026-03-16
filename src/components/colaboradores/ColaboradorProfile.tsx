@@ -37,6 +37,83 @@ import { api } from "@/lib/api";
 import type { AsoRecord, TreinamentoRecord } from "@/types/dashboard";
 import { toast } from "sonner";
 
+// ==================== HELPERS PARA NÍVEL 2 ====================
+
+/**
+ * Converte data ISO para Date, retorna epoch 0 se inválida
+ */
+function getDateTime(dateISO?: string | null): number {
+  if (!dateISO) return 0;
+  try {
+    return new Date(dateISO).getTime();
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * Separa registros em "Atual" e "Histórico"
+ * Atual = mais recente por chave (ex: tipoTreinamento)
+ */
+function splitLatestByKey<T extends Record<string, unknown>>(
+  records: T[],
+  keyField: keyof T,
+  dateField: keyof T,
+): { atual: T[]; historico: T[] } {
+  const seenKeys = new Set<unknown>();
+  const atual: T[] = [];
+
+  // Ordena por data DESC (mais recente primeiro)
+  const sorted = [...records].sort(
+    (a, b) =>
+      getDateTime(b[dateField] as string) - getDateTime(a[dateField] as string),
+  );
+
+  // Coleta apenas o primeiro registro por chave
+  for (const record of sorted) {
+    const key = record[keyField];
+    if (!seenKeys.has(key)) {
+      seenKeys.add(key);
+      atual.push(record);
+    }
+  }
+
+  // Histórico = todos os demais
+  const historico = records.filter((r) => !atual.includes(r));
+
+  return { atual, historico };
+}
+
+/**
+ * Separa registros em "Atual" (apenas o mais recente) e "Histórico"
+ * Usado para ASOs onde queremos apenas 1 registro "Atual"
+ */
+function splitLatestSingle<T extends Record<string, unknown>>(
+  records: T[],
+  dateField: keyof T,
+): { atual: T[]; historico: T[] } {
+  // Se vazio, retorna vazio
+  if (records.length === 0) {
+    return { atual: [], historico: [] };
+  }
+
+  // Ordena por data DESC (mais recente primeiro)
+  const sorted = [...records].sort(
+    (a, b) =>
+      getDateTime(b[dateField] as string) - getDateTime(a[dateField] as string),
+  );
+
+  // Atual = apenas o primeiro (mais recente)
+  const atual = [sorted[0]];
+
+  // Histórico = todos os demais
+  const historico = sorted.slice(1);
+
+  return { atual, historico };
+}
+
+// =========== FIM DOS HELPERS PARA NÍVEL 2 ===========
+
 function statusBadge(status: string) {
   const map: Record<string, string> = {
     "Em dia": "bg-emerald-100 text-emerald-700 border-emerald-200",
@@ -106,6 +183,15 @@ export default function ColaboradorProfile({ id }: { id: string }) {
     useState<TreinamentoRecord | null>(null);
   const [editingASO, setEditingASO] = useState<AsoRecord | null>(null);
 
+  // ==================== ESTADOS DE FILTRO ====================
+  
+  // Filtros para Treinamentos
+  const [treinamentoBusca, setTreinamentoBusca] = useState("");
+  const [treinamentoStatusFiltro, setTreinamentoStatusFiltro] = useState<string | null>(null);
+  const [treinamentoVisualizacao, setTreinamentoVisualizacao] = useState<"todos" | "atuais" | "historico">("todos");
+
+  // ==================== FIM ESTADOS DE FILTRO ====================
+
   const { data: colaborador, isLoading: loadingColab } = useQuery({
     queryKey: ["colaborador", id],
     queryFn: () => api.colaboradores.get(id),
@@ -132,7 +218,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
   });
 
   const treinamentosDoColab = useMemo(() => {
-    return (treinamentos as TreinamentoRecord[])
+    const filtered = (treinamentos as TreinamentoRecord[])
       .filter((t) => t.colaborador_id === id)
       .map((t) => ({
         ...t,
@@ -147,7 +233,25 @@ export default function ColaboradorProfile({ id }: { id: string }) {
       .sort((a, b) =>
         byStatusThenDate(a.status, a.validade, b.status, b.validade),
       );
+    return filtered;
   }, [treinamentos, id]);
+
+  const { atual: treinamentosAtuais, historico: treinamentosHistorico } =
+    useMemo(() => {
+      const keyField = "tipoTreinamento" as const;
+      const dateField = "data_treinamento" as const;
+
+      const result = splitLatestByKey(treinamentosDoColab, keyField, dateField);
+
+      return {
+        atual: result.atual.sort((a, b) =>
+          byStatusThenDate(a.status, a.validade, b.status, b.validade),
+        ),
+        historico: result.historico.sort((a, b) =>
+          byStatusThenDate(a.status, a.validade, b.status, b.validade),
+        ),
+      };
+    }, [treinamentosDoColab]);
 
   const asosDoColab = useMemo(() => {
     return (asos as AsoRecord[])
@@ -163,6 +267,52 @@ export default function ColaboradorProfile({ id }: { id: string }) {
           : "Indeterminada",
       }));
   }, [asos, id]);
+
+  const { atual: asosAtuais, historico: asosHistorico } = useMemo(() => {
+    // Nova regra: apenas o registro mais recente em "Atual"
+    // Todos os demais em "Histórico", independentemente do tipo de ASO
+    const dateField = "data_aso" as const;
+
+    const result = splitLatestSingle(asosDoColab, dateField);
+
+    return {
+      atual: result.atual,
+      historico: result.historico,
+    };
+  }, [asosDoColab]);
+
+  // ==================== FILTROS PARA TREINAMENTOS ====================
+
+  const treinamentosFiltrados = useMemo(() => {
+    // Combina atuais e histórico, aplica filtros
+    const todos = [...treinamentosAtuais, ...treinamentosHistorico];
+    
+    let resultado = todos.filter((t) => {
+      // Filtro de status
+      if (treinamentoStatusFiltro && t.status !== treinamentoStatusFiltro) return false;
+
+      // Filtro de busca
+      if (treinamentoBusca.trim()) {
+        const needle = treinamentoBusca.toLowerCase();
+        const nome = (t.tipoTreinamento_nome ?? "").toLowerCase();
+        const nr = (t.nr ?? "").toLowerCase();
+        if (!nome.includes(needle) && !nr.includes(needle)) return false;
+      }
+
+      return true;
+    });
+
+    // Aplica filtro de visualização
+    if (treinamentoVisualizacao === "atuais") {
+      resultado = resultado.filter((t) => treinamentosAtuais.includes(t));
+    } else if (treinamentoVisualizacao === "historico") {
+      resultado = resultado.filter((t) => treinamentosHistorico.includes(t));
+    }
+
+    return resultado;
+  }, [treinamentosAtuais, treinamentosHistorico, treinamentoBusca, treinamentoStatusFiltro, treinamentoVisualizacao]);
+
+  // ==================== FIM DOS FILTROS ====================
 
   const delTre = useMutation({
     mutationFn: (treinamentoId: string) =>
@@ -268,150 +418,335 @@ export default function ColaboradorProfile({ id }: { id: string }) {
           </Button>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
-                    Treinamento / NR
-                  </th>
-                  <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
-                    Data
-                  </th>
-                  <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
-                    Validade
-                  </th>
-                  <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
-                    Carga (h)
-                  </th>
-                  <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
-                    Status
-                  </th>
-                  <th className="px-4 py-2.5 text-right text-sm font-semibold text-slate-600">
-                    Acoes
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {loadingTre ? (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="px-4 py-8 text-center text-slate-500"
-                    >
-                      Carregando...
-                    </td>
-                  </tr>
-                ) : treinamentosDoColab.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="px-4 py-8 text-center text-slate-500"
-                    >
-                      Nenhum treinamento.
-                    </td>
-                  </tr>
-                ) : (
-                  treinamentosDoColab.map((t: TreinamentoProfileRow) => (
-                    <tr
-                      key={t.id}
-                      className="border-t border-slate-100 hover:bg-slate-50"
-                    >
-                      <td className="max-w-85 px-4 py-2.5 text-sm font-medium text-slate-900">
-                        <div className="flex items-center gap-2">
-                          {t.tipoTreinamento_nome ? (
-                            <span>{t.tipoTreinamento_nome}</span>
-                          ) : null}
-                          {t.nr ? (
-                            <Badge
-                              variant="outline"
-                              className="border-sky-200 bg-sky-50 text-sky-700 shadow-none"
-                            >
-                              {t.nr}
-                            </Badge>
-                          ) : !t.tipoTreinamento_nome ? (
-                            <span>-</span>
-                          ) : null}
-                        </div>
-                      </td>
-                      <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
-                        <span className="inline-flex items-center gap-2">
-                          <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
-                          {t.dataFmt}
-                        </span>
-                      </td>
-                      <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
-                        <span className="inline-flex items-center gap-2">
-                          <Clock3 className="h-3.5 w-3.5 text-slate-400" />
-                          {t.validadeFmt}
-                        </span>
-                      </td>
-                      <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
-                        {t.carga_horaria ?? "-"}
-                      </td>
-                      <td className="px-4 py-2.5">
-                        <Badge
-                          variant="outline"
-                          className={`font-medium ${statusBadge(t.status)}`}
-                        >
-                          {t.status}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-2.5">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            title="Editar"
-                            onClick={() => {
-                              setEditingTreinamento(t);
-                              setOpenTreinamento(true);
-                            }}
-                            className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
+        {/* Controles de Filtro para Treinamentos */}
+        <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {/* Busca */}
+            <input
+              type="text"
+              placeholder="Buscar por nome ou NR..."
+              value={treinamentoBusca}
+              onChange={(e) => setTreinamentoBusca(e.target.value)}
+              className="px-3 py-2 rounded-lg border border-slate-300 bg-slate-50 text-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            />
 
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>
-                                  Excluir treinamento?
-                                </AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Essa acao e permanente.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => delTre.mutate(t.id)}
-                                  className="bg-rose-600 hover:bg-rose-700"
-                                >
-                                  Excluir
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+            {/* Filtro de Status */}
+            <select
+              value={treinamentoStatusFiltro ?? ""}
+              onChange={(e) => setTreinamentoStatusFiltro(e.target.value || null)}
+              className="px-3 py-2 rounded-lg border border-slate-300 bg-slate-50 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            >
+              <option value="">Todos os status</option>
+              <option value="Em dia">Em dia</option>
+              <option value="Prestes a vencer">Prestes a vencer</option>
+              <option value="Vencido">Vencido</option>
+              <option value="Pendente">Pendente</option>
+            </select>
+
+            {/* Filtro de Visualização */}
+            <select
+              value={treinamentoVisualizacao}
+              onChange={(e) => setTreinamentoVisualizacao(e.target.value as "todos" | "atuais" | "historico")}
+              className="px-3 py-2 rounded-lg border border-slate-300 bg-slate-50 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            >
+              <option value="todos">Todos</option>
+              <option value="atuais">Apenas Atuais</option>
+              <option value="historico">Apenas Histórico</option>
+            </select>
           </div>
         </div>
+
+        {/* Treinamentos Atuais */}
+        <div className="space-y-2">
+          <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+            <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
+              Atuais
+            </Badge>
+          </h3>
+          <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-slate-50">
+                  <tr>
+                    <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                      Treinamento / NR
+                    </th>
+                    <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                      Data
+                    </th>
+                    <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                      Validade
+                    </th>
+                    <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                      Carga (h)
+                    </th>
+                    <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                      Status
+                    </th>
+                    <th className="px-4 py-2.5 text-right text-sm font-semibold text-slate-600">
+                      Acoes
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loadingTre ? (
+                    <tr>
+                      <td
+                        colSpan={6}
+                        className="px-4 py-8 text-center text-slate-500"
+                      >
+                        Carregando...
+                      </td>
+                    </tr>
+                  ) : treinamentosFiltrados.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={6}
+                        className="px-4 py-8 text-center text-slate-500"
+                      >
+                        Nenhum treinamento encontrado.
+                      </td>
+                    </tr>
+                  ) : (
+                    treinamentosFiltrados.map((t: TreinamentoProfileRow) => (
+                      <tr
+                        key={t.id}
+                        className="border-t border-slate-100 hover:bg-slate-50"
+                      >
+                        <td className="max-w-85 px-4 py-2.5 text-sm font-medium text-slate-900">
+                          <div className="flex items-center gap-2">
+                            {t.tipoTreinamento_nome ? (
+                              <span>{t.tipoTreinamento_nome}</span>
+                            ) : null}
+                            {t.nr ? (
+                              <Badge
+                                variant="outline"
+                                className="border-sky-200 bg-sky-50 text-sky-700 shadow-none"
+                              >
+                                {t.nr}
+                              </Badge>
+                            ) : !t.tipoTreinamento_nome ? (
+                              <span>-</span>
+                            ) : null}
+                          </div>
+                        </td>
+                        <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                          <span className="inline-flex items-center gap-2">
+                            <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
+                            {t.dataFmt}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                          <span className="inline-flex items-center gap-2">
+                            <Clock3 className="h-3.5 w-3.5 text-slate-400" />
+                            {t.validadeFmt}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                          {t.carga_horaria ?? "-"}
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <Badge
+                            variant="outline"
+                            className={`font-medium ${statusBadge(t.status)}`}
+                          >
+                            {t.status}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Editar"
+                              onClick={() => {
+                                setEditingTreinamento(t);
+                                setOpenTreinamento(true);
+                              }}
+                              className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    Excluir treinamento?
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Essa acao e permanente.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>
+                                    Cancelar
+                                  </AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => delTre.mutate(t.id)}
+                                    className="bg-rose-600 hover:bg-rose-700"
+                                  >
+                                    Excluir
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        {/* Treinamentos Histórico */}
+        {treinamentosHistorico.length > 0 && (
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+              <Badge className="bg-slate-100 text-slate-700 border-slate-200">
+                Histórico
+              </Badge>
+            </h3>
+            <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-slate-50">
+                    <tr>
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                        Treinamento / NR
+                      </th>
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                        Data
+                      </th>
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                        Validade
+                      </th>
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                        Carga (h)
+                      </th>
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                        Status
+                      </th>
+                      <th className="px-4 py-2.5 text-right text-sm font-semibold text-slate-600">
+                        Acoes
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {treinamentosHistorico.map((t: TreinamentoProfileRow) => (
+                      <tr
+                        key={t.id}
+                        className="border-t border-slate-100 hover:bg-slate-50 opacity-75"
+                      >
+                        <td className="max-w-85 px-4 py-2.5 text-sm font-medium text-slate-900">
+                          <div className="flex items-center gap-2">
+                            {t.tipoTreinamento_nome ? (
+                              <span>{t.tipoTreinamento_nome}</span>
+                            ) : null}
+                            {t.nr ? (
+                              <Badge
+                                variant="outline"
+                                className="border-sky-200 bg-sky-50 text-sky-700 shadow-none"
+                              >
+                                {t.nr}
+                              </Badge>
+                            ) : !t.tipoTreinamento_nome ? (
+                              <span>-</span>
+                            ) : null}
+                          </div>
+                        </td>
+                        <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                          <span className="inline-flex items-center gap-2">
+                            <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
+                            {t.dataFmt}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                          <span className="inline-flex items-center gap-2">
+                            <Clock3 className="h-3.5 w-3.5 text-slate-400" />
+                            {t.validadeFmt}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                          {t.carga_horaria ?? "-"}
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <Badge
+                            variant="outline"
+                            className={`font-medium ${statusBadge(t.status)}`}
+                          >
+                            {t.status}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Editar"
+                              onClick={() => {
+                                setEditingTreinamento(t);
+                                setOpenTreinamento(true);
+                              }}
+                              className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    Excluir treinamento?
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Essa acao e permanente.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>
+                                    Cancelar
+                                  </AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => delTre.mutate(t.id)}
+                                    className="bg-rose-600 hover:bg-rose-700"
+                                  >
+                                    Excluir
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
       </section>
 
       <section className="space-y-4">
@@ -423,145 +758,287 @@ export default function ColaboradorProfile({ id }: { id: string }) {
           </Button>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
-                    Tipo de ASO
-                  </th>
-                  <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
-                    Data
-                  </th>
-                  <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
-                    Validade
-                  </th>
-                  <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
-                    Clinica
-                  </th>
-                  <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
-                    Status
-                  </th>
-                  <th className="px-4 py-2.5 text-right text-sm font-semibold text-slate-600">
-                    Acoes
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {loadingAso ? (
+        {/* ASOs Atuais */}
+        <div className="space-y-2">
+          <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+            <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
+              Atuais
+            </Badge>
+          </h3>
+          <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-slate-50">
                   <tr>
-                    <td
-                      colSpan={6}
-                      className="px-4 py-8 text-center text-slate-500"
-                    >
-                      Carregando...
-                    </td>
+                    <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                      Tipo de ASO
+                    </th>
+                    <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                      Data
+                    </th>
+                    <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                      Validade
+                    </th>
+                    <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                      Clinica
+                    </th>
+                    <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                      Status
+                    </th>
+                    <th className="px-4 py-2.5 text-right text-sm font-semibold text-slate-600">
+                      Acoes
+                    </th>
                   </tr>
-                ) : asosDoColab.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="px-4 py-8 text-center text-slate-500"
-                    >
-                      Nenhum ASO.
-                    </td>
-                  </tr>
-                ) : (
-                  asosDoColab.map((a: AsoProfileRow) => (
-                    <tr
-                      key={a.id}
-                      className="border-t border-slate-100 hover:bg-slate-50"
-                    >
-                      <td className="px-4 py-2.5 text-sm text-slate-900 whitespace-nowrap">
-                        {a.tipoASO_nome ? (
-                          <Badge
-                            variant="outline"
-                            className="border-emerald-200 bg-emerald-50 text-emerald-700 shadow-none"
-                          >
-                            {a.tipoASO_nome}
-                          </Badge>
-                        ) : (
-                          "-"
-                        )}
-                      </td>
-                      <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
-                        <span className="inline-flex items-center gap-2">
-                          <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
-                          {a.dataFmt}
-                        </span>
-                      </td>
-                      <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
-                        <span className="inline-flex items-center gap-2">
-                          <Clock3 className="h-3.5 w-3.5 text-slate-400" />
-                          {a.validadeFmt}
-                        </span>
-                      </td>
-                      <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
-                        {a.clinica ?? "-"}
-                      </td>
-                      <td className="px-4 py-2.5">
-                        <Badge
-                          variant="outline"
-                          className={`font-medium ${statusBadge(a.status)}`}
-                        >
-                          {a.status}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-2.5">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            title="Editar"
-                            onClick={() => {
-                              setEditingASO(a);
-                              setOpenASO(true);
-                            }}
-                            className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>
-                                  Excluir ASO?
-                                </AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Essa acao e permanente.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => delAso.mutate(a.id)}
-                                  className="bg-rose-600 hover:bg-rose-700"
-                                >
-                                  Excluir
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
+                </thead>
+                <tbody>
+                  {loadingAso ? (
+                    <tr>
+                      <td
+                        colSpan={6}
+                        className="px-4 py-8 text-center text-slate-500"
+                      >
+                        Carregando...
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : asosAtuais.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={6}
+                        className="px-4 py-8 text-center text-slate-500"
+                      >
+                        Nenhum ASO atual.
+                      </td>
+                    </tr>
+                  ) : (
+                    asosAtuais.map((a: AsoProfileRow) => (
+                      <tr
+                        key={a.id}
+                        className="border-t border-slate-100 hover:bg-slate-50"
+                      >
+                        <td className="px-4 py-2.5 text-sm text-slate-900 whitespace-nowrap">
+                          {a.tipoASO_nome ? (
+                            <Badge
+                              variant="outline"
+                              className="border-emerald-200 bg-emerald-50 text-emerald-700 shadow-none"
+                            >
+                              {a.tipoASO_nome}
+                            </Badge>
+                          ) : (
+                            "-"
+                          )}
+                        </td>
+                        <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                          <span className="inline-flex items-center gap-2">
+                            <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
+                            {a.dataFmt}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                          <span className="inline-flex items-center gap-2">
+                            <Clock3 className="h-3.5 w-3.5 text-slate-400" />
+                            {a.validadeFmt}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                          {a.clinica ?? "-"}
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <Badge
+                            variant="outline"
+                            className={`font-medium ${statusBadge(a.status)}`}
+                          >
+                            {a.status}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Editar"
+                              onClick={() => {
+                                setEditingASO(a);
+                                setOpenASO(true);
+                              }}
+                              className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    Excluir ASO?
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Essa acao e permanente.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>
+                                    Cancelar
+                                  </AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => delAso.mutate(a.id)}
+                                    className="bg-rose-600 hover:bg-rose-700"
+                                  >
+                                    Excluir
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
+
+        {/* ASOs Histórico */}
+        {asosHistorico.length > 0 && (
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+              <Badge className="bg-slate-100 text-slate-700 border-slate-200">
+                Histórico
+              </Badge>
+            </h3>
+            <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-slate-50">
+                    <tr>
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                        Tipo de ASO
+                      </th>
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                        Data
+                      </th>
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                        Validade
+                      </th>
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                        Clinica
+                      </th>
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                        Status
+                      </th>
+                      <th className="px-4 py-2.5 text-right text-sm font-semibold text-slate-600">
+                        Acoes
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {asosHistorico.map((a: AsoProfileRow) => (
+                      <tr
+                        key={a.id}
+                        className="border-t border-slate-100 hover:bg-slate-50 opacity-75"
+                      >
+                        <td className="px-4 py-2.5 text-sm text-slate-900 whitespace-nowrap">
+                          {a.tipoASO_nome ? (
+                            <Badge
+                              variant="outline"
+                              className="border-emerald-200 bg-emerald-50 text-emerald-700 shadow-none"
+                            >
+                              {a.tipoASO_nome}
+                            </Badge>
+                          ) : (
+                            "-"
+                          )}
+                        </td>
+                        <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                          <span className="inline-flex items-center gap-2">
+                            <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
+                            {a.dataFmt}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                          <span className="inline-flex items-center gap-2">
+                            <Clock3 className="h-3.5 w-3.5 text-slate-400" />
+                            {a.validadeFmt}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                          {a.clinica ?? "-"}
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <Badge
+                            variant="outline"
+                            className={`font-medium ${statusBadge(a.status)}`}
+                          >
+                            {a.status}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Editar"
+                              onClick={() => {
+                                setEditingASO(a);
+                                setOpenASO(true);
+                              }}
+                              className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    Excluir ASO?
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Essa acao e permanente.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>
+                                    Cancelar
+                                  </AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => delAso.mutate(a.id)}
+                                    className="bg-rose-600 hover:bg-rose-700"
+                                  >
+                                    Excluir
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
       </section>
 
       <AddTreinamentoModal

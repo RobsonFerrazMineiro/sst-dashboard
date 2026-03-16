@@ -59,7 +59,7 @@ export default function DashboardPage() {
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="p-2 rounded-xl bg-linear-to-br from-green-900 via-emerald-600 to-emerald-300 shadow-md shadow-emerald-200">
+            <div className="p-2 rounded-xl bg-linear-to-br from-teal-800 via-teal-300 to-lime-200 shadow-md shadow-emerald-200">
               <ShieldCheck className="w-14 h-14 text-white" />
             </div>
             <div>
@@ -73,14 +73,12 @@ export default function DashboardPage() {
           </div>
 
           <Button
-            variant="outline"
             onClick={handleRefresh}
-            className="gap-2 self-start sm:self-auto"
             disabled={isRefreshing}
+            variant="outline"
+            className="gap-2 self-start sm:self-auto"
           >
-            <RefreshCw
-              className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`}
-            />
+            <RefreshCw className="w-4 h-4" />
             Atualizar
           </Button>
         </div>

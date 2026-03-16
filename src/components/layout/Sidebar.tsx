@@ -41,12 +41,12 @@ export default function Sidebar({
   return (
     <aside
       className={cn(
-        "h-full w-72 border-r border-slate-200 bg-white",
+        "h-full w-full md:w-56 border-r border-slate-200 bg-white",
         className,
       )}
     >
       <div className="h-16 px-4 flex items-center gap-3 border-b border-slate-200">
-        <div className="p-1 rounded-xl bg-linear-to-br from-green-900 via-emerald-600 to-emerald-300 shadow-md shadow-emerald-200">
+        <div className="p-1 rounded-xl bg-linear-to-br from-teal-800 via-teal-300 to-lime-200 shadow-md shadow-emerald-200">
           <ShieldCheck className="w-7 h-7 text-white" />
         </div>
         <div className="leading-tight">

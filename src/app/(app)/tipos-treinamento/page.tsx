@@ -85,8 +85,8 @@ export default function TiposTreinamentoPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <div className="flex items-center gap-3">
             <div className="rounded-xl bg-emerald-50 p-2.5 text-sky-700">
               <ShieldCheck className="h-8 w-8" />
@@ -100,11 +100,14 @@ export default function TiposTreinamentoPage() {
           </p>
         </div>
 
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => refetch()} className="gap-2">
-            <RefreshCw
-              className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`}
-            />
+        <div className="flex flex-wrap gap-2 sm:justify-end">
+          <Button
+            onClick={() => refetch()}
+            disabled={isFetching}
+            variant="outline"
+            className="gap-2"
+          >
+            <RefreshCw className="w-4 h-4" />
             Atualizar
           </Button>
           <Button onClick={onNew} className="gap-2">
@@ -128,13 +131,13 @@ export default function TiposTreinamentoPage() {
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-230">
             <thead className="bg-slate-50">
               <tr>
                 <th className="text-left text-sm font-semibold text-slate-600 px-4 py-3">
                   NR
                 </th>
-                <th className="text-left text-sm font-semibold text-slate-600 px-4 py-3">
+                <th className="text-left text-sm font-semibold text-slate-600 px-4 py-3 min-w-[320px]">
                   Nome
                 </th>
                 <th className="text-left text-sm font-semibold text-slate-600 px-4 py-3">
@@ -182,7 +185,7 @@ export default function TiposTreinamentoPage() {
                         {row.nr}
                       </Badge>
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-900 whitespace-nowrap">
+                    <td className="px-4 py-3 text-sm text-slate-900 whitespace-nowrap min-w-[320px]">
                       {row.nome}
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
