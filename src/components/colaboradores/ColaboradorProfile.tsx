@@ -183,18 +183,15 @@ export default function ColaboradorProfile({ id }: { id: string }) {
     useState<TreinamentoRecord | null>(null);
   const [editingASO, setEditingASO] = useState<AsoRecord | null>(null);
 
-  // ==================== ESTADOS DE FILTRO ====================
+  // ==================== ESTADO DE FILTRO GLOBAL ====================
 
-  // Filtros para Treinamentos
-  const [treinamentoBusca, setTreinamentoBusca] = useState("");
-  const [treinamentoStatusFiltro, setTreinamentoStatusFiltro] = useState<
-    string | null
-  >(null);
-  const [treinamentoVisualizacao, setTreinamentoVisualizacao] = useState<
+  const [buscaGlobal, setBuscaGlobal] = useState("");
+  const [statusGlobalFiltro, setStatusGlobalFiltro] = useState<string | null>(null);
+  const [visualizacaoGlobal, setVisualizacaoGlobal] = useState<
     "todos" | "atuais" | "historico"
   >("todos");
 
-  // ==================== FIM ESTADOS DE FILTRO ====================
+  // ==================== FIM ESTADO DE FILTRO GLOBAL ====================
 
   const { data: colaborador, isLoading: loadingColab } = useQuery({
     queryKey: ["colaborador", id],
@@ -288,17 +285,17 @@ export default function ColaboradorProfile({ id }: { id: string }) {
   // ==================== FILTROS PARA TREINAMENTOS ====================
 
   const treinamentosFiltrados = useMemo(() => {
-    // Combina atuais e histórico, aplica filtros
+    // Combina atuais e histórico, aplica filtros globais
     const todos = [...treinamentosAtuais, ...treinamentosHistorico];
 
     let resultado = todos.filter((t) => {
-      // Filtro de status
-      if (treinamentoStatusFiltro && t.status !== treinamentoStatusFiltro)
+      // Filtro de status global
+      if (statusGlobalFiltro && t.status !== statusGlobalFiltro)
         return false;
 
-      // Filtro de busca
-      if (treinamentoBusca.trim()) {
-        const needle = treinamentoBusca.toLowerCase();
+      // Filtro de busca global
+      if (buscaGlobal.trim()) {
+        const needle = buscaGlobal.toLowerCase();
         const nome = (t.tipoTreinamento_nome ?? "").toLowerCase();
         const nr = (t.nr ?? "").toLowerCase();
         if (!nome.includes(needle) && !nr.includes(needle)) return false;
@@ -307,10 +304,10 @@ export default function ColaboradorProfile({ id }: { id: string }) {
       return true;
     });
 
-    // Aplica filtro de visualização
-    if (treinamentoVisualizacao === "atuais") {
+    // Aplica filtro global de visualização
+    if (visualizacaoGlobal === "atuais") {
       resultado = resultado.filter((t) => treinamentosAtuais.includes(t));
-    } else if (treinamentoVisualizacao === "historico") {
+    } else if (visualizacaoGlobal === "historico") {
       resultado = resultado.filter((t) => treinamentosHistorico.includes(t));
     }
 
@@ -318,10 +315,44 @@ export default function ColaboradorProfile({ id }: { id: string }) {
   }, [
     treinamentosAtuais,
     treinamentosHistorico,
-    treinamentoBusca,
-    treinamentoStatusFiltro,
-    treinamentoVisualizacao,
+    buscaGlobal,
+    statusGlobalFiltro,
+    visualizacaoGlobal,
   ]);
+
+  // ==================== FILTROS PARA ASOs ====================
+
+  const asosFiltrados = useMemo(() => {
+    // Apenas ASOs atuais - aplicar filtros globais (status e visualização)
+    let resultado = asosAtuais;
+
+    // Filtro de status global
+    if (statusGlobalFiltro) {
+      resultado = resultado.filter((a) => a.status === statusGlobalFiltro);
+    }
+
+    if (visualizacaoGlobal === "historico") {
+      resultado = [];
+    }
+
+    return resultado;
+  }, [asosAtuais, statusGlobalFiltro, visualizacaoGlobal]);
+
+  const asosHistoricoFiltrados = useMemo(() => {
+    // Apenas ASOs históricos - aplicar filtros globais (status e visualização)
+    let resultado = asosHistorico;
+
+    // Filtro de status global
+    if (statusGlobalFiltro) {
+      resultado = resultado.filter((a) => a.status === statusGlobalFiltro);
+    }
+
+    if (visualizacaoGlobal === "atuais") {
+      resultado = [];
+    }
+
+    return resultado;
+  }, [asosHistorico, statusGlobalFiltro, visualizacaoGlobal]);
 
   // ==================== FIM DOS FILTROS ====================
 
@@ -419,33 +450,23 @@ export default function ColaboradorProfile({ id }: { id: string }) {
       </section>
 
       <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold text-slate-900">
-            Treinamentos
-          </h2>
-          <Button onClick={() => setOpenTreinamento(true)} className="gap-2">
-            <Plus className="w-4 h-4" />
-            Adicionar treinamento
-          </Button>
-        </div>
-
-        {/* Controles de Filtro para Treinamentos */}
+        {/* Filtro Global - Posicionado acima do título */}
         <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {/* Busca */}
+            {/* Busca Global */}
             <input
               type="text"
               placeholder="Buscar por nome ou NR..."
-              value={treinamentoBusca}
-              onChange={(e) => setTreinamentoBusca(e.target.value)}
+              value={buscaGlobal}
+              onChange={(e) => setBuscaGlobal(e.target.value)}
               className="px-3 py-2 rounded-lg border border-slate-300 bg-slate-50 text-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
 
-            {/* Filtro de Status */}
+            {/* Filtro de Status Global */}
             <select
-              value={treinamentoStatusFiltro ?? ""}
+              value={statusGlobalFiltro ?? ""}
               onChange={(e) =>
-                setTreinamentoStatusFiltro(e.target.value || null)
+                setStatusGlobalFiltro(e.target.value || null)
               }
               className="px-3 py-2 rounded-lg border border-slate-300 bg-slate-50 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
@@ -456,21 +477,31 @@ export default function ColaboradorProfile({ id }: { id: string }) {
               <option value="Pendente">Pendente</option>
             </select>
 
-            {/* Filtro de Visualização */}
+            {/* Filtro de Visualização Global */}
             <select
-              value={treinamentoVisualizacao}
+              value={visualizacaoGlobal}
               onChange={(e) =>
-                setTreinamentoVisualizacao(
+                setVisualizacaoGlobal(
                   e.target.value as "todos" | "atuais" | "historico",
                 )
               }
               className="px-3 py-2 rounded-lg border border-slate-300 bg-slate-50 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
-              <option value="todos">Todos</option>
+              <option value="todos">Todos (Atuais + Histórico)</option>
               <option value="atuais">Apenas Atuais</option>
               <option value="historico">Apenas Histórico</option>
             </select>
           </div>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-semibold text-slate-900">
+            Treinamentos
+          </h2>
+          <Button onClick={() => setOpenTreinamento(true)} className="gap-2">
+            <Plus className="w-4 h-4" />
+            Adicionar treinamento
+          </Button>
         </div>
 
         {/* Treinamentos Atuais */}
@@ -817,17 +848,17 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                         Carregando...
                       </td>
                     </tr>
-                  ) : asosAtuais.length === 0 ? (
+                  ) : asosFiltrados.length === 0 ? (
                     <tr>
                       <td
                         colSpan={6}
                         className="px-4 py-8 text-center text-slate-500"
                       >
-                        Nenhum ASO atual.
+                        Nenhum ASO para visualizar.
                       </td>
                     </tr>
                   ) : (
-                    asosAtuais.map((a: AsoProfileRow) => (
+                    asosFiltrados.map((a: AsoProfileRow) => (
                       <tr
                         key={a.id}
                         className="border-t border-slate-100 hover:bg-slate-50"
@@ -926,7 +957,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
         </div>
 
         {/* ASOs Histórico */}
-        {asosHistorico.length > 0 && (
+        {asosHistoricoFiltrados.length > 0 && (
           <div className="space-y-2">
             <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
               <Badge className="bg-slate-100 text-slate-700 border-slate-200">
@@ -959,7 +990,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {asosHistorico.map((a: AsoProfileRow) => (
+                    {asosHistoricoFiltrados.map((a: AsoProfileRow) => (
                       <tr
                         key={a.id}
                         className="border-t border-slate-100 hover:bg-slate-50 opacity-75"
