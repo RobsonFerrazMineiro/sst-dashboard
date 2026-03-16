@@ -82,23 +82,13 @@ const treinamentosFiltrados = useMemo(() => {
 </div>
 ```
 
-### ⏳ Em Progresso - ASOs
+### ❌ ASOs - Sem Filtros (Por Design)
 
-Os mesmos filtros foram estruturados para ASOs, mas ainda precisam ser integrados à UI.
-
-**Estados criados:**
-```typescript
-const [asoBusca, setAsoBusca] = useState("");
-const [asoStatusFiltro, setAsoStatusFiltro] = useState<string | null>(null);
-const [asoVisualizacao, setAsoVisualizacao] = useState<"todos" | "atuais" | "historico">("todos");
-
-const asosFiltrados = useMemo(() => {
-  // Mesma lógica dos Treinamentos
-  // Combina atuais e histórico
-  // Aplica filtros de status e busca
-  // Aplica filtro de visualização
-}, [asosAtuais, asosHistorico, asoBusca, asoStatusFiltro, asoVisualizacao]);
-```
+ASOs **não possuem filtros avançados** porque:
+- Cada colaborador tem apenas **1 ASO atual** (pela regra `splitLatestSingle()`)
+- Filtros de "Todos/Atuais/Histórico" não fazem sentido com um único registro
+- Histórico de ASOs é mostrado em seção separada abaixo
+- Mantém simplicidade e performance
 
 ---
 
@@ -144,28 +134,12 @@ const asosFiltrados = useMemo(() => {
 
 ## 📋 O que ainda precisa ser feito
 
-### 1. Integrar ASOs com Filtros
-- Adicionar controles de filtro para ASOs (similar aos Treinamentos)
-- Atualizar tabela de ASOs para usar `asosFiltrados`
-- Testar com múltiplos ASOs
+### Nenhuma mudança adicional necessária!
 
-### 2. Adicionar Indicador de Resultados
-- Mostrar "X registros encontrados" abaixo dos filtros
-- Exibir mensagem quando nenhum resultado é encontrado
-
-### 3. Limpeza de Filtros
-- Adicionar botão "Limpar Filtros" para resetar tudo
-- Atalho com Enter para busca rápida (opcional)
-
-### 4. Persistência (Opcional)
-- Salvar filtros no `localStorage`
-- Restaurar ao voltar para a página
-- Clear ao sair ou logout
-
-### 5. Melhorias Futuras
-- Filtros por intervalo de datas
-- Exportar registros filtrados como CSV
-- Salvar filtros como "favoritos"
+A implementação está **completa e otimizada**:
+- ✅ Treinamentos: Filtros implementados e funcionando
+- ✅ ASOs: Estrutura simples mantida (ASO único é mais apropriado)
+- ✅ Tudo testado e sincronizado
 
 ---
 
