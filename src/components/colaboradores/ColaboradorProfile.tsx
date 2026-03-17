@@ -521,6 +521,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
             Adicionar treinamento
           </Button>
         </div>
+
         {/* Treinamentos Atuais */}
         {visualizacaoGlobal !== "historico" && (
           <div className="space-y-2">
@@ -679,7 +680,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
         )}
 
         {/* Treinamentos Histórico */}
-        {visualizacaoGlobal !== "atuais" && treinamentosHistoricoFiltrados.length > 0 && (
+        {visualizacaoGlobal !== "atuais" && (
           <div className="space-y-2">
             <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
               <Badge className="bg-slate-100 text-slate-700 border-slate-200">
@@ -712,7 +713,17 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {treinamentosHistoricoFiltrados.map((t: TreinamentoProfileRow) => (
+                    {treinamentosHistoricoFiltrados.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={6}
+                          className="px-4 py-8 text-center text-slate-500"
+                        >
+                          Nenhum treinamento encontrado.
+                        </td>
+                      </tr>
+                    ) : (
+                      treinamentosHistoricoFiltrados.map((t: TreinamentoProfileRow) => (
                       <tr
                         key={t.id}
                         className="border-t border-slate-100 hover:bg-slate-50 opacity-75"
@@ -807,7 +818,8 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                           </div>
                         </td>
                       </tr>
-                    ))}
+                    ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -826,7 +838,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
         </div>
 
         {/* ASOs Atuais */}
-        {asosFiltrados.length > 0 && visualizacaoGlobal !== "historico" && (
+        {visualizacaoGlobal !== "historico" && (
           <div className="space-y-2">
             <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
               <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
@@ -978,7 +990,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
         )}
 
         {/* ASOs Histórico */}
-        {asosHistoricoFiltrados.length > 0 && visualizacaoGlobal !== "atuais" && (
+        {visualizacaoGlobal !== "atuais" && (
           <div className="space-y-2">
             <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
               <Badge className="bg-slate-100 text-slate-700 border-slate-200">
@@ -1011,7 +1023,17 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {asosHistoricoFiltrados.map((a: AsoProfileRow) => (
+                    {asosHistoricoFiltrados.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={6}
+                          className="px-4 py-8 text-center text-slate-500"
+                        >
+                          Nenhum ASO para visualizar.
+                        </td>
+                      </tr>
+                    ) : (
+                      asosHistoricoFiltrados.map((a: AsoProfileRow) => (
                       <tr
                         key={a.id}
                         className="border-t border-slate-100 hover:bg-slate-50 opacity-75"
@@ -1101,7 +1123,8 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                           </div>
                         </td>
                       </tr>
-                    ))}
+                    ))
+                    )}
                   </tbody>
                 </table>
               </div>
