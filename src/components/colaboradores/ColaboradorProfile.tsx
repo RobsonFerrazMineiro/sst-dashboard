@@ -285,40 +285,58 @@ export default function ColaboradorProfile({ id }: { id: string }) {
   // ==================== FILTROS PARA TREINAMENTOS ====================
 
   const treinamentosFiltrados = useMemo(() => {
-    // Combina atuais e histórico, aplica filtros globais
-    const todos = [...treinamentosAtuais, ...treinamentosHistorico];
+    // Apenas Treinamentos Atuais - aplicar filtros globais (status, busca e visualização)
+    let resultado = treinamentosAtuais;
 
-    let resultado = todos.filter((t) => {
-      // Filtro de status global
-      if (statusGlobalFiltro && t.status !== statusGlobalFiltro)
-        return false;
+    // Filtro de status global
+    if (statusGlobalFiltro) {
+      resultado = resultado.filter((t) => t.status === statusGlobalFiltro);
+    }
 
-      // Filtro de busca global
-      if (buscaGlobal.trim()) {
-        const needle = buscaGlobal.toLowerCase();
+    // Filtro de busca global
+    if (buscaGlobal.trim()) {
+      const needle = buscaGlobal.toLowerCase();
+      resultado = resultado.filter((t) => {
         const nome = (t.tipoTreinamento_nome ?? "").toLowerCase();
         const nr = (t.nr ?? "").toLowerCase();
-        if (!nome.includes(needle) && !nr.includes(needle)) return false;
-      }
+        return nome.includes(needle) || nr.includes(needle);
+      });
+    }
 
-      return true;
-    });
-
-    // Aplica filtro global de visualização
-    if (visualizacaoGlobal === "atuais") {
-      resultado = resultado.filter((t) => treinamentosAtuais.includes(t));
-    } else if (visualizacaoGlobal === "historico") {
-      resultado = resultado.filter((t) => treinamentosHistorico.includes(t));
+    // Aplicar visualização
+    if (visualizacaoGlobal === "historico") {
+      resultado = [];
     }
 
     return resultado;
-  }, [
-    treinamentosAtuais,
-    treinamentosHistorico,
-    buscaGlobal,
-    statusGlobalFiltro,
-    visualizacaoGlobal,
-  ]);
+  }, [treinamentosAtuais, statusGlobalFiltro, buscaGlobal, visualizacaoGlobal]);
+
+  const treinamentosHistoricoFiltrados = useMemo(() => {
+    // Apenas Treinamentos Histórico - aplicar filtros globais (status, busca e visualização)
+    let resultado = treinamentosHistorico;
+
+    // Filtro de status global
+    if (statusGlobalFiltro) {
+      resultado = resultado.filter((t) => t.status === statusGlobalFiltro);
+    }
+
+    // Filtro de busca global
+    if (buscaGlobal.trim()) {
+      const needle = buscaGlobal.toLowerCase();
+      resultado = resultado.filter((t) => {
+        const nome = (t.tipoTreinamento_nome ?? "").toLowerCase();
+        const nr = (t.nr ?? "").toLowerCase();
+        return nome.includes(needle) || nr.includes(needle);
+      });
+    }
+
+    // Aplicar visualização
+    if (visualizacaoGlobal === "atuais") {
+      resultado = [];
+    }
+
+    return resultado;
+  }, [treinamentosHistorico, statusGlobalFiltro, buscaGlobal, visualizacaoGlobal]);
 
   // ==================== FILTROS PARA ASOs ====================
 
@@ -503,17 +521,17 @@ export default function ColaboradorProfile({ id }: { id: string }) {
             Adicionar treinamento
           </Button>
         </div>
-
         {/* Treinamentos Atuais */}
-        <div className="space-y-2">
-          <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-            <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
-              Atuais
-            </Badge>
-          </h3>
-          <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
+        {visualizacaoGlobal !== "historico" && (
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+              <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
+                Atuais
+              </Badge>
+            </h3>
+            <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
                 <thead className="bg-slate-50">
                   <tr>
                     <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
@@ -658,9 +676,10 @@ export default function ColaboradorProfile({ id }: { id: string }) {
             </div>
           </div>
         </div>
+        )}
 
         {/* Treinamentos Histórico */}
-        {treinamentosHistorico.length > 0 && (
+        {visualizacaoGlobal !== "atuais" && treinamentosHistoricoFiltrados.length > 0 && (
           <div className="space-y-2">
             <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
               <Badge className="bg-slate-100 text-slate-700 border-slate-200">
@@ -693,7 +712,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {treinamentosHistorico.map((t: TreinamentoProfileRow) => (
+                    {treinamentosHistoricoFiltrados.map((t: TreinamentoProfileRow) => (
                       <tr
                         key={t.id}
                         className="border-t border-slate-100 hover:bg-slate-50 opacity-75"
