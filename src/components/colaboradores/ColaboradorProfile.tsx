@@ -826,12 +826,13 @@ export default function ColaboradorProfile({ id }: { id: string }) {
         </div>
 
         {/* ASOs Atuais */}
-        <div className="space-y-2">
-          <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-            <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
-              Atuais
-            </Badge>
-          </h3>
+        {asosFiltrados.length > 0 && visualizacaoGlobal !== "historico" && (
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+              <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
+                Atuais
+              </Badge>
+            </h3>
           <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -974,9 +975,10 @@ export default function ColaboradorProfile({ id }: { id: string }) {
             </div>
           </div>
         </div>
+        )}
 
         {/* ASOs Histórico */}
-        {asosHistoricoFiltrados.length > 0 && (
+        {asosHistoricoFiltrados.length > 0 && visualizacaoGlobal !== "atuais" && (
           <div className="space-y-2">
             <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
               <Badge className="bg-slate-100 text-slate-700 border-slate-200">
