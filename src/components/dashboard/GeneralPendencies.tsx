@@ -4,6 +4,7 @@ import { AlertCircle, CheckCircle2, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
+import { Card, CardContent } from "@/components/ui/card";
 import {
   createRealPendingsList,
   filterGroupsByStatus,
@@ -86,7 +87,7 @@ export default function GeneralPendencies({
   return (
     <div className="bg-white rounded-lg border border-slate-200 shadow-sm mb-6">
       {/* Header */}
-      <div className="border-b border-slate-200 p-4 sm:p-6">
+      <div className="border-b border-slate-200 sm:p-2 sm:pl-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <h2 className="text-lg font-bold text-slate-900">
             Pendências Gerais
@@ -175,7 +176,7 @@ export default function GeneralPendencies({
                       </div>
                     </div>
 
-                    {/* Coluna direita: faixa horizontal de mini-cards - compacta */}
+                    {/* Coluna direita: faixa horizontal de mini-cards */}
                     <div
                       style={{
                         overflowX: "auto",
@@ -183,47 +184,51 @@ export default function GeneralPendencies({
                       }}
                       className="w-full"
                     >
-                      <div className="flex gap-1.5 min-w-min">
+                      <div className="flex gap-2 min-w-min">
                         {group.items.map((item) => {
                           const colors = getStatusColorClasses(item.status);
                           return (
-                            <div
+                            <Card
                               key={`${item.type}-${item.id}`}
-                              className={`shrink-0 p-1.5 rounded border text-xs min-w-52 max-w-60 ${colors.bg}`}
+                              className={`shrink-0 min-w-56 max-w-64 border-0 ${colors.bg}`}
                             >
-                              <div className="space-y-0.5">
-                                {/* Linha 1: Tipo e Status - compacto */}
-                                <div className="flex items-center justify-between gap-0.5">
-                                  <span className="inline-flex items-center px-1 py-0 rounded border text-xs font-medium bg-slate-100 text-slate-700 shrink-0 leading-tight">
-                                    {item.type === "aso" ? "ASO" : "TRE"}
-                                  </span>
-                                  <span
-                                    className={`inline-flex items-center gap-0.5 px-1 py-0 rounded border text-xs font-medium shrink-0 leading-tight ${getStatusBadgeColor(item.status)}`}
-                                  >
-                                    {getStatusIcon(item.status)}
-                                    <span className="text-xs">
-                                      {item.status === "Vencido"
-                                        ? "Venc."
-                                        : item.status === "Prestes a vencer"
-                                          ? "Venc!"
-                                          : "Pend."}
+                              <CardContent className="p-3">
+                                <div className="space-y-1.5">
+                                  {/* Linha 1: Tipo e Status */}
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="text-xs font-semibold text-slate-700 uppercase">
+                                      {item.type === "aso"
+                                        ? "ASO"
+                                        : "Treinamento"}
                                     </span>
-                                  </span>
-                                </div>
+                                    <span
+                                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${getStatusBadgeColor(item.status)}`}
+                                    >
+                                      {getStatusIcon(item.status)}
+                                      <span>
+                                        {item.status === "Vencido"
+                                          ? "Vencido"
+                                          : item.status === "Prestes a vencer"
+                                            ? "Vencendo"
+                                            : "Pendente"}
+                                      </span>
+                                    </span>
+                                  </div>
 
-                                {/* Linha 2: NR/Descrição + Data - lado a lado */}
-                                <div className="flex items-center justify-between gap-1 min-w-0">
-                                  <p className="text-xs font-medium text-slate-900 truncate leading-tight flex-1">
-                                    {item.type === "treinamento"
-                                      ? item.nr
-                                      : item.descricao}
-                                  </p>
-                                  <p className="text-xs text-slate-600 leading-tight shrink-0 whitespace-nowrap">
-                                    {formatDate(item.validade)}
-                                  </p>
+                                  {/* Linha 2: Descrição/NR + Data (lado a lado) */}
+                                  <div className="flex items-center justify-between gap-2 min-w-0">
+                                    <p className="text-sm font-medium text-slate-900 truncate flex-1">
+                                      {item.type === "treinamento"
+                                        ? item.nr
+                                        : item.descricao}
+                                    </p>
+                                    <p className="text-xs text-slate-600 shrink-0 whitespace-nowrap">
+                                      {formatDate(item.validade)}
+                                    </p>
+                                  </div>
                                 </div>
-                              </div>
-                            </div>
+                              </CardContent>
+                            </Card>
                           );
                         })}
                       </div>
