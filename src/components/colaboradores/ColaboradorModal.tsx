@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -40,36 +40,43 @@ export default function ColaboradorModal({
 
   const isEdit = !!initial?.id;
 
-  const [nome, setNome] = useState("");
-  const [setor, setSetor] = useState("");
-  const [cargo, setCargo] = useState("");
-  const [matricula, setMatricula] = useState("");
+  const [formData, setFormData] = useState({
+    nome: "",
+    setor: "",
+    cargo: "",
+    matricula: "",
+    error: null as string | null,
+  });
 
-  const [error, setError] = useState<string | null>(null);
+  const resetForm = useCallback(() => {
+    setFormData({
+      nome: initial?.nome ?? "",
+      setor: initial?.setor ?? "",
+      cargo: initial?.cargo ?? "",
+      matricula: initial?.matricula ?? "",
+      error: null,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initial?.id]);
 
   useEffect(() => {
-    if (!open) return;
-
-    setError(null);
-
-    setNome(initial?.nome ?? "");
-    setSetor(initial?.setor ?? "");
-    setCargo(initial?.cargo ?? "");
-    setMatricula(initial?.matricula ?? "");
-  }, [open, initial]);
+    if (open) {
+      resetForm();
+    }
+  }, [open, resetForm]);
 
   const payload = useMemo(() => {
     return {
-      nome: nome.trim(),
-      setor: setor.trim(),
-      cargo: cargo.trim(),
-      matricula: matricula.trim() ? matricula.trim() : null,
+      nome: formData.nome.trim(),
+      setor: formData.setor.trim(),
+      cargo: formData.cargo.trim(),
+      matricula: formData.matricula.trim() ? formData.matricula.trim() : null,
     };
-  }, [nome, setor, cargo, matricula]);
+  }, [formData]);
 
   const mutation = useMutation({
     mutationFn: async () => {
-      setError(null);
+      setFormData((prev) => ({ ...prev, error: null }));
 
       if (!payload.nome) throw new Error("Nome é obrigatório");
       if (!payload.setor) throw new Error("Setor é obrigatório");
@@ -82,16 +89,14 @@ export default function ColaboradorModal({
       return api.colaboradores.create(payload);
     },
     onSuccess: async () => {
-      toast.success(
-        isEdit ? "Colaborador atualizado!" : "Colaborador criado!",
-      );
+      toast.success(isEdit ? "Colaborador atualizado!" : "Colaborador criado!");
       await qc.invalidateQueries({ queryKey: ["colaboradores"] });
       onOpenChange(false);
       await onSaved?.();
     },
     onError: (err: unknown) => {
       const message = err instanceof Error ? err.message : "Erro ao salvar";
-      setError(message);
+      setFormData((prev) => ({ ...prev, error: message }));
       toast.error(message);
     },
   });
@@ -113,8 +118,10 @@ export default function ColaboradorModal({
             <Label htmlFor="nome">Nome *</Label>
             <Input
               id="nome"
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
+              value={formData.nome}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, nome: e.target.value }))
+              }
               placeholder="Ex: João da Silva"
             />
           </div>
@@ -123,8 +130,10 @@ export default function ColaboradorModal({
             <Label htmlFor="setor">Setor *</Label>
             <Input
               id="setor"
-              value={setor}
-              onChange={(e) => setSetor(e.target.value)}
+              value={formData.setor}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, setor: e.target.value }))
+              }
               placeholder="Ex: Operação"
             />
           </div>
@@ -133,8 +142,10 @@ export default function ColaboradorModal({
             <Label htmlFor="cargo">Cargo *</Label>
             <Input
               id="cargo"
-              value={cargo}
-              onChange={(e) => setCargo(e.target.value)}
+              value={formData.cargo}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, cargo: e.target.value }))
+              }
               placeholder="Ex: Operador"
             />
           </div>
@@ -143,15 +154,17 @@ export default function ColaboradorModal({
             <Label htmlFor="matricula">Matrícula</Label>
             <Input
               id="matricula"
-              value={matricula}
-              onChange={(e) => setMatricula(e.target.value)}
+              value={formData.matricula}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, matricula: e.target.value }))
+              }
               placeholder="Ex: MAT-0001 (opcional)"
             />
           </div>
 
-          {error && (
+          {formData.error && (
             <div className="text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded-lg p-3">
-              {error}
+              {formData.error}
             </div>
           )}
 
