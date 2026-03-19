@@ -186,7 +186,9 @@ export default function ColaboradorProfile({ id }: { id: string }) {
   // ==================== ESTADO DE FILTRO GLOBAL ====================
 
   const [buscaGlobal, setBuscaGlobal] = useState("");
-  const [statusGlobalFiltro, setStatusGlobalFiltro] = useState<string | null>(null);
+  const [statusGlobalFiltro, setStatusGlobalFiltro] = useState<string | null>(
+    null,
+  );
   const [visualizacaoGlobal, setVisualizacaoGlobal] = useState<
     "todos" | "atuais" | "historico"
   >("todos");
@@ -336,7 +338,12 @@ export default function ColaboradorProfile({ id }: { id: string }) {
     }
 
     return resultado;
-  }, [treinamentosHistorico, statusGlobalFiltro, buscaGlobal, visualizacaoGlobal]);
+  }, [
+    treinamentosHistorico,
+    statusGlobalFiltro,
+    buscaGlobal,
+    visualizacaoGlobal,
+  ]);
 
   // ==================== FILTROS PARA ASOs ====================
 
@@ -483,9 +490,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
             {/* Filtro de Status Global */}
             <select
               value={statusGlobalFiltro ?? ""}
-              onChange={(e) =>
-                setStatusGlobalFiltro(e.target.value || null)
-              }
+              onChange={(e) => setStatusGlobalFiltro(e.target.value || null)}
               className="px-3 py-2 rounded-lg border border-slate-300 bg-slate-50 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
               <option value="">Todos os status</option>
@@ -533,150 +538,150 @@ export default function ColaboradorProfile({ id }: { id: string }) {
             <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
-                <thead className="bg-slate-50">
-                  <tr>
-                    <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
-                      Treinamento / NR
-                    </th>
-                    <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
-                      Data
-                    </th>
-                    <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
-                      Validade
-                    </th>
-                    <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
-                      Carga (h)
-                    </th>
-                    <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
-                      Status
-                    </th>
-                    <th className="px-4 py-2.5 text-right text-sm font-semibold text-slate-600">
-                      Acoes
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loadingTre ? (
+                  <thead className="bg-slate-50">
                     <tr>
-                      <td
-                        colSpan={6}
-                        className="px-4 py-8 text-center text-slate-500"
-                      >
-                        Carregando...
-                      </td>
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                        Treinamento / NR
+                      </th>
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                        Data
+                      </th>
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                        Validade
+                      </th>
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                        Carga (h)
+                      </th>
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                        Status
+                      </th>
+                      <th className="px-4 py-2.5 text-right text-sm font-semibold text-slate-600">
+                        Acoes
+                      </th>
                     </tr>
-                  ) : treinamentosFiltrados.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={6}
-                        className="px-4 py-8 text-center text-slate-500"
-                      >
-                        Nenhum treinamento encontrado.
-                      </td>
-                    </tr>
-                  ) : (
-                    treinamentosFiltrados.map((t: TreinamentoProfileRow) => (
-                      <tr
-                        key={t.id}
-                        className="border-t border-slate-100 hover:bg-slate-50"
-                      >
-                        <td className="max-w-85 px-4 py-2.5 text-sm font-medium text-slate-900">
-                          <div className="flex items-center gap-2">
-                            {t.tipoTreinamento_nome ? (
-                              <span>{t.tipoTreinamento_nome}</span>
-                            ) : null}
-                            {t.nr ? (
-                              <Badge
-                                variant="outline"
-                                className="border-sky-200 bg-sky-50 text-sky-700 shadow-none"
-                              >
-                                {t.nr}
-                              </Badge>
-                            ) : !t.tipoTreinamento_nome ? (
-                              <span>-</span>
-                            ) : null}
-                          </div>
-                        </td>
-                        <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
-                          <span className="inline-flex items-center gap-2">
-                            <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
-                            {t.dataFmt}
-                          </span>
-                        </td>
-                        <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
-                          <span className="inline-flex items-center gap-2">
-                            <Clock3 className="h-3.5 w-3.5 text-slate-400" />
-                            {t.validadeFmt}
-                          </span>
-                        </td>
-                        <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
-                          {t.carga_horaria ?? "-"}
-                        </td>
-                        <td className="px-4 py-2.5">
-                          <Badge
-                            variant="outline"
-                            className={`font-medium ${statusBadge(t.status)}`}
-                          >
-                            {t.status}
-                          </Badge>
-                        </td>
-                        <td className="px-4 py-2.5">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              title="Editar"
-                              onClick={() => {
-                                setEditingTreinamento(t);
-                                setOpenTreinamento(true);
-                              }}
-                              className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </Button>
-
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    Excluir treinamento?
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Essa acao e permanente.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>
-                                    Cancelar
-                                  </AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => delTre.mutate(t.id)}
-                                    className="bg-rose-600 hover:bg-rose-700"
-                                  >
-                                    Excluir
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
+                  </thead>
+                  <tbody>
+                    {loadingTre ? (
+                      <tr>
+                        <td
+                          colSpan={6}
+                          className="px-4 py-8 text-center text-slate-500"
+                        >
+                          Carregando...
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ) : treinamentosFiltrados.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={6}
+                          className="px-4 py-8 text-center text-slate-500"
+                        >
+                          Nenhum treinamento encontrado.
+                        </td>
+                      </tr>
+                    ) : (
+                      treinamentosFiltrados.map((t: TreinamentoProfileRow) => (
+                        <tr
+                          key={t.id}
+                          className="border-t border-slate-100 hover:bg-slate-50"
+                        >
+                          <td className="max-w-85 px-4 py-2.5 text-sm font-medium text-slate-900">
+                            <div className="flex items-center gap-2">
+                              {t.tipoTreinamento_nome ? (
+                                <span>{t.tipoTreinamento_nome}</span>
+                              ) : null}
+                              {t.nr ? (
+                                <Badge
+                                  variant="outline"
+                                  className="border-sky-200 bg-sky-50 text-sky-700 shadow-none"
+                                >
+                                  {t.nr}
+                                </Badge>
+                              ) : !t.tipoTreinamento_nome ? (
+                                <span>-</span>
+                              ) : null}
+                            </div>
+                          </td>
+                          <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                            <span className="inline-flex items-center gap-2">
+                              <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
+                              {t.dataFmt}
+                            </span>
+                          </td>
+                          <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                            <span className="inline-flex items-center gap-2">
+                              <Clock3 className="h-3.5 w-3.5 text-slate-400" />
+                              {t.validadeFmt}
+                            </span>
+                          </td>
+                          <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                            {t.carga_horaria ?? "-"}
+                          </td>
+                          <td className="px-4 py-2.5">
+                            <Badge
+                              variant="outline"
+                              className={`font-medium ${statusBadge(t.status)}`}
+                            >
+                              {t.status}
+                            </Badge>
+                          </td>
+                          <td className="px-4 py-2.5">
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                title="Editar"
+                                onClick={() => {
+                                  setEditingTreinamento(t);
+                                  setOpenTreinamento(true);
+                                }}
+                                className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                      Excluir treinamento?
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Essa acao e permanente.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>
+                                      Cancelar
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => delTre.mutate(t.id)}
+                                      className="bg-rose-600 hover:bg-rose-700"
+                                    >
+                                      Excluir
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
-        </div>
         )}
 
         {/* Treinamentos Histórico */}
@@ -723,102 +728,104 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                         </td>
                       </tr>
                     ) : (
-                      treinamentosHistoricoFiltrados.map((t: TreinamentoProfileRow) => (
-                      <tr
-                        key={t.id}
-                        className="border-t border-slate-100 hover:bg-slate-50 opacity-75"
-                      >
-                        <td className="max-w-85 px-4 py-2.5 text-sm font-medium text-slate-900">
-                          <div className="flex items-center gap-2">
-                            {t.tipoTreinamento_nome ? (
-                              <span>{t.tipoTreinamento_nome}</span>
-                            ) : null}
-                            {t.nr ? (
+                      treinamentosHistoricoFiltrados.map(
+                        (t: TreinamentoProfileRow) => (
+                          <tr
+                            key={t.id}
+                            className="border-t border-slate-100 hover:bg-slate-50 opacity-75"
+                          >
+                            <td className="max-w-85 px-4 py-2.5 text-sm font-medium text-slate-900">
+                              <div className="flex items-center gap-2">
+                                {t.tipoTreinamento_nome ? (
+                                  <span>{t.tipoTreinamento_nome}</span>
+                                ) : null}
+                                {t.nr ? (
+                                  <Badge
+                                    variant="outline"
+                                    className="border-sky-200 bg-sky-50 text-sky-700 shadow-none"
+                                  >
+                                    {t.nr}
+                                  </Badge>
+                                ) : !t.tipoTreinamento_nome ? (
+                                  <span>-</span>
+                                ) : null}
+                              </div>
+                            </td>
+                            <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                              <span className="inline-flex items-center gap-2">
+                                <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
+                                {t.dataFmt}
+                              </span>
+                            </td>
+                            <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                              <span className="inline-flex items-center gap-2">
+                                <Clock3 className="h-3.5 w-3.5 text-slate-400" />
+                                {t.validadeFmt}
+                              </span>
+                            </td>
+                            <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                              {t.carga_horaria ?? "-"}
+                            </td>
+                            <td className="px-4 py-2.5">
                               <Badge
                                 variant="outline"
-                                className="border-sky-200 bg-sky-50 text-sky-700 shadow-none"
+                                className={`font-medium ${statusBadge(t.status)}`}
                               >
-                                {t.nr}
+                                {t.status}
                               </Badge>
-                            ) : !t.tipoTreinamento_nome ? (
-                              <span>-</span>
-                            ) : null}
-                          </div>
-                        </td>
-                        <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
-                          <span className="inline-flex items-center gap-2">
-                            <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
-                            {t.dataFmt}
-                          </span>
-                        </td>
-                        <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
-                          <span className="inline-flex items-center gap-2">
-                            <Clock3 className="h-3.5 w-3.5 text-slate-400" />
-                            {t.validadeFmt}
-                          </span>
-                        </td>
-                        <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
-                          {t.carga_horaria ?? "-"}
-                        </td>
-                        <td className="px-4 py-2.5">
-                          <Badge
-                            variant="outline"
-                            className={`font-medium ${statusBadge(t.status)}`}
-                          >
-                            {t.status}
-                          </Badge>
-                        </td>
-                        <td className="px-4 py-2.5">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              title="Editar"
-                              onClick={() => {
-                                setEditingTreinamento(t);
-                                setOpenTreinamento(true);
-                              }}
-                              className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </Button>
-
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
+                            </td>
+                            <td className="px-4 py-2.5">
+                              <div className="flex justify-end gap-2">
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                                  title="Editar"
+                                  onClick={() => {
+                                    setEditingTreinamento(t);
+                                    setOpenTreinamento(true);
+                                  }}
+                                  className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                                 >
-                                  <Trash2 className="w-4 h-4" />
+                                  <Pencil className="w-4 h-4" />
                                 </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    Excluir treinamento?
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Essa acao e permanente.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>
-                                    Cancelar
-                                  </AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => delTre.mutate(t.id)}
-                                    className="bg-rose-600 hover:bg-rose-700"
-                                  >
-                                    Excluir
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
+
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>
+                                        Excluir treinamento?
+                                      </AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Essa acao e permanente.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>
+                                        Cancelar
+                                      </AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => delTre.mutate(t.id)}
+                                        className="bg-rose-600 hover:bg-rose-700"
+                                      >
+                                        Excluir
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
+                            </td>
+                          </tr>
+                        ),
+                      )
                     )}
                   </tbody>
                 </table>
@@ -845,148 +852,148 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                 Atuais
               </Badge>
             </h3>
-          <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-slate-50">
-                  <tr>
-                    <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
-                      Tipo de ASO
-                    </th>
-                    <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
-                      Data
-                    </th>
-                    <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
-                      Validade
-                    </th>
-                    <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
-                      Clinica
-                    </th>
-                    <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
-                      Status
-                    </th>
-                    <th className="px-4 py-2.5 text-right text-sm font-semibold text-slate-600">
-                      Acoes
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loadingAso ? (
+            <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-slate-50">
                     <tr>
-                      <td
-                        colSpan={6}
-                        className="px-4 py-8 text-center text-slate-500"
-                      >
-                        Carregando...
-                      </td>
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                        Tipo de ASO
+                      </th>
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                        Data
+                      </th>
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                        Validade
+                      </th>
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                        Clinica
+                      </th>
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                        Status
+                      </th>
+                      <th className="px-4 py-2.5 text-right text-sm font-semibold text-slate-600">
+                        Acoes
+                      </th>
                     </tr>
-                  ) : asosFiltrados.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={6}
-                        className="px-4 py-8 text-center text-slate-500"
-                      >
-                        Nenhum ASO para visualizar.
-                      </td>
-                    </tr>
-                  ) : (
-                    asosFiltrados.map((a: AsoProfileRow) => (
-                      <tr
-                        key={a.id}
-                        className="border-t border-slate-100 hover:bg-slate-50"
-                      >
-                        <td className="px-4 py-2.5 text-sm text-slate-900 whitespace-nowrap">
-                          {a.tipoASO_nome ? (
-                            <Badge
-                              variant="outline"
-                              className="border-emerald-200 bg-emerald-50 text-emerald-700 shadow-none"
-                            >
-                              {a.tipoASO_nome}
-                            </Badge>
-                          ) : (
-                            "-"
-                          )}
-                        </td>
-                        <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
-                          <span className="inline-flex items-center gap-2">
-                            <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
-                            {a.dataFmt}
-                          </span>
-                        </td>
-                        <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
-                          <span className="inline-flex items-center gap-2">
-                            <Clock3 className="h-3.5 w-3.5 text-slate-400" />
-                            {a.validadeFmt}
-                          </span>
-                        </td>
-                        <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
-                          {a.clinica ?? "-"}
-                        </td>
-                        <td className="px-4 py-2.5">
-                          <Badge
-                            variant="outline"
-                            className={`font-medium ${statusBadge(a.status)}`}
-                          >
-                            {a.status}
-                          </Badge>
-                        </td>
-                        <td className="px-4 py-2.5">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              title="Editar"
-                              onClick={() => {
-                                setEditingASO(a);
-                                setOpenASO(true);
-                              }}
-                              className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </Button>
-
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    Excluir ASO?
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Essa acao e permanente.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>
-                                    Cancelar
-                                  </AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => delAso.mutate(a.id)}
-                                    className="bg-rose-600 hover:bg-rose-700"
-                                  >
-                                    Excluir
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
+                  </thead>
+                  <tbody>
+                    {loadingAso ? (
+                      <tr>
+                        <td
+                          colSpan={6}
+                          className="px-4 py-8 text-center text-slate-500"
+                        >
+                          Carregando...
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ) : asosFiltrados.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={6}
+                          className="px-4 py-8 text-center text-slate-500"
+                        >
+                          Nenhum ASO para visualizar.
+                        </td>
+                      </tr>
+                    ) : (
+                      asosFiltrados.map((a: AsoProfileRow) => (
+                        <tr
+                          key={a.id}
+                          className="border-t border-slate-100 hover:bg-slate-50"
+                        >
+                          <td className="px-4 py-2.5 text-sm text-slate-900 whitespace-nowrap">
+                            {a.tipoASO_nome ? (
+                              <Badge
+                                variant="outline"
+                                className="border-emerald-200 bg-emerald-50 text-emerald-700 shadow-none"
+                              >
+                                {a.tipoASO_nome}
+                              </Badge>
+                            ) : (
+                              "-"
+                            )}
+                          </td>
+                          <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                            <span className="inline-flex items-center gap-2">
+                              <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
+                              {a.dataFmt}
+                            </span>
+                          </td>
+                          <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                            <span className="inline-flex items-center gap-2">
+                              <Clock3 className="h-3.5 w-3.5 text-slate-400" />
+                              {a.validadeFmt}
+                            </span>
+                          </td>
+                          <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                            {a.clinica ?? "-"}
+                          </td>
+                          <td className="px-4 py-2.5">
+                            <Badge
+                              variant="outline"
+                              className={`font-medium ${statusBadge(a.status)}`}
+                            >
+                              {a.status}
+                            </Badge>
+                          </td>
+                          <td className="px-4 py-2.5">
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                title="Editar"
+                                onClick={() => {
+                                  setEditingASO(a);
+                                  setOpenASO(true);
+                                }}
+                                className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                      Excluir ASO?
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Essa acao e permanente.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>
+                                      Cancelar
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => delAso.mutate(a.id)}
+                                      className="bg-rose-600 hover:bg-rose-700"
+                                    >
+                                      Excluir
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
-        </div>
         )}
 
         {/* ASOs Histórico */}
@@ -1034,96 +1041,96 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                       </tr>
                     ) : (
                       asosHistoricoFiltrados.map((a: AsoProfileRow) => (
-                      <tr
-                        key={a.id}
-                        className="border-t border-slate-100 hover:bg-slate-50 opacity-75"
-                      >
-                        <td className="px-4 py-2.5 text-sm text-slate-900 whitespace-nowrap">
-                          {a.tipoASO_nome ? (
+                        <tr
+                          key={a.id}
+                          className="border-t border-slate-100 hover:bg-slate-50 opacity-75"
+                        >
+                          <td className="px-4 py-2.5 text-sm text-slate-900 whitespace-nowrap">
+                            {a.tipoASO_nome ? (
+                              <Badge
+                                variant="outline"
+                                className="border-emerald-200 bg-emerald-50 text-emerald-700 shadow-none"
+                              >
+                                {a.tipoASO_nome}
+                              </Badge>
+                            ) : (
+                              "-"
+                            )}
+                          </td>
+                          <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                            <span className="inline-flex items-center gap-2">
+                              <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
+                              {a.dataFmt}
+                            </span>
+                          </td>
+                          <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                            <span className="inline-flex items-center gap-2">
+                              <Clock3 className="h-3.5 w-3.5 text-slate-400" />
+                              {a.validadeFmt}
+                            </span>
+                          </td>
+                          <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                            {a.clinica ?? "-"}
+                          </td>
+                          <td className="px-4 py-2.5">
                             <Badge
                               variant="outline"
-                              className="border-emerald-200 bg-emerald-50 text-emerald-700 shadow-none"
+                              className={`font-medium ${statusBadge(a.status)}`}
                             >
-                              {a.tipoASO_nome}
+                              {a.status}
                             </Badge>
-                          ) : (
-                            "-"
-                          )}
-                        </td>
-                        <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
-                          <span className="inline-flex items-center gap-2">
-                            <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
-                            {a.dataFmt}
-                          </span>
-                        </td>
-                        <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
-                          <span className="inline-flex items-center gap-2">
-                            <Clock3 className="h-3.5 w-3.5 text-slate-400" />
-                            {a.validadeFmt}
-                          </span>
-                        </td>
-                        <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
-                          {a.clinica ?? "-"}
-                        </td>
-                        <td className="px-4 py-2.5">
-                          <Badge
-                            variant="outline"
-                            className={`font-medium ${statusBadge(a.status)}`}
-                          >
-                            {a.status}
-                          </Badge>
-                        </td>
-                        <td className="px-4 py-2.5">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              title="Editar"
-                              onClick={() => {
-                                setEditingASO(a);
-                                setOpenASO(true);
-                              }}
-                              className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </Button>
+                          </td>
+                          <td className="px-4 py-2.5">
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                title="Editar"
+                                onClick={() => {
+                                  setEditingASO(a);
+                                  setOpenASO(true);
+                                }}
+                                className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </Button>
 
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    Excluir ASO?
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Essa acao e permanente.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>
-                                    Cancelar
-                                  </AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => delAso.mutate(a.id)}
-                                    className="bg-rose-600 hover:bg-rose-700"
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
                                   >
-                                    Excluir
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                      Excluir ASO?
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Essa acao e permanente.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>
+                                      Cancelar
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => delAso.mutate(a.id)}
+                                      className="bg-rose-600 hover:bg-rose-700"
+                                    >
+                                      Excluir
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
                     )}
                   </tbody>
                 </table>
