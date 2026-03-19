@@ -188,8 +188,8 @@ export default function GeneralPendencies({
                                 key={`${item.type}-${item.id}`}
                                 className={`shrink-0 p-2 rounded border text-xs min-w-55 max-w-65 ${colors.bg}`}
                               >
-                                <div className="space-y-1">
-                                  {/* Tipo e Status em uma linha */}
+                                <div className="space-y-1.5">
+                                  {/* Linha 1: Tipo e Status */}
                                   <div className="flex items-center justify-between gap-1">
                                     <span className="inline-flex items-center px-1.5 py-0 rounded border text-xs font-medium bg-slate-100 text-slate-700 shrink-0">
                                       {item.type === "aso"
@@ -210,15 +210,17 @@ export default function GeneralPendencies({
                                     </span>
                                   </div>
 
-                                  {/* Descrição */}
-                                  <p className="text-xs font-medium text-slate-900 truncate leading-tight">
-                                    {item.descricao}
-                                  </p>
-
-                                  {/* Validade */}
-                                  <p className="text-xs text-slate-600 leading-tight">
-                                    {formatDate(item.validade)}
-                                  </p>
+                                  {/* Linha 2: NR/Descrição + Data (lado a lado) */}
+                                  <div className="flex items-center justify-between gap-1">
+                                    <p className="text-xs font-medium text-slate-900 truncate leading-tight flex-1">
+                                      {item.type === "treinamento"
+                                        ? item.nr
+                                        : item.descricao}
+                                    </p>
+                                    <p className="text-xs text-slate-600 leading-tight shrink-0">
+                                      {formatDate(item.validade)}
+                                    </p>
+                                  </div>
                                 </div>
                               </div>
                             );

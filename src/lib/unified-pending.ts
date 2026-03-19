@@ -13,6 +13,7 @@ export type UnifiedPendingItem = {
   type: "aso" | "treinamento";
   colaborador: string;
   descricao: string;
+  nr?: string; // NR para treinamentos
   validade: string | null;
   status: ValidityStatus;
   originalData: AsoRecord | TreinamentoRecord;
@@ -41,7 +42,8 @@ function treinamentoToUnified(tre: TreinamentoRecord): UnifiedPendingItem {
     id: tre.id,
     type: "treinamento",
     colaborador: tre.colaborador_nome || "Desconhecido",
-    descricao: `${tre.tipoTreinamento_nome || "Treinamento"} (${tre.nr || "N/A"})`,
+    descricao: tre.tipoTreinamento_nome || "Treinamento",
+    nr: tre.nr || "N/A",
     validade: tre.validade ?? null,
     status: getTrainingStatus(tre.validade),
     originalData: tre,
@@ -214,7 +216,9 @@ export function groupPendingsByColaborador(
       const vendoCount = items.filter(
         (i) => i.status === "Prestes a vencer",
       ).length;
-      const pendentesCount = items.filter((i) => i.status === "Pendente").length;
+      const pendentesCount = items.filter(
+        (i) => i.status === "Pendente",
+      ).length;
 
       return {
         colaboradorId: items[0]?.originalData.colaborador_id || null,
@@ -260,7 +264,9 @@ export function filterGroupsByStatus(
 
       switch (filterType) {
         case "vencidos":
-          filteredItems = group.items.filter((item) => item.status === "Vencido");
+          filteredItems = group.items.filter(
+            (item) => item.status === "Vencido",
+          );
           break;
         case "vencendo":
           filteredItems = group.items.filter(
@@ -268,7 +274,9 @@ export function filterGroupsByStatus(
           );
           break;
         case "pendencias":
-          filteredItems = group.items.filter((item) => item.status === "Pendente");
+          filteredItems = group.items.filter(
+            (item) => item.status === "Pendente",
+          );
           break;
       }
 
