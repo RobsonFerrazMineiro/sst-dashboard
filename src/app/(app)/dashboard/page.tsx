@@ -4,8 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { RefreshCw, ShieldCheck } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import GeneralPendencies from "@/components/dashboard/GeneralPendencies";
 import ASOPanel from "@/components/dashboard/ASOPanel";
+import GeneralPendencies from "@/components/dashboard/GeneralPendencies";
 import TabNavigation from "@/components/dashboard/TabNavigation";
 import TreinamentoPanel from "@/components/dashboard/TreinamentoPanel";
 import { Button } from "@/components/ui/button";
@@ -107,7 +107,7 @@ export default function DashboardPage() {
       />
 
       {/* Tab Navigation */}
-      <div className="mb-8">
+      <div className="mb-6">
         <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
       </div>
 

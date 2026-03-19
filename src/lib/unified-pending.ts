@@ -1,4 +1,8 @@
-import { getAsoStatus, getTrainingStatus, type ValidityStatus } from "@/lib/validity";
+import {
+  getAsoStatus,
+  getTrainingStatus,
+  type ValidityStatus,
+} from "@/lib/validity";
 import type { AsoRecord, TreinamentoRecord } from "@/types/dashboard";
 
 /**
@@ -49,10 +53,10 @@ function treinamentoToUnified(tre: TreinamentoRecord): UnifiedPendingItem {
  */
 function getStatusPriority(status: ValidityStatus): number {
   const priorities: Record<ValidityStatus, number> = {
-    "Vencido": 0,
+    Vencido: 0,
     "Prestes a vencer": 1,
     "Em dia": 2,
-    "Pendente": 3,
+    Pendente: 3,
     "Sem vencimento": 4,
   };
   return priorities[status];
@@ -71,7 +75,8 @@ export function createUnifiedPendingsList(
 
   // Ordena por status (prioridade) e depois por data de validade
   unified.sort((a, b) => {
-    const priorityDiff = getStatusPriority(a.status) - getStatusPriority(b.status);
+    const priorityDiff =
+      getStatusPriority(a.status) - getStatusPriority(b.status);
     if (priorityDiff !== 0) return priorityDiff;
 
     if (a.validade && b.validade) {
@@ -112,8 +117,11 @@ export function getStatusColorClasses(status: ValidityStatus): {
   text: string;
   border: string;
 } {
-  const colors: Record<ValidityStatus, { bg: string; text: string; border: string }> = {
-    "Vencido": {
+  const colors: Record<
+    ValidityStatus,
+    { bg: string; text: string; border: string }
+  > = {
+    Vencido: {
       bg: "bg-rose-50",
       text: "text-rose-700",
       border: "border-rose-200",
@@ -128,7 +136,7 @@ export function getStatusColorClasses(status: ValidityStatus): {
       text: "text-emerald-700",
       border: "border-emerald-200",
     },
-    "Pendente": {
+    Pendente: {
       bg: "bg-slate-50",
       text: "text-slate-700",
       border: "border-slate-200",
