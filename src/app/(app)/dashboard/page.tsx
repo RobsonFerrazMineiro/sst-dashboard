@@ -2,13 +2,15 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { RefreshCw, ShieldCheck } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import ASOPanel from "@/components/dashboard/ASOPanel";
+import GeneralPendencies from "@/components/dashboard/GeneralPendencies";
 import TabNavigation from "@/components/dashboard/TabNavigation";
 import TreinamentoPanel from "@/components/dashboard/TreinamentoPanel";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
+import { createUnifiedPendingsList } from "@/lib/unified-pending";
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<"asos" | "treinamentos">("asos");
@@ -53,6 +55,11 @@ export default function DashboardPage() {
 
   const isRefreshing = fetchingASOs || fetchingTreinamentos;
 
+  // Cria lista unificada de pendências
+  const unifiedPendingsList = useMemo(() => {
+    return createUnifiedPendingsList(asos, treinamentos);
+  }, [asos, treinamentos]);
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
@@ -93,8 +100,14 @@ export default function DashboardPage() {
         )}
       </div>
 
+      {/* Seção: Pendências Gerais */}
+      <GeneralPendencies
+        items={unifiedPendingsList}
+        isLoading={loadingASOs || loadingTreinamentos}
+      />
+
       {/* Tab Navigation */}
-      <div className="mb-8">
+      <div className="mb-6">
         <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
       </div>
 
