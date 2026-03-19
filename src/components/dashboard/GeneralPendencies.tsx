@@ -131,7 +131,7 @@ export default function GeneralPendencies({
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-200">
+          <div className="max-h-96 overflow-y-auto divide-y divide-slate-200">
             {filteredGroups.map((group, index) => {
               return (
                 <div
