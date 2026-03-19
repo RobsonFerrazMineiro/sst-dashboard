@@ -4,7 +4,6 @@ import { ChevronDown, ChevronRight, CheckCircle2, Clock, AlertCircle } from "luc
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   createRealPendingsList,
@@ -177,30 +176,21 @@ export default function GeneralPendencies({
                         {/* Resumo de status - linha compacta */}
                         <div className="flex flex-wrap gap-1.5 mt-1.5">
                           {group.vencidosCount > 0 && (
-                            <Badge
-                              variant="outline"
-                              className="bg-rose-50 text-rose-700 border-rose-200 text-xs py-0 px-2"
-                            >
+                            <span className="inline-flex items-center gap-1 px-2 py-0 rounded border text-xs font-medium bg-rose-50 text-rose-700 border-rose-200">
                               {group.vencidosCount} vencido
                               {group.vencidosCount > 1 ? "s" : ""}
-                            </Badge>
+                            </span>
                           )}
                           {group.vendoCount > 0 && (
-                            <Badge
-                              variant="outline"
-                              className="bg-amber-50 text-amber-700 border-amber-200 text-xs py-0 px-2"
-                            >
+                            <span className="inline-flex items-center gap-1 px-2 py-0 rounded border text-xs font-medium bg-amber-50 text-amber-700 border-amber-200">
                               {group.vendoCount} vencendo
-                            </Badge>
+                            </span>
                           )}
                           {group.pendentesCount > 0 && (
-                            <Badge
-                              variant="outline"
-                              className="bg-slate-100 text-slate-700 border-slate-200 text-xs py-0 px-2"
-                            >
+                            <span className="inline-flex items-center gap-1 px-2 py-0 rounded border text-xs font-medium bg-slate-100 text-slate-700 border-slate-200">
                               {group.pendentesCount} pendente
                               {group.pendentesCount > 1 ? "s" : ""}
-                            </Badge>
+                            </span>
                           )}
                         </div>
                       </div>
@@ -235,28 +225,22 @@ export default function GeneralPendencies({
                                   <div className="space-y-1">
                                     {/* Tipo e Status em uma linha */}
                                     <div className="flex items-center justify-between gap-1">
-                                      <Badge
-                                        variant="outline"
-                                        className="text-xs py-0 px-1.5"
-                                      >
-                                        {item.type === "aso"
-                                          ? "ASO"
-                                          : "TRE"}
-                                      </Badge>
+                                      <span className="inline-flex items-center px-1.5 py-0 rounded border text-xs font-medium bg-slate-100 text-slate-700">
+                                        {item.type === "aso" ? "ASO" : "TRE"}
+                                      </span>
                                       <div className="flex items-center gap-0.5">
                                         <div className={colors.text}>
                                           {getStatusIcon(item.status)}
                                         </div>
-                                        <Badge
-                                          variant="secondary"
-                                          className={`text-xs py-0 px-1.5 ${getStatusBadgeColor(
+                                        <span
+                                          className={`inline-flex items-center px-1.5 py-0 rounded border text-xs font-medium ${getStatusBadgeColor(
                                             item.status,
                                           )}`}
                                         >
                                           {item.status === "Vencido"
-                                            ? "Vencido"
-                                            : "Vencendo"}
-                                        </Badge>
+                                            ? "Venc."
+                                            : "Venc!"}
+                                        </span>
                                       </div>
                                     </div>
 
