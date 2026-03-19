@@ -1,16 +1,9 @@
 "use client";
 
-import {
-  AlertCircle,
-  CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
-  Clock,
-} from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
-import { Button } from "@/components/ui/button";
 import {
   createRealPendingsList,
   filterGroupsByStatus,
@@ -65,9 +58,6 @@ export default function GeneralPendencies({
   const [filterType, setFilterType] = useState<
     "todos" | "vencidos" | "vencendo" | "pendencias"
   >("todos");
-  const [expandedColaboradores, setExpandedColaboradores] = useState<
-    Set<string>
-  >(new Set());
 
   // Cria lista de apenas pendências reais
   const realPendingsList = useMemo(
@@ -86,18 +76,6 @@ export default function GeneralPendencies({
     () => filterGroupsByStatus(groupedPendencies, filterType),
     [groupedPendencies, filterType],
   );
-
-  const toggleExpandir = (colaboradorId: string | null) => {
-    if (colaboradorId) {
-      const newSet = new Set(expandedColaboradores);
-      if (newSet.has(colaboradorId)) {
-        newSet.delete(colaboradorId);
-      } else {
-        newSet.add(colaboradorId);
-      }
-      setExpandedColaboradores(newSet);
-    }
-  };
 
   const handleNavegaColaborador = (colaboradorId: string | null) => {
     if (colaboradorId) {
@@ -119,7 +97,6 @@ export default function GeneralPendencies({
                 key={filter}
                 onClick={() => {
                   setFilterType(filter as typeof filterType);
-                  setExpandedColaboradores(new Set());
                 }}
                 className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
                   filterType === filter
@@ -154,44 +131,40 @@ export default function GeneralPendencies({
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-200">
+          <div className="space-y-3">
             {filteredGroups.map((group) => {
-              const isExpanded = expandedColaboradores.has(
-                group.colaboradorId || "",
-              );
-
               return (
                 <div key={group.colaboradorId || group.colaborador}>
-                  {/* Linha expansível - tudo em uma única linha */}
-                  <div className="px-4 sm:px-6 py-3 hover:bg-slate-50 transition-colors">
-                    <div className="flex items-center justify-between gap-2 min-w-0">
-                      {/* Bloco esquerdo: nome + badges */}
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                  {/* Bloco do colaborador com layout grid */}
+                  <div className="px-4 sm:px-6 py-3 hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-b-0">
+                    <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-4 items-start">
+                      {/* Coluna esquerda: nome + badges resumo */}
+                      <div className="flex flex-col gap-2 min-w-0 lg:max-w-xs shrink-0">
                         {/* Nome clicável */}
                         <button
                           onClick={() =>
                             handleNavegaColaborador(group.colaboradorId)
                           }
-                          className="text-sm font-semibold text-slate-900 hover:text-emerald-600 hover:underline transition-colors text-left whitespace-nowrap shrink-0"
+                          className="text-sm font-semibold text-slate-900 hover:text-emerald-600 hover:underline transition-colors text-left"
                         >
                           {group.colaborador}
                         </button>
 
-                        {/* Resumo de status - badges compactos */}
-                        <div className="flex gap-1.5 flex-wrap min-w-0">
+                        {/* Resumo de status - badges */}
+                        <div className="flex flex-wrap gap-1.5">
                           {group.vencidosCount > 0 && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border text-xs font-medium bg-rose-50 text-rose-700 border-rose-200 shrink-0">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border text-xs font-medium bg-rose-50 text-rose-700 border-rose-200">
                               {group.vencidosCount} vencido
                               {group.vencidosCount > 1 ? "s" : ""}
                             </span>
                           )}
                           {group.vendoCount > 0 && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border text-xs font-medium bg-amber-50 text-amber-700 border-amber-200 shrink-0">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border text-xs font-medium bg-amber-50 text-amber-700 border-amber-200">
                               {group.vendoCount} vencendo
                             </span>
                           )}
                           {group.pendentesCount > 0 && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border text-xs font-medium bg-slate-100 text-slate-700 border-slate-200 shrink-0">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border text-xs font-medium bg-slate-100 text-slate-700 border-slate-200">
                               {group.pendentesCount} pendente
                               {group.pendentesCount > 1 ? "s" : ""}
                             </span>
@@ -199,43 +172,50 @@ export default function GeneralPendencies({
                         </div>
                       </div>
 
-                      {/* Cards expandidos em linha horizontal */}
-                      {isExpanded && (
-                        <div
-                          style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}
-                          className="flex gap-1.5 flex-nowrap min-w-0 flex-1 pr-2"
-                        >
+                      {/* Coluna direita: faixa horizontal de mini-cards */}
+                      <div
+                        style={{
+                          overflowX: "auto",
+                          WebkitOverflowScrolling: "touch",
+                        }}
+                        className="w-full"
+                      >
+                        <div className="flex gap-2 min-w-min pb-1">
                           {group.items.map((item) => {
                             const colors = getStatusColorClasses(item.status);
                             return (
                               <div
                                 key={`${item.type}-${item.id}`}
-                                className={`shrink-0 p-1.5 rounded border text-xs w-56 ${colors.bg}`}
+                                className={`shrink-0 p-2 rounded border text-xs min-w-55 max-w-65 ${colors.bg}`}
                               >
-                                <div className="space-y-0.5">
+                                <div className="space-y-1">
                                   {/* Tipo e Status em uma linha */}
                                   <div className="flex items-center justify-between gap-1">
                                     <span className="inline-flex items-center px-1.5 py-0 rounded border text-xs font-medium bg-slate-100 text-slate-700 shrink-0">
-                                      {item.type === "aso" ? "ASO" : "TRE"}
+                                      {item.type === "aso"
+                                        ? "ASO"
+                                        : "Treinamento"}
                                     </span>
-                                    <div className="flex items-center gap-0.5 shrink-0">
-                                      <div className={`${colors.text}`}>
-                                        {getStatusIcon(item.status)}
-                                      </div>
-                                      <span
-                                        className={`inline-flex items-center px-1.5 py-0 rounded border text-xs font-medium ${getStatusBadgeColor(item.status)}`}
-                                      >
-                                        {item.status === "Vencido" ? "V." : "!"}
+                                    <span
+                                      className={`inline-flex items-center gap-0.5 px-1.5 py-0 rounded border text-xs font-medium shrink-0 ${getStatusBadgeColor(item.status)}`}
+                                    >
+                                      {getStatusIcon(item.status)}
+                                      <span className="leading-tight">
+                                        {item.status === "Vencido"
+                                          ? "Vencido"
+                                          : item.status === "Prestes a vencer"
+                                            ? "Vencendo"
+                                            : "Pendente"}
                                       </span>
-                                    </div>
+                                    </span>
                                   </div>
 
-                                  {/* Descrição - ultra compacta */}
+                                  {/* Descrição */}
                                   <p className="text-xs font-medium text-slate-900 truncate leading-tight">
                                     {item.descricao}
                                   </p>
 
-                                  {/* Validade - compacta */}
+                                  {/* Validade */}
                                   <p className="text-xs text-slate-600 leading-tight">
                                     {formatDate(item.validade)}
                                   </p>
@@ -244,21 +224,7 @@ export default function GeneralPendencies({
                             );
                           })}
                         </div>
-                      )}
-
-                      {/* Botão de expandir no final */}
-                      <Button
-                        onClick={() => toggleExpandir(group.colaboradorId)}
-                        variant="ghost"
-                        size="sm"
-                        className="shrink-0 p-1.5 hover:bg-slate-100"
-                      >
-                        {isExpanded ? (
-                          <ChevronLeft className="w-4 h-4 text-slate-600" />
-                        ) : (
-                          <ChevronRight className="w-4 h-4 text-slate-600" />
-                        )}
-                      </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
