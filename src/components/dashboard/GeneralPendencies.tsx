@@ -131,101 +131,101 @@ export default function GeneralPendencies({
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
-            {filteredGroups.map((group) => {
+          <div className="divide-y divide-slate-200">
+            {filteredGroups.map((group, index) => {
               return (
-                <div key={group.colaboradorId || group.colaborador}>
-                  {/* Bloco do colaborador com layout grid */}
-                  <div className="px-4 sm:px-6 py-3 hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-b-0">
-                    <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-4 items-start">
-                      {/* Coluna esquerda: nome + badges resumo */}
-                      <div className="flex flex-col gap-2 min-w-0 lg:max-w-xs shrink-0">
-                        {/* Nome clicável */}
-                        <button
-                          onClick={() =>
-                            handleNavegaColaborador(group.colaboradorId)
-                          }
-                          className="text-sm font-semibold text-slate-900 hover:text-emerald-600 hover:underline transition-colors text-left"
-                        >
-                          {group.colaborador}
-                        </button>
-
-                        {/* Resumo de status - badges */}
-                        <div className="flex flex-wrap gap-1.5">
-                          {group.vencidosCount > 0 && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border text-xs font-medium bg-rose-50 text-rose-700 border-rose-200">
-                              {group.vencidosCount} vencido
-                              {group.vencidosCount > 1 ? "s" : ""}
-                            </span>
-                          )}
-                          {group.vendoCount > 0 && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border text-xs font-medium bg-amber-50 text-amber-700 border-amber-200">
-                              {group.vendoCount} vencendo
-                            </span>
-                          )}
-                          {group.pendentesCount > 0 && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border text-xs font-medium bg-slate-100 text-slate-700 border-slate-200">
-                              {group.pendentesCount} pendente
-                              {group.pendentesCount > 1 ? "s" : ""}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Coluna direita: faixa horizontal de mini-cards */}
-                      <div
-                        style={{
-                          overflowX: "auto",
-                          WebkitOverflowScrolling: "touch",
-                        }}
-                        className="w-full"
+                <div
+                  key={group.colaboradorId || group.colaborador}
+                  className={`px-4 sm:px-6 py-2 hover:bg-slate-50 transition-colors ${
+                    index % 2 === 1 ? "bg-slate-50/30" : ""
+                  }`}
+                >
+                  <div className="grid grid-cols-1 lg:grid-cols-[minmax(140px,auto)_1fr] gap-3 items-center">
+                    {/* Coluna esquerda: nome + badges resumo - compacto */}
+                    <div className="flex flex-col gap-1">
+                      {/* Nome clicável */}
+                      <button
+                        onClick={() =>
+                          handleNavegaColaborador(group.colaboradorId)
+                        }
+                        className="text-sm font-semibold text-slate-900 hover:text-emerald-600 hover:underline transition-colors text-left leading-tight"
                       >
-                        <div className="flex gap-2 min-w-min pb-1">
-                          {group.items.map((item) => {
-                            const colors = getStatusColorClasses(item.status);
-                            return (
-                              <div
-                                key={`${item.type}-${item.id}`}
-                                className={`shrink-0 p-2 rounded border text-xs min-w-55 max-w-65 ${colors.bg}`}
-                              >
-                                <div className="space-y-1.5">
-                                  {/* Linha 1: Tipo e Status */}
-                                  <div className="flex items-center justify-between gap-1">
-                                    <span className="inline-flex items-center px-1.5 py-0 rounded border text-xs font-medium bg-slate-100 text-slate-700 shrink-0">
-                                      {item.type === "aso"
-                                        ? "ASO"
-                                        : "Treinamento"}
-                                    </span>
-                                    <span
-                                      className={`inline-flex items-center gap-0.5 px-1.5 py-0 rounded border text-xs font-medium shrink-0 ${getStatusBadgeColor(item.status)}`}
-                                    >
-                                      {getStatusIcon(item.status)}
-                                      <span className="leading-tight">
-                                        {item.status === "Vencido"
-                                          ? "Vencido"
-                                          : item.status === "Prestes a vencer"
-                                            ? "Vencendo"
-                                            : "Pendente"}
-                                      </span>
-                                    </span>
-                                  </div>
+                        {group.colaborador}
+                      </button>
 
-                                  {/* Linha 2: NR/Descrição + Data (lado a lado) */}
-                                  <div className="flex items-center justify-between gap-1">
-                                    <p className="text-xs font-medium text-slate-900 truncate leading-tight flex-1">
-                                      {item.type === "treinamento"
-                                        ? item.nr
-                                        : item.descricao}
-                                    </p>
-                                    <p className="text-xs text-slate-600 leading-tight shrink-0">
-                                      {formatDate(item.validade)}
-                                    </p>
-                                  </div>
+                      {/* Resumo de status - badges compactos */}
+                      <div className="flex flex-wrap gap-1">
+                        {group.vencidosCount > 0 && (
+                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0 rounded border text-xs font-medium bg-rose-50 text-rose-700 border-rose-200 leading-tight">
+                            {group.vencidosCount} vencido
+                            {group.vencidosCount > 1 ? "s" : ""}
+                          </span>
+                        )}
+                        {group.vendoCount > 0 && (
+                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0 rounded border text-xs font-medium bg-amber-50 text-amber-700 border-amber-200 leading-tight">
+                            {group.vendoCount} vencendo
+                          </span>
+                        )}
+                        {group.pendentesCount > 0 && (
+                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0 rounded border text-xs font-medium bg-slate-100 text-slate-700 border-slate-200 leading-tight">
+                            {group.pendentesCount} pendente
+                            {group.pendentesCount > 1 ? "s" : ""}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Coluna direita: faixa horizontal de mini-cards - compacta */}
+                    <div
+                      style={{
+                        overflowX: "auto",
+                        WebkitOverflowScrolling: "touch",
+                      }}
+                      className="w-full"
+                    >
+                      <div className="flex gap-1.5 min-w-min">
+                        {group.items.map((item) => {
+                          const colors = getStatusColorClasses(item.status);
+                          return (
+                            <div
+                              key={`${item.type}-${item.id}`}
+                              className={`shrink-0 p-1.5 rounded border text-xs min-w-52 max-w-60 ${colors.bg}`}
+                            >
+                              <div className="space-y-0.5">
+                                {/* Linha 1: Tipo e Status - compacto */}
+                                <div className="flex items-center justify-between gap-0.5">
+                                  <span className="inline-flex items-center px-1 py-0 rounded border text-xs font-medium bg-slate-100 text-slate-700 shrink-0 leading-tight">
+                                    {item.type === "aso" ? "ASO" : "TRE"}
+                                  </span>
+                                  <span
+                                    className={`inline-flex items-center gap-0.5 px-1 py-0 rounded border text-xs font-medium shrink-0 leading-tight ${getStatusBadgeColor(item.status)}`}
+                                  >
+                                    {getStatusIcon(item.status)}
+                                    <span className="text-xs">
+                                      {item.status === "Vencido"
+                                        ? "Venc."
+                                        : item.status === "Prestes a vencer"
+                                          ? "Venc!"
+                                          : "Pend."}
+                                    </span>
+                                  </span>
+                                </div>
+
+                                {/* Linha 2: NR/Descrição + Data - lado a lado */}
+                                <div className="flex items-center justify-between gap-1 min-w-0">
+                                  <p className="text-xs font-medium text-slate-900 truncate leading-tight flex-1">
+                                    {item.type === "treinamento"
+                                      ? item.nr
+                                      : item.descricao}
+                                  </p>
+                                  <p className="text-xs text-slate-600 leading-tight shrink-0 whitespace-nowrap">
+                                    {formatDate(item.validade)}
+                                  </p>
                                 </div>
                               </div>
-                            );
-                          })}
-                        </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   </div>
