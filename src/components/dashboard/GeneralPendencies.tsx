@@ -158,34 +158,28 @@ export default function GeneralPendencies({
               return (
                 <div key={group.colaboradorId || group.colaborador}>
                   {/* Linha compacta do colaborador */}
-                  <div className="px-4 sm:px-6 py-4 hover:bg-slate-50 transition-colors">
-                    <div className="flex items-center justify-between gap-4">
+                  <div className="px-4 sm:px-6 py-2.5 hover:bg-slate-50 transition-colors">
+                    <div className="flex items-center justify-between gap-3">
                       {/* Info do colaborador */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
                           {/* Nome clicável */}
                           <button
                             onClick={() =>
                               handleNavegaColaborador(group.colaboradorId)
                             }
-                            className="text-sm font-semibold text-slate-900 hover:text-emerald-600 hover:underline transition-colors text-left"
+                            className="text-sm font-semibold text-slate-900 hover:text-emerald-600 hover:underline transition-colors text-left whitespace-nowrap"
                           >
                             {group.colaborador}
                           </button>
-
-                          {/* Total de pendências */}
-                          <span className="px-2 py-0.5 rounded-full bg-slate-100 text-xs font-medium text-slate-600">
-                            {group.totalCount}{" "}
-                            {group.totalCount === 1 ? "item" : "itens"}
-                          </span>
                         </div>
 
-                        {/* Resumo de status */}
-                        <div className="flex flex-wrap gap-2 mt-2">
+                        {/* Resumo de status - linha compacta */}
+                        <div className="flex flex-wrap gap-1.5 mt-1.5">
                           {group.vencidosCount > 0 && (
                             <Badge
                               variant="outline"
-                              className="bg-rose-50 text-rose-700 border-rose-200 text-xs"
+                              className="bg-rose-50 text-rose-700 border-rose-200 text-xs py-0 px-2"
                             >
                               {group.vencidosCount} vencido
                               {group.vencidosCount > 1 ? "s" : ""}
@@ -194,7 +188,7 @@ export default function GeneralPendencies({
                           {group.vendoCount > 0 && (
                             <Badge
                               variant="outline"
-                              className="bg-amber-50 text-amber-700 border-amber-200 text-xs"
+                              className="bg-amber-50 text-amber-700 border-amber-200 text-xs py-0 px-2"
                             >
                               {group.vendoCount} vencendo
                             </Badge>
@@ -202,7 +196,7 @@ export default function GeneralPendencies({
                           {group.pendentesCount > 0 && (
                             <Badge
                               variant="outline"
-                              className="bg-slate-100 text-slate-700 border-slate-200 text-xs"
+                              className="bg-slate-100 text-slate-700 border-slate-200 text-xs py-0 px-2"
                             >
                               {group.pendentesCount} pendente
                               {group.pendentesCount > 1 ? "s" : ""}
@@ -216,65 +210,64 @@ export default function GeneralPendencies({
                         onClick={() => toggleExpandir(group.colaboradorId)}
                         variant="ghost"
                         size="sm"
-                        className="shrink-0 p-2 hover:bg-slate-100"
+                        className="shrink-0 p-1.5 hover:bg-slate-100"
                       >
                         {isExpanded ? (
-                          <ChevronDown className="w-5 h-5 text-slate-600" />
+                          <ChevronDown className="w-4 h-4 text-slate-600" />
                         ) : (
-                          <ChevronRight className="w-5 h-5 text-slate-600" />
+                          <ChevronRight className="w-4 h-4 text-slate-600" />
                         )}
                       </Button>
                     </div>
 
-                    {/* Painel expandido com itens horizontais */}
+                    {/* Painel expandido com itens horizontais - faixa compacta */}
                     {isExpanded && (
-                      <div className="mt-4 pt-4 border-t border-slate-200">
-                        <div className="overflow-x-auto">
-                          <div className="flex gap-3 min-w-min pb-2">
+                      <div className="mt-2.5 pt-2.5 border-t border-slate-100">
+                        <div className="overflow-x-auto -mx-1">
+                          <div className="flex gap-2 min-w-min pb-1 px-1">
                             {group.items.map((item) => {
                               const colors = getStatusColorClasses(item.status);
                               return (
                                 <div
                                   key={`${item.type}-${item.id}`}
-                                  className={`shrink-0 p-3 rounded-lg border w-72 ${colors.bg}`}
+                                  className={`shrink-0 p-2 rounded border text-xs w-64 ${colors.bg}`}
                                 >
-                                  <div className="space-y-2">
-                                    {/* Tipo e Status */}
-                                    <div className="flex items-center justify-between gap-2">
+                                  <div className="space-y-1">
+                                    {/* Tipo e Status em uma linha */}
+                                    <div className="flex items-center justify-between gap-1">
                                       <Badge
                                         variant="outline"
-                                        className="text-xs"
+                                        className="text-xs py-0 px-1.5"
                                       >
                                         {item.type === "aso"
                                           ? "ASO"
-                                          : "Treinamento"}
+                                          : "TRE"}
                                       </Badge>
-                                      <div className="flex items-center gap-1">
+                                      <div className="flex items-center gap-0.5">
                                         <div className={colors.text}>
                                           {getStatusIcon(item.status)}
                                         </div>
                                         <Badge
                                           variant="secondary"
-                                          className={`text-xs ${getStatusBadgeColor(
+                                          className={`text-xs py-0 px-1.5 ${getStatusBadgeColor(
                                             item.status,
                                           )}`}
                                         >
-                                          {item.status}
+                                          {item.status === "Vencido"
+                                            ? "Vencido"
+                                            : "Vencendo"}
                                         </Badge>
                                       </div>
                                     </div>
 
-                                    {/* Descrição */}
-                                    <p className="text-sm font-medium text-slate-900">
+                                    {/* Descrição - linha única */}
+                                    <p className="text-xs font-medium text-slate-900 truncate">
                                       {item.descricao}
                                     </p>
 
                                     {/* Validade */}
                                     <p className="text-xs text-slate-600">
-                                      Validade:{" "}
-                                      <span className="font-semibold">
-                                        {formatDate(item.validade)}
-                                      </span>
+                                      {formatDate(item.validade)}
                                     </p>
                                   </div>
                                 </div>
