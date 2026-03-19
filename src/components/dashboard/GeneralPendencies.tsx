@@ -132,7 +132,13 @@ export default function GeneralPendencies({
             </p>
           </div>
         ) : (
-          <div className="max-h-96 overflow-y-auto divide-y divide-slate-200">
+          <div
+            className="max-h-96 overflow-y-auto divide-y divide-slate-200"
+            style={{
+              maskImage:
+                "linear-gradient(to bottom, black 95%, transparent 100%)",
+            }}
+          >
             {filteredGroups.map((group, index) => {
               return (
                 <div
