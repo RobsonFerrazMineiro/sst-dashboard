@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertCircle, AlertTriangle, Info } from "lucide-react";
+import Link from "next/link";
 import type { Alert } from "./AlertsHub";
 
 interface AlertsModalContentProps {
@@ -54,6 +55,34 @@ export default function AlertsModalContent({
     }
   };
 
+  // Renderizar mensagem com nome do colaborador como link clicável
+  const renderAlertMessage = (alert: Alert) => {
+    if (!alert.colaborador) {
+      return (
+        <span className="text-sm font-medium text-slate-900">
+          {alert.message}
+        </span>
+      );
+    }
+
+    // Extrair o nome do colaborador da mensagem e criar um link
+    const parts = alert.message.split(alert.colaborador);
+
+    return (
+      <p className="text-sm text-slate-900">
+        {parts[0]}
+        <Link
+          href={`/colaboradores?search=${encodeURIComponent(alert.colaborador)}`}
+          className="font-semibold text-slate-900 hover:text-blue-600 hover:underline cursor-pointer transition-colors"
+          title={`Ver perfil de ${alert.colaborador}`}
+        >
+          {alert.colaborador}
+        </Link>
+        {parts[1]}
+      </p>
+    );
+  };
+
   // Group alerts by severity
   const alertsBySeverity = alerts.reduce(
     (acc, alert) => {
@@ -88,19 +117,7 @@ export default function AlertsModalContent({
                   className={`rounded-lg p-4 ${getSeverityColor(severity)}`}
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-slate-900">
-                        {alert.message}
-                      </p>
-                      {alert.colaborador && (
-                        <p className="text-xs text-slate-600 mt-1">
-                          Colaborador:{" "}
-                          <span className="font-semibold">
-                            {alert.colaborador}
-                          </span>
-                        </p>
-                      )}
-                    </div>
+                    <div className="flex-1">{renderAlertMessage(alert)}</div>
                     <span
                       className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium whitespace-nowrap ${getSeverityBadgeColor(
                         severity,
