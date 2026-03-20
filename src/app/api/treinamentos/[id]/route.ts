@@ -81,17 +81,22 @@ export async function PATCH(req: Request, { params }: Ctx) {
         // ✅ se não veio validade no PATCH e o tipo tiver validadeMeses,
         //    calcula a validade com base na data_treinamento (nova ou atual)
         const current = await prisma.treinamento.findUnique({ where: { id } });
-        const baseDate =
-          data.data_treinamento ?? current?.data_treinamento ?? null;
+        const baseDateValue =
+          (typeof data.data_treinamento === "object" &&
+          data.data_treinamento instanceof Date
+            ? data.data_treinamento
+            : null) ??
+          current?.data_treinamento ??
+          null;
 
         if (
           body.validade === undefined && // só calcula se usuário não mandou validade
           !data.validade &&
-          baseDate &&
+          baseDateValue &&
           tipo.validadeMeses &&
           tipo.validadeMeses > 0
         ) {
-          const d = new Date(baseDate);
+          const d = new Date(baseDateValue);
           d.setMonth(d.getMonth() + tipo.validadeMeses);
           data.validade = d;
         }
@@ -116,7 +121,10 @@ export async function PATCH(req: Request, { params }: Ctx) {
   } catch (err: unknown) {
     console.error("PATCH /api/treinamentos/[id] ->", err);
     return NextResponse.json(
-      { error: "Erro interno", detail: err instanceof Error ? err.message : String(err) },
+      {
+        error: "Erro interno",
+        detail: err instanceof Error ? err.message : String(err),
+      },
       { status: 500 },
     );
   }
@@ -134,7 +142,10 @@ export async function DELETE(_req: Request, { params }: Ctx) {
   } catch (err: unknown) {
     console.error("DELETE /api/treinamentos/[id] ->", err);
     return NextResponse.json(
-      { error: "Erro interno", detail: err instanceof Error ? err.message : String(err) },
+      {
+        error: "Erro interno",
+        detail: err instanceof Error ? err.message : String(err),
+      },
       { status: 500 },
     );
   }
