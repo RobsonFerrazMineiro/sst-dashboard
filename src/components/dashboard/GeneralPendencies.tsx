@@ -1,34 +1,32 @@
 "use client";
 
-import { ChevronDown, ChevronUp, AlertCircle, CheckCircle2, Clock } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
-  filterPendingsByStatus,
+  createRealPendingsList,
+  filterGroupsByStatus,
   getStatusColorClasses,
-  type UnifiedPendingItem,
+  groupPendingsByColaborador,
 } from "@/lib/unified-pending";
+import type { AsoRecord, TreinamentoRecord } from "@/types/dashboard";
 
 interface GeneralPendenciesProps {
-  items: UnifiedPendingItem[];
+  asos: AsoRecord[];
+  treinamentos: TreinamentoRecord[];
   isLoading?: boolean;
 }
-
-const INITIAL_LIMIT = 5;
 
 function getStatusIcon(status: string) {
   switch (status) {
     case "Vencido":
-      return <AlertCircle className="w-5 h-5" />;
+      return <AlertCircle className="w-4 h-4" />;
     case "Prestes a vencer":
-      return <Clock className="w-5 h-5" />;
-    case "Em dia":
-      return <CheckCircle2 className="w-5 h-5" />;
+      return <Clock className="w-4 h-4" />;
     default:
-      return <AlertCircle className="w-5 h-5" />;
+      return <AlertCircle className="w-4 h-4" />;
   }
 }
 
@@ -41,53 +39,56 @@ function formatDate(dateStr: string | null | undefined): string {
   }
 }
 
-/**
- * Retorna classe de background baseado no status para destacar linhas
- */
-function getRowBgClass(status: string): string {
+function getStatusBadgeColor(status: string): string {
   switch (status) {
     case "Vencido":
-      return "bg-rose-50 hover:bg-rose-100";
+      return "bg-rose-100 text-rose-700 border-rose-200";
     case "Prestes a vencer":
-      return "bg-amber-50 hover:bg-amber-100";
+      return "bg-amber-100 text-amber-700 border-amber-200";
     default:
-      return "hover:bg-slate-50";
+      return "bg-slate-100 text-slate-700 border-slate-200";
   }
 }
 
 export default function GeneralPendencies({
-  items,
+  asos,
+  treinamentos,
   isLoading = false,
 }: GeneralPendenciesProps) {
   const router = useRouter();
   const [filterType, setFilterType] = useState<
     "todos" | "vencidos" | "vencendo" | "pendencias"
   >("todos");
-  const [expandAll, setExpandAll] = useState(false);
 
-  const filteredItems = useMemo(
-    () => filterPendingsByStatus(items, filterType),
-    [items, filterType],
+  // Cria lista de apenas pendências reais
+  const realPendingsList = useMemo(
+    () => createRealPendingsList(asos, treinamentos),
+    [asos, treinamentos],
   );
 
-  const displayItems = useMemo(
-    () => filteredItems.slice(0, expandAll ? filteredItems.length : INITIAL_LIMIT),
-    [filteredItems, expandAll],
+  // Agrupa por colaborador
+  const groupedPendencies = useMemo(
+    () => groupPendingsByColaborador(realPendingsList),
+    [realPendingsList],
   );
 
-  const hasMore = filteredItems.length > INITIAL_LIMIT;
+  // Filtra grupos por tipo de status
+  const filteredGroups = useMemo(
+    () => filterGroupsByStatus(groupedPendencies, filterType),
+    [groupedPendencies, filterType],
+  );
 
-  const handleRowClick = (colaboradorId: string | null | undefined) => {
+  const handleNavegaColaborador = (colaboradorId: string | null) => {
     if (colaboradorId) {
       router.push(`/colaboradores/${colaboradorId}`);
     }
   };
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm mb-6">
+    <div className="bg-white rounded-lg border border-slate-200 shadow-sm mb-6">
       {/* Header */}
-      <div className="border-b border-slate-200 p-4 sm:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="border-b border-slate-200 p-3 sm:p-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <h2 className="text-lg font-bold text-slate-900">
             Pendências Gerais
           </h2>
@@ -97,7 +98,6 @@ export default function GeneralPendencies({
                 key={filter}
                 onClick={() => {
                   setFilterType(filter as typeof filterType);
-                  setExpandAll(false); // Reset ao trocar filtro
                 }}
                 className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
                   filterType === filter
@@ -116,119 +116,134 @@ export default function GeneralPendencies({
       </div>
 
       {/* Content */}
-      <div className="overflow-x-auto">
+      <div>
         {isLoading ? (
-          <div className="p-8 text-center text-slate-500">Carregando pendências...</div>
-        ) : filteredItems.length === 0 ? (
+          <div className="p-8 text-center text-slate-500">
+            Carregando pendências...
+          </div>
+        ) : filteredGroups.length === 0 ? (
           <div className="p-8 text-center">
             <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-50 mb-3">
               <CheckCircle2 className="w-6 h-6 text-emerald-600" />
             </div>
             <p className="text-slate-600 font-medium">Nenhuma pendência</p>
             <p className="text-slate-500 text-sm mt-1">
-              Todos os registros estão em dia!
+              Todos os colaboradores estão em dia!
             </p>
           </div>
         ) : (
-          <>
-            <table className="w-full">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200">
-                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                    Colaborador
-                  </th>
-                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                    Tipo
-                  </th>
-                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                    Descrição
-                  </th>
-                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                    Validade
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {displayItems.map((item) => {
-                  const colors = getStatusColorClasses(item.status);
-                  const bgClass = getRowBgClass(item.status);
-                  const colaboradorId = item.originalData.colaborador_id;
-
-                  return (
-                    <tr
-                      key={`${item.type}-${item.id}`}
-                      onClick={() => handleRowClick(colaboradorId)}
-                      className={`transition-colors cursor-pointer ${bgClass}`}
-                    >
-                      <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          <div className={colors.text}>
-                            {getStatusIcon(item.status)}
-                          </div>
-                          <Badge
-                            variant="secondary"
-                            className={`${colors.bg} ${colors.text} border ${colors.border}`}
-                          >
-                            {item.status}
-                          </Badge>
-                        </div>
-                      </td>
-                      <td className="px-4 sm:px-6 py-4">
-                        <p className="text-sm font-medium text-slate-900">
-                          {item.colaborador}
-                        </p>
-                      </td>
-                      <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
-                        <Badge variant="outline">
-                          {item.type === "aso" ? "ASO" : "Treinamento"}
-                        </Badge>
-                      </td>
-                      <td className="px-4 sm:px-6 py-4">
-                        <p className="text-sm text-slate-600 max-w-xs">
-                          {item.descricao}
-                        </p>
-                      </td>
-                      <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
-                        <p className="text-sm text-slate-600">
-                          {formatDate(item.validade)}
-                        </p>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-
-            {/* Footer com botão de "Ver todas" */}
-            {hasMore && (
-              <div className="border-t border-slate-200 bg-slate-50 px-4 sm:px-6 py-3 flex items-center justify-between">
-                <p className="text-sm text-slate-600">
-                  Mostrando {displayItems.length} de {filteredItems.length} registros
-                </p>
-                <Button
-                  onClick={() => setExpandAll(!expandAll)}
-                  variant="ghost"
-                  size="sm"
-                  className="gap-1 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+          <div
+            className="max-h-96 overflow-y-auto divide-y divide-slate-200"
+            style={{
+              maskImage:
+                "linear-gradient(to bottom, black 95%, transparent 100%)",
+            }}
+          >
+            {filteredGroups.map((group, index) => {
+              return (
+                <div
+                  key={group.colaboradorId || group.colaborador}
+                  className={`px-4 sm:px-6 py-2 hover:bg-slate-50 transition-colors ${
+                    index % 2 === 1 ? "bg-slate-50/30" : ""
+                  }`}
                 >
-                  {expandAll ? (
-                    <>
-                      <ChevronUp className="w-4 h-4" />
-                      Ver menos
-                    </>
-                  ) : (
-                    <>
-                      <ChevronDown className="w-4 h-4" />
-                      Ver todas as pendências
-                    </>
-                  )}
-                </Button>
-              </div>
-            )}
-          </>
+                  <div className="grid grid-cols-1 lg:grid-cols-[minmax(140px,auto)_1fr] gap-3 items-center">
+                    {/* Coluna esquerda: nome + badges resumo - compacto */}
+                    <div className="flex flex-col gap-1">
+                      {/* Nome clicável */}
+                      <button
+                        onClick={() =>
+                          handleNavegaColaborador(group.colaboradorId)
+                        }
+                        className="text-sm font-semibold text-slate-900 hover:text-emerald-600 hover:underline transition-colors text-left leading-tight"
+                      >
+                        {group.colaborador}
+                      </button>
+
+                      {/* Resumo de status - badges compactos */}
+                      <div className="flex flex-wrap gap-1">
+                        {group.vencidosCount > 0 && (
+                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0 rounded border text-xs font-medium bg-rose-50 text-rose-700 border-rose-200 leading-tight">
+                            {group.vencidosCount} vencido
+                            {group.vencidosCount > 1 ? "s" : ""}
+                          </span>
+                        )}
+                        {group.vendoCount > 0 && (
+                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0 rounded border text-xs font-medium bg-amber-50 text-amber-700 border-amber-200 leading-tight">
+                            {group.vendoCount} vencendo
+                          </span>
+                        )}
+                        {group.pendentesCount > 0 && (
+                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0 rounded border text-xs font-medium bg-slate-100 text-slate-700 border-slate-200 leading-tight">
+                            {group.pendentesCount} pendente
+                            {group.pendentesCount > 1 ? "s" : ""}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Coluna direita: faixa horizontal de mini-cards */}
+                    <div
+                      style={{
+                        overflowX: "auto",
+                        WebkitOverflowScrolling: "touch",
+                      }}
+                      className="w-full"
+                    >
+                      <div className="flex gap-2 min-w-min">
+                        {group.items.map((item) => {
+                          const colors = getStatusColorClasses(item.status);
+                          return (
+                            <Card
+                              key={`${item.type}-${item.id}`}
+                              className={`shrink-0 min-w-56 max-w-64 border-0 ${colors.bg}`}
+                            >
+                              <CardContent className="p-3">
+                                <div className="space-y-1.5">
+                                  {/* Linha 1: Tipo e Status */}
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="text-xs font-semibold text-slate-700 uppercase">
+                                      {item.type === "aso"
+                                        ? "ASO"
+                                        : "Treinamento"}
+                                    </span>
+                                    <span
+                                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${getStatusBadgeColor(item.status)}`}
+                                    >
+                                      {getStatusIcon(item.status)}
+                                      <span>
+                                        {item.status === "Vencido"
+                                          ? "Vencido"
+                                          : item.status === "Prestes a vencer"
+                                            ? "Vencendo"
+                                            : "Pendente"}
+                                      </span>
+                                    </span>
+                                  </div>
+
+                                  {/* Linha 2: Descrição/NR + Data (lado a lado) */}
+                                  <div className="flex items-center justify-between gap-2 min-w-0">
+                                    <p className="text-sm font-medium text-slate-900 truncate flex-1">
+                                      {item.type === "treinamento"
+                                        ? item.nr
+                                        : item.descricao}
+                                    </p>
+                                    <p className="text-xs text-slate-600 shrink-0 whitespace-nowrap">
+                                      {formatDate(item.validade)}
+                                    </p>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>

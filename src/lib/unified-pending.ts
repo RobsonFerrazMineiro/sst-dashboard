@@ -13,6 +13,7 @@ export type UnifiedPendingItem = {
   type: "aso" | "treinamento";
   colaborador: string;
   descricao: string;
+  nr?: string; // NR para treinamentos
   validade: string | null;
   status: ValidityStatus;
   originalData: AsoRecord | TreinamentoRecord;
@@ -41,7 +42,8 @@ function treinamentoToUnified(tre: TreinamentoRecord): UnifiedPendingItem {
     id: tre.id,
     type: "treinamento",
     colaborador: tre.colaborador_nome || "Desconhecido",
-    descricao: `${tre.tipoTreinamento_nome || "Treinamento"} (${tre.nr || "N/A"})`,
+    descricao: tre.tipoTreinamento_nome || "Treinamento",
+    nr: tre.nr || "N/A",
     validade: tre.validade ?? null,
     status: getTrainingStatus(tre.validade),
     originalData: tre,
@@ -148,4 +150,144 @@ export function getStatusColorClasses(status: ValidityStatus): {
     },
   };
   return colors[status];
+}
+
+/**
+ * Status que são considerados pendências reais (não "Em dia" ou "Sem vencimento")
+ */
+const REAL_PENDING_STATUS: ValidityStatus[] = [
+  "Vencido",
+  "Prestes a vencer",
+  "Pendente",
+];
+
+/**
+ * Verifica se um status é uma pendência real
+ */
+function isRealPending(status: ValidityStatus): boolean {
+  return REAL_PENDING_STATUS.includes(status);
+}
+
+/**
+ * Cria lista de apenas pendências reais (exclui "Em dia" e "Sem vencimento")
+ */
+export function createRealPendingsList(
+  asos: AsoRecord[],
+  treinamentos: TreinamentoRecord[],
+): UnifiedPendingItem[] {
+  const allItems = createUnifiedPendingsList(asos, treinamentos);
+  return allItems.filter((item) => isRealPending(item.status));
+}
+
+/**
+ * Grupo de pendências agrupado por colaborador
+ */
+export type PendingsByColaborador = {
+  colaboradorId: string | null;
+  colaborador: string;
+  totalCount: number;
+  vencidosCount: number;
+  vendoCount: number;
+  pendentesCount: number;
+  items: UnifiedPendingItem[];
+};
+
+/**
+ * Agrupa pendências por colaborador e ordena por gravidade
+ */
+export function groupPendingsByColaborador(
+  items: UnifiedPendingItem[],
+): PendingsByColaborador[] {
+  const grouped = new Map<string, UnifiedPendingItem[]>();
+
+  // Agrupa por colaborador (usando nome como chave)
+  items.forEach((item) => {
+    const key = item.colaborador;
+    if (!grouped.has(key)) {
+      grouped.set(key, []);
+    }
+    grouped.get(key)!.push(item);
+  });
+
+  // Transforma em array com metadados
+  const groups: PendingsByColaborador[] = Array.from(grouped.entries()).map(
+    ([colaborador, items]) => {
+      const vencidosCount = items.filter((i) => i.status === "Vencido").length;
+      const vendoCount = items.filter(
+        (i) => i.status === "Prestes a vencer",
+      ).length;
+      const pendentesCount = items.filter(
+        (i) => i.status === "Pendente",
+      ).length;
+
+      return {
+        colaboradorId: items[0]?.originalData.colaborador_id || null,
+        colaborador,
+        totalCount: items.length,
+        vencidosCount,
+        vendoCount,
+        pendentesCount,
+        items,
+      };
+    },
+  );
+
+  // Ordena por gravidade: vencidos DESC, vendo DESC, pendentes DESC, depois alfabético
+  groups.sort((a, b) => {
+    if (a.vencidosCount !== b.vencidosCount) {
+      return b.vencidosCount - a.vencidosCount;
+    }
+    if (a.vendoCount !== b.vendoCount) {
+      return b.vendoCount - a.vendoCount;
+    }
+    if (a.pendentesCount !== b.pendentesCount) {
+      return b.pendentesCount - a.pendentesCount;
+    }
+    return a.colaborador.localeCompare(b.colaborador);
+  });
+
+  return groups;
+}
+
+/**
+ * Filtra grupos de pendências por tipo de status
+ */
+export function filterGroupsByStatus(
+  groups: PendingsByColaborador[],
+  filterType: "todos" | "vencidos" | "vencendo" | "pendencias",
+): PendingsByColaborador[] {
+  if (filterType === "todos") return groups;
+
+  return groups
+    .map((group) => {
+      let filteredItems = group.items;
+
+      switch (filterType) {
+        case "vencidos":
+          filteredItems = group.items.filter(
+            (item) => item.status === "Vencido",
+          );
+          break;
+        case "vencendo":
+          filteredItems = group.items.filter(
+            (item) => item.status === "Prestes a vencer",
+          );
+          break;
+        case "pendencias":
+          filteredItems = group.items.filter(
+            (item) => item.status === "Pendente",
+          );
+          break;
+      }
+
+      // Retorna null se o grupo ficar vazio
+      if (filteredItems.length === 0) return null;
+
+      return {
+        ...group,
+        items: filteredItems,
+        totalCount: filteredItems.length,
+      };
+    })
+    .filter((g) => g !== null) as PendingsByColaborador[];
 }
