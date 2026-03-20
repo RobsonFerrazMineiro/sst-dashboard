@@ -5,7 +5,7 @@ import { RefreshCw, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 
 import ASOPanel from "@/components/dashboard/ASOPanel";
-import { AutomaticAlerts } from "@/components/dashboard/AutomaticAlerts";
+import AlertsHub from "@/components/dashboard/AlertsHub";
 import GeneralPendencies from "@/components/dashboard/GeneralPendencies";
 import RiskIndicator from "@/components/dashboard/RiskIndicator";
 import TabNavigation from "@/components/dashboard/TabNavigation";
@@ -75,15 +75,22 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <Button
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            variant="outline"
-            className="gap-2 self-start sm:self-auto"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Atualizar
-          </Button>
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <AlertsHub
+              asos={asos}
+              treinamentos={treinamentos}
+              isLoading={loadingASOs || loadingTreinamentos}
+            />
+            <Button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              variant="outline"
+              className="gap-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Atualizar
+            </Button>
+          </div>
         </div>
 
         {hasError && (
@@ -98,13 +105,6 @@ export default function DashboardPage() {
 
       {/* Seção: Indicador de Risco */}
       <RiskIndicator
-        asos={asos}
-        treinamentos={treinamentos}
-        isLoading={loadingASOs || loadingTreinamentos}
-      />
-
-      {/* Seção: Alertas Automáticos */}
-      <AutomaticAlerts
         asos={asos}
         treinamentos={treinamentos}
         isLoading={loadingASOs || loadingTreinamentos}
