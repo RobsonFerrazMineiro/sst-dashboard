@@ -5,7 +5,9 @@ import { RefreshCw, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 
 import ASOPanel from "@/components/dashboard/ASOPanel";
+import { AutomaticAlerts } from "@/components/dashboard/AutomaticAlerts";
 import GeneralPendencies from "@/components/dashboard/GeneralPendencies";
+import RiskIndicator from "@/components/dashboard/RiskIndicator";
 import TabNavigation from "@/components/dashboard/TabNavigation";
 import TreinamentoPanel from "@/components/dashboard/TreinamentoPanel";
 import { Button } from "@/components/ui/button";
@@ -93,6 +95,20 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
+
+      {/* Seção: Indicador de Risco */}
+      <RiskIndicator
+        asos={asos}
+        treinamentos={treinamentos}
+        isLoading={loadingASOs || loadingTreinamentos}
+      />
+
+      {/* Seção: Alertas Automáticos */}
+      <AutomaticAlerts
+        asos={asos}
+        treinamentos={treinamentos}
+        isLoading={loadingASOs || loadingTreinamentos}
+      />
 
       {/* Seção: Pendências Gerais */}
       <GeneralPendencies
