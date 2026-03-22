@@ -1,4 +1,4 @@
-import { parseISO } from "date-fns";
+import { parseLocalDate } from "@/lib/utils";
 
 export type ValidityStatus =
   | "Em dia"
@@ -26,7 +26,8 @@ export function getAsoStatus(
   dataStr?: string | null,
 ): ValidityStatus {
   if (!validadeStr || !dataStr) return "Pendente";
-  const validade = parseISO(validadeStr);
+  const validade = parseLocalDate(validadeStr);
+  if (!validade) return "Pendente";
   const diffDays = diffDaysTo(validade);
   if (diffDays < 0) return "Vencido";
   if (diffDays <= 30) return "Prestes a vencer";
@@ -35,7 +36,8 @@ export function getAsoStatus(
 
 export function getTrainingStatus(validadeStr?: string | null): ValidityStatus {
   if (!validadeStr) return "Sem vencimento";
-  const validade = parseISO(validadeStr);
+  const validade = parseLocalDate(validadeStr);
+  if (!validade) return "Sem vencimento";
   const diffDays = diffDaysTo(validade);
   if (diffDays < 0) return "Vencido";
   if (diffDays <= 30) return "Prestes a vencer";

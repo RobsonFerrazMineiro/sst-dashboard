@@ -33,12 +33,14 @@ if (!validade && tipo.validadeMeses && tipo.validadeMeses > 0) {
 ```
 
 **Verificação:**
+
 - ✅ Cria novo objeto `Date` (não muta original)
 - ✅ Valida `validadeMeses > 0` antes de calcular
 - ✅ Usa `.setMonth()` que trata rolagem de ano automaticamente
 - ✅ Só calcula se validade não foi fornecida
 
 **Exemplo:**
+
 ```
 Data treinamento: 2026-03-22
 Tipo validade: 12 meses
@@ -61,12 +63,14 @@ if (!validade_aso && tipo.validadeMeses && tipo.validadeMeses > 0) {
 ```
 
 **Verificação:**
+
 - ✅ Idêntico ao de treinamentos (padrão consistente)
 - ✅ Valida entrada antes de usar
 - ✅ Trata rolagem de ano
 - ✅ Apenas calcula se necessário
 
 **Exemplo:**
+
 ```
 Data ASO: 2026-03-22
 Tipo validade: 24 meses
@@ -103,12 +107,14 @@ if (
 ```
 
 **Verificação:**
+
 - ✅ Type guard para `instanceof Date`
 - ✅ Fallback para data atual se não houver mudança
 - ✅ Múltiplas validações antes de calcular
 - ✅ Lida com strings e Dates corretamente
 
 **Casos testados:**
+
 ```
 1. Novo tipo com validade + nova data_treinamento
    → Calcula com a nova data ✅
@@ -130,9 +136,7 @@ if (
 **Arquivo:** `src/lib/validity.ts`
 
 ```typescript
-export function getTrainingStatus(
-  validadeStr?: string | null
-): ValidityStatus {
+export function getTrainingStatus(validadeStr?: string | null): ValidityStatus {
   if (!validadeStr) return "Sem vencimento";
   const validade = parseISO(validadeStr);
   const diffDays = diffDaysTo(validade);
@@ -143,12 +147,14 @@ export function getTrainingStatus(
 ```
 
 **Verificação:**
+
 - ✅ Usa `parseISO` do `date-fns` (padrão ISO 8601)
 - ✅ Calcula diferença em dias (sem problemas de timezone)
 - ✅ Incluir 30 dias exatos: `<=` (correto)
 - ✅ Edge case de hoje: `diffDays === 0` → "Prestes a vencer" ✅
 
 **Exemplos:**
+
 ```
 Hoje: 2026-03-22
 
@@ -178,7 +184,7 @@ Status: "Vencido" ✅
 ```typescript
 export function getAsoStatus(
   validadeStr?: string | null,
-  dataStr?: string | null
+  dataStr?: string | null,
 ): ValidityStatus {
   if (!validadeStr || !dataStr) return "Pendente";
   const validade = parseISO(validadeStr);
@@ -190,6 +196,7 @@ export function getAsoStatus(
 ```
 
 **Verificação:**
+
 - ✅ Verifica ambas as datas (validade E data_aso)
 - ✅ Retorna "Pendente" se incompleto
 - ✅ Mesma lógica de cálculo que treinamentos
@@ -215,12 +222,14 @@ function diffDaysTo(date: Date): number {
 ```
 
 **Verificação:**
+
 - ✅ `setHours(0, 0, 0, 0)` remove timezone bias
 - ✅ `Math.ceil` garante >= 0 para qualquer hora do dia
 - ✅ Cálculo em milissegundos é preciso
 - ✅ Sem dependência de locale
 
 **Exemplo de cálculo:**
+
 ```
 Hoje às 14h30: 2026-03-22 00:00:00
 Validade: 2026-03-23 00:00:00
@@ -244,11 +253,13 @@ Math.ceil(0.395): 1 ✅ (conservador, melhor)
 ### Cenário: Criar Treinamento NR-35 com Validade Automática
 
 **Setup:**
+
 - Tipo: NR-35 com validadeMeses = 12
 - Data treinamento: 2026-03-22
 - Validade: (não fornecida)
 
 **Fluxo:**
+
 ```
 1. POST /api/treinamentos
    ✅ Recebe: data_treinamento, tipoTreinamento
@@ -283,6 +294,7 @@ Math.ceil(0.395): 1 ✅ (conservador, melhor)
 ### 1. Mês com rollover (ex: janeiro 31 + 1 mês)
 
 **Código:**
+
 ```javascript
 const d = new Date("2026-01-31");
 d.setMonth(d.getMonth() + 1); // Jan(0) + 1 = 1 (Feb)
@@ -292,6 +304,7 @@ console.log(d.toISOString()); // 2026-02-28 (correto!)
 **Resultado:** ✅ JavaScript trata automaticamente
 
 **Mas atenção:**
+
 ```javascript
 const d = new Date("2026-01-31");
 d.setMonth(d.getMonth() + 13); // Set para o próximo ano
@@ -303,9 +316,10 @@ d.setMonth(d.getMonth() + 13); // Set para o próximo ano
 ### 2. Timezones
 
 **Código:**
+
 ```javascript
 // String ISO vindo do frontend
-const iso = "2026-03-22" // ou "2026-03-22T14:30:00Z"
+const iso = "2026-03-22"; // ou "2026-03-22T14:30:00Z"
 const d = parseISO(iso); // Sempre UTC
 
 // Cálculo
@@ -314,6 +328,7 @@ const diff = (d.getTime() - hoje.getTime()) / 86400000;
 ```
 
 **Comportamento:**
+
 ```
 Usuário em São Paulo (-3), validade: 2026-03-23
 - ISO string: "2026-03-23T00:00:00Z" (meia-noite UTC)
@@ -332,6 +347,7 @@ Cálculo:
 ### 3. Leap Years
 
 **Código:**
+
 ```javascript
 const d = new Date("2024-02-29"); // Ano bissexto
 d.setMonth(d.getMonth() + 12);
@@ -343,6 +359,7 @@ d.setMonth(d.getMonth() + 12);
 ### 4. Validade negativa
 
 **Código no POST:**
+
 ```typescript
 if (tipo.validadeMeses && tipo.validadeMeses > 0) {
   // Calcula
@@ -350,6 +367,7 @@ if (tipo.validadeMeses && tipo.validadeMeses > 0) {
 ```
 
 **Validação:**
+
 ```typescript
 if (!Number.isFinite(n) || n < 0) {
   return NextResponse.json(
@@ -364,6 +382,7 @@ if (!Number.isFinite(n) || n < 0) {
 ### 5. Validade = 0
 
 **Comportamento:**
+
 ```
 validadeMeses = 0
 Condição: validadeMeses > 0 → false
@@ -376,19 +395,20 @@ Ação: Não calcula, usa validade fornecida ou null
 
 ## 📊 Comparação: Antes vs Implementação
 
-| Aspecto | Antes | Agora | Status |
-|---------|-------|-------|--------|
-| Cálculo manual | Comum | Automático | ✅ Melhorado |
-| Rollover meses | Manual | Automático | ✅ Seguro |
-| Timezones | Problemático | OK | ✅ Resolvido |
-| Edge cases | Não tratados | Validados | ✅ Robusto |
-| Consistência | Variável | Uniforme | ✅ Padronizado |
+| Aspecto        | Antes        | Agora      | Status         |
+| -------------- | ------------ | ---------- | -------------- |
+| Cálculo manual | Comum        | Automático | ✅ Melhorado   |
+| Rollover meses | Manual       | Automático | ✅ Seguro      |
+| Timezones      | Problemático | OK         | ✅ Resolvido   |
+| Edge cases     | Não tratados | Validados  | ✅ Robusto     |
+| Consistência   | Variável     | Uniforme   | ✅ Padronizado |
 
 ---
 
 ## 🎯 Conclusões
 
 ### ✅ Pontos Fortes
+
 1. **Cálculos corretos** - `setMonth()` trata rollover
 2. **Validações** - Verifica `validadeMeses > 0` antes de usar
 3. **Consistência** - Mesmo padrão em POST, PATCH, GET
@@ -396,11 +416,13 @@ Ação: Não calcula, usa validade fornecida ou null
 5. **Robustez** - Type guards, nullability checks
 
 ### ⚠️ Observações
+
 1. Assume que `data_treinamento` e `data_aso` são ISO válidas ✅
 2. Assume que `validadeMeses` é número inteiro ✅
 3. Assume que frontend envia datas em UTC/ISO ✅
 
 ### 🔐 Recomendações
+
 1. ✅ Manter implementação atual
 2. ✅ Continuar validando validadeMeses no backend
 3. ✅ Adicionar testes unitários para edge cases (bonus)
@@ -424,7 +446,7 @@ describe("Date calculations", () => {
     const today = new Date();
     const in30Days = new Date(today);
     in30Days.setDate(in30Days.getDate() + 30);
-    
+
     const status = getTrainingStatus(in30Days.toISOString());
     expect(status).toBe("Prestes a vencer");
   });
@@ -433,7 +455,7 @@ describe("Date calculations", () => {
     const today = new Date();
     const in31Days = new Date(today);
     in31Days.setDate(in31Days.getDate() + 31);
-    
+
     const status = getTrainingStatus(in31Days.toISOString());
     expect(status).toBe("Em dia");
   });
@@ -458,4 +480,3 @@ Nível de confiança: 95/100 ⭐⭐⭐⭐⭐
 
 **Relatório gerado em:** 22/03/2026  
 **Status:** ✅ Verificado e Aprovado
-

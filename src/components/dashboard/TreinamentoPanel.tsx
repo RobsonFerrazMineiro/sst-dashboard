@@ -1,7 +1,6 @@
 "use client";
 
-import { format, parseISO } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { parseISO } from "date-fns";
 import {
   AlertTriangle,
   CalendarDays,
@@ -18,13 +17,14 @@ import FilterBar from "./FilterBar";
 import Pagination from "./Pagination";
 import StatCard from "./StatCard";
 
+import { formatDate } from "@/lib/utils";
+import { getTrainingStatus } from "@/lib/validity";
 import type {
   ColumnDef,
   TipoTreinamento,
   TreinamentoRecord,
 } from "@/types/dashboard";
 import { exportToCSV } from "@/utils/csvExport";
-import { getTrainingStatus } from "@/lib/validity";
 
 type StatusTreino =
   | "Em dia"
@@ -41,7 +41,10 @@ type ProcessedTreinamento = TreinamentoRecord & {
 };
 
 function getStatus(validadeStr?: string | null): StatusTreino {
-  return (getTrainingStatus(validadeStr) as unknown as StatusTreino) || "Sem vencimento";
+  return (
+    (getTrainingStatus(validadeStr) as unknown as StatusTreino) ||
+    "Sem vencimento"
+  );
 }
 
 export default function TreinamentoPanel({
@@ -102,8 +105,12 @@ export default function TreinamentoPanel({
       let currentDate: Date | null = null;
       let existingDate: Date | null = null;
       try {
-        currentDate = treinamento.data_treinamento ? parseISO(treinamento.data_treinamento) : null;
-        existingDate = existing.data_treinamento ? parseISO(existing.data_treinamento) : null;
+        currentDate = treinamento.data_treinamento
+          ? parseISO(treinamento.data_treinamento)
+          : null;
+        existingDate = existing.data_treinamento
+          ? parseISO(existing.data_treinamento)
+          : null;
       } catch {
         // ignore parsing errors
       }
@@ -122,16 +129,11 @@ export default function TreinamentoPanel({
       return {
         ...treinamento,
         status: getStatus(treinamento.validade),
-        data_treinamento_formatted: treinamento.data_treinamento
-          ? format(parseISO(treinamento.data_treinamento), "dd/MM/yyyy", {
-              locale: ptBR,
-            })
-          : "-",
-        validade_formatted: treinamento.validade
-          ? format(parseISO(treinamento.validade), "dd/MM/yyyy", {
-              locale: ptBR,
-            })
-          : "Indeterminada",
+        data_treinamento_formatted: formatDate(
+          treinamento.data_treinamento,
+          "-",
+        ),
+        validade_formatted: formatDate(treinamento.validade, "Indeterminada"),
         tipo_display: tipo
           ? `${tipo.nr} – ${tipo.nome}`
           : (treinamento.nr ?? "-"),
@@ -247,11 +249,10 @@ export default function TreinamentoPanel({
   const handleExportCSV = () =>
     exportToCSV(filteredData, "treinamentos", columns);
 
-  const handleCardClick = (status: string) =>
-    {
-      setActiveCard(activeCard === status ? null : status);
-      setCurrentPage(1);
-    };
+  const handleCardClick = (status: string) => {
+    setActiveCard(activeCard === status ? null : status);
+    setCurrentPage(1);
+  };
 
   const clearFilters = () => {
     setSearchTerm("");

@@ -1,7 +1,6 @@
 "use client";
 
-import { format, parseISO } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { parseISO } from "date-fns";
 import {
   AlertTriangle,
   CalendarDays,
@@ -18,6 +17,7 @@ import FilterBar from "./FilterBar";
 import Pagination from "./Pagination";
 import StatCard from "./StatCard";
 
+import { formatDate } from "@/lib/utils";
 import type { AsoRecord, ColumnDef } from "@/types/dashboard";
 import { exportToCSV } from "@/utils/csvExport";
 
@@ -120,12 +120,8 @@ export default function ASOPanel({
     return Array.from(grouped.values()).map((aso) => ({
       ...aso,
       status: getStatus(aso.validade_aso, aso.data_aso),
-      data_aso_formatted: aso.data_aso
-        ? format(parseISO(aso.data_aso), "dd/MM/yyyy", { locale: ptBR })
-        : "Sem registro",
-      validade_aso_formatted: aso.validade_aso
-        ? format(parseISO(aso.validade_aso), "dd/MM/yyyy", { locale: ptBR })
-        : "Sem registro",
+      data_aso_formatted: formatDate(aso.data_aso, "Sem registro"),
+      validade_aso_formatted: formatDate(aso.validade_aso, "Sem registro"),
     }));
   }, [data]);
 
@@ -234,11 +230,10 @@ export default function ASOPanel({
 
   const handleExportCSV = () => exportToCSV(filteredData, "asos", columns);
 
-  const handleCardClick = (status: string) =>
-    {
-      setActiveCard(activeCard === status ? null : status);
-      setCurrentPage(1);
-    };
+  const handleCardClick = (status: string) => {
+    setActiveCard(activeCard === status ? null : status);
+    setCurrentPage(1);
+  };
 
   const clearFilters = () => {
     setSearchTerm("");

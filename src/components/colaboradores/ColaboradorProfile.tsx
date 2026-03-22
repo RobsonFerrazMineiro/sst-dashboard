@@ -1,8 +1,6 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { format, parseISO } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import {
   ArrowLeft,
   BriefcaseBusiness,
@@ -34,6 +32,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
+import { formatDate, parseLocalDate } from "@/lib/utils";
 import type { AsoRecord, TreinamentoRecord } from "@/types/dashboard";
 import { toast } from "sonner";
 
@@ -131,7 +130,9 @@ function getStatus(validadeISO?: string | null) {
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
 
-  const validade = parseISO(validadeISO);
+  const validade = parseLocalDate(validadeISO);
+  if (!validade) return "Sem vencimento";
+
   validade.setHours(0, 0, 0, 0);
 
   const diffDays = Math.ceil(
@@ -230,12 +231,8 @@ export default function ColaboradorProfile({ id }: { id: string }) {
       .map((t) => ({
         ...t,
         status: getStatus(t.validade ?? null),
-        dataFmt: t.data_treinamento
-          ? format(parseISO(t.data_treinamento), "dd/MM/yyyy", { locale: ptBR })
-          : "-",
-        validadeFmt: t.validade
-          ? format(parseISO(t.validade), "dd/MM/yyyy", { locale: ptBR })
-          : "Indeterminada",
+        dataFmt: formatDate(t.data_treinamento, "-"),
+        validadeFmt: formatDate(t.validade, "Indeterminada"),
       }))
       .sort((a, b) =>
         byStatusThenDate(a.status, a.validade, b.status, b.validade),
@@ -266,12 +263,8 @@ export default function ColaboradorProfile({ id }: { id: string }) {
       .map((a) => ({
         ...a,
         status: getStatus(a.validade_aso ?? null),
-        dataFmt: a.data_aso
-          ? format(parseISO(a.data_aso), "dd/MM/yyyy", { locale: ptBR })
-          : "-",
-        validadeFmt: a.validade_aso
-          ? format(parseISO(a.validade_aso), "dd/MM/yyyy", { locale: ptBR })
-          : "Indeterminada",
+        dataFmt: formatDate(a.data_aso, "-"),
+        validadeFmt: formatDate(a.validade_aso, "Indeterminada"),
       }));
   }, [asos, id]);
 
