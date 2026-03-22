@@ -75,7 +75,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 self-start sm:self-auto">
+          <div className="flex items-center gap-4 self-start sm:self-auto">
             <AlertsHub
               asos={asos}
               treinamentos={treinamentos}
