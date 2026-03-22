@@ -17,12 +17,15 @@ import FilterBar from "./FilterBar";
 import Pagination from "./Pagination";
 import StatCard from "./StatCard";
 
+import { StatusBadgeWithTemporal } from "@/components/ui/status-badge-with-temporal";
 import { formatDate } from "@/lib/utils";
 import type { AsoRecord, ColumnDef } from "@/types/dashboard";
 import { exportToCSV } from "@/utils/csvExport";
 
 type ProcessedAso = AsoRecord & {
   status: "Em dia" | "Prestes a vencer" | "Vencido" | "Pendente";
+  diffDays: number;
+  temporalLabel: string;
   data_aso_formatted: string;
   validade_aso_formatted: string;
 };
@@ -59,6 +62,40 @@ function getStatus(
     return "Em dia";
   } catch {
     return "Pendente";
+  }
+}
+
+function getDiffDays(
+  validadeStr?: string | null,
+  dataStr?: string | null,
+): number {
+  if (!dataStr || !validadeStr) return 0;
+
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  try {
+    const validade = parseISO(validadeStr);
+    validade.setHours(0, 0, 0, 0);
+
+    return Math.ceil(
+      (validade.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24),
+    );
+  } catch {
+    return 0;
+  }
+}
+
+function getTemporalLabel(diffDays: number): string {
+  if (diffDays < 0) {
+    const absDays = Math.abs(diffDays);
+    return `há ${absDays} ${absDays === 1 ? "dia" : "dias"}`;
+  } else if (diffDays === 0) {
+    return "vence hoje";
+  } else if (diffDays <= 30) {
+    return `em ${diffDays} ${diffDays === 1 ? "dia" : "dias"}`;
+  } else {
+    return `${diffDays} ${diffDays === 1 ? "dia" : "dias"} restantes`;
   }
 }
 
@@ -117,12 +154,18 @@ export default function ASOPanel({
       }
     }
 
-    return Array.from(grouped.values()).map((aso) => ({
-      ...aso,
-      status: getStatus(aso.validade_aso, aso.data_aso),
-      data_aso_formatted: formatDate(aso.data_aso, "Sem registro"),
-      validade_aso_formatted: formatDate(aso.validade_aso, "Sem registro"),
-    }));
+    return Array.from(grouped.values()).map((aso) => {
+      const diffDays = getDiffDays(aso.validade_aso, aso.data_aso);
+
+      return {
+        ...aso,
+        status: getStatus(aso.validade_aso, aso.data_aso),
+        diffDays,
+        temporalLabel: getTemporalLabel(diffDays),
+        data_aso_formatted: formatDate(aso.data_aso, "Sem registro"),
+        validade_aso_formatted: formatDate(aso.validade_aso, "Sem registro"),
+      };
+    });
   }, [data]);
 
   const stats = useMemo(() => {
@@ -204,7 +247,20 @@ export default function ASOPanel({
         </span>
       ),
     },
-    { header: "Status", accessor: "status" },
+    {
+      header: "Status",
+      accessor: "status",
+      render: (row) => (
+        <StatusBadgeWithTemporal
+          statusInfo={{
+            status: row.status,
+            diffDays: row.diffDays,
+            temporalLabel: row.temporalLabel,
+          }}
+          showTemporalBelow={true}
+        />
+      ),
+    },
   ];
 
   const filters = [

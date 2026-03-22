@@ -17,6 +17,7 @@ import FilterBar from "./FilterBar";
 import Pagination from "./Pagination";
 import StatCard from "./StatCard";
 
+import { StatusBadgeWithTemporal } from "@/components/ui/status-badge-with-temporal";
 import { formatDate } from "@/lib/utils";
 import { getTrainingStatus } from "@/lib/validity";
 import type {
@@ -34,6 +35,8 @@ type StatusTreino =
 
 type ProcessedTreinamento = TreinamentoRecord & {
   status: StatusTreino;
+  diffDays: number;
+  temporalLabel: string;
   data_treinamento_formatted: string;
   validade_formatted: string;
   tipo_display: string;
@@ -45,6 +48,31 @@ function getStatus(validadeStr?: string | null): StatusTreino {
     (getTrainingStatus(validadeStr) as unknown as StatusTreino) ||
     "Sem vencimento"
   );
+}
+
+function getDiffDays(validadeStr?: string | null): number {
+  if (!validadeStr) return 0;
+
+  const validade = parseISO(validadeStr);
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const v = new Date(validade);
+  v.setHours(0, 0, 0, 0);
+
+  return Math.ceil((v.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function getTemporalLabel(diffDays: number): string {
+  if (diffDays < 0) {
+    const absDays = Math.abs(diffDays);
+    return `há ${absDays} ${absDays === 1 ? "dia" : "dias"}`;
+  } else if (diffDays === 0) {
+    return "vence hoje";
+  } else if (diffDays <= 30) {
+    return `em ${diffDays} ${diffDays === 1 ? "dia" : "dias"}`;
+  } else {
+    return `${diffDays} ${diffDays === 1 ? "dia" : "dias"} restantes`;
+  }
 }
 
 export default function TreinamentoPanel({
@@ -126,9 +154,13 @@ export default function TreinamentoPanel({
         ? tiposMap[treinamento.tipoTreinamento]
         : null;
 
+      const diffDays = getDiffDays(treinamento.validade);
+
       return {
         ...treinamento,
         status: getStatus(treinamento.validade),
+        diffDays,
+        temporalLabel: getTemporalLabel(diffDays),
         data_treinamento_formatted: formatDate(
           treinamento.data_treinamento,
           "-",
@@ -222,7 +254,20 @@ export default function TreinamentoPanel({
         </span>
       ),
     },
-    { header: "Status", accessor: "status" },
+    {
+      header: "Status",
+      accessor: "status",
+      render: (row) => (
+        <StatusBadgeWithTemporal
+          statusInfo={{
+            status: row.status,
+            diffDays: row.diffDays,
+            temporalLabel: row.temporalLabel,
+          }}
+          showTemporalBelow={true}
+        />
+      ),
+    },
   ];
 
   const filters = [
