@@ -1,13 +1,7 @@
 "use client";
 
 import { getRiskLevelColors, type RiskScore } from "@/lib/risk-score";
-import {
-  AlertCircle,
-  AlertTriangle,
-  CheckCircle2,
-  Info,
-  Minus,
-} from "lucide-react";
+import { AlertCircle, AlertTriangle, CheckCircle2, Info } from "lucide-react";
 
 interface RiskScoreDetailProps {
   riskScore: RiskScore;
@@ -58,69 +52,105 @@ export default function RiskScoreDetail({ riskScore }: RiskScoreDetailProps) {
   ].filter((item) => item.value !== 0);
 
   return (
-    <div className={`rounded-lg border p-3 ${colors.bg} ${colors.border}`}>
-      {/* Header */}
-      <div className="flex items-center gap-2 mb-3 pb-3 border-b border-opacity-30">
-        <IconComponent className={`w-5 h-5 ${colors.icon}`} />
+    <div className="space-y-0 max-w-xs">
+      {/* Header com background colorido - compacto */}
+      <div className={`flex items-center gap-2 p-3 ${colors.bg}`}>
+        <IconComponent className={`w-5 h-5 ${colors.icon} shrink-0`} />
         <div>
-          <div className={`text-sm font-bold ${colors.text}`}>
-            Score de Risco: {riskScore.score}
+          <div className={`text-base font-bold ${colors.text} leading-tight`}>
+            {riskScore.score}
           </div>
-          <div className={`text-xs font-medium ${colors.text}`}>
+          <div className={`text-xs font-semibold ${colors.text} opacity-70`}>
             {riskScore.level}
           </div>
         </div>
       </div>
 
-      {/* Breakdown */}
-      <div className="space-y-2">
-        {breakdownItems.map((item) => (
-          <div
-            key={item.label}
-            className="flex items-center justify-between text-xs"
-          >
-            <div className="flex items-center gap-1">
-              {item.type === "deduction" && (
-                <Minus className={`w-3 h-3 ${colors.text}`} />
-              )}
-              <span className={`${colors.text}`}>{item.label}</span>
-            </div>
-            <span
-              className={`font-medium ${item.type === "initial" ? `font-bold ${colors.text}` : colors.text}`}
+      {/* Divisor sutil */}
+      <div className="h-px bg-slate-200" />
+
+      {/* Breakdown section - compacto */}
+      <div className="p-3 space-y-1.5">
+        <div className="space-y-1">
+          {breakdownItems.map((item) => (
+            <div
+              key={item.label}
+              className="flex items-center justify-between text-xs"
             >
-              {item.value}
-            </span>
-          </div>
-        ))}
+              <div className="flex items-center gap-1.5">
+                {item.type === "initial" ? (
+                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                ) : (
+                  <div className="w-2 h-2 rounded-full bg-rose-500" />
+                )}
+                <span className="text-slate-600">{item.label}</span>
+              </div>
+              <span
+                className={`font-semibold ${
+                  item.type === "initial" ? "text-emerald-600" : "text-rose-600"
+                }`}
+              >
+                {item.value > 0 ? "+" : ""}
+                {item.value}
+              </span>
+            </div>
+          ))}
+        </div>
 
         {/* Total */}
-        <div className="flex items-center justify-between text-xs font-bold pt-2 border-t border-opacity-30 mt-2">
-          <span className={colors.text}>Score final</span>
-          <span className={colors.text}>{riskScore.score}</span>
+        <div className="pt-1.5 mt-1.5 border-t border-slate-200">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-600">Total</span>
+            <span className={`text-base font-bold ${colors.text}`}>
+              {riskScore.score}
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Insights */}
-      <div className="mt-3 text-xs space-y-1">
-        {riskScore.breakdown.expiredDeduction < 0 && (
-          <p className={`${colors.text}`}>
-            ⚠️ {Math.abs(riskScore.breakdown.expiredDeduction) / 30} item(ns)
-            vencido(s)
-          </p>
-        )}
-        {riskScore.breakdown.almostExpiredDeduction < 0 && (
-          <p className={`${colors.text}`}>
-            ⏰ {Math.abs(riskScore.breakdown.almostExpiredDeduction) / 10}{" "}
-            item(ns) prestes a vencer
-          </p>
-        )}
-        {riskScore.breakdown.pendingDeduction < 0 && (
-          <p className={`${colors.text}`}>
-            📋 {Math.abs(riskScore.breakdown.pendingDeduction) / 15} item(ns)
-            pendente(s)
-          </p>
-        )}
-      </div>
+      {/* Insights section - compacto */}
+      {(riskScore.breakdown.expiredDeduction < 0 ||
+        riskScore.breakdown.almostExpiredDeduction < 0 ||
+        riskScore.breakdown.pendingDeduction < 0) && (
+        <>
+          <div className="h-px bg-slate-200" />
+          <div className="px-3 py-2 space-y-1">
+            {riskScore.breakdown.expiredDeduction < 0 && (
+              <div className="flex items-center gap-1.5 text-xs text-rose-700">
+                <span>⚠️</span>
+                <span>
+                  <span className="font-semibold">
+                    {Math.abs(riskScore.breakdown.expiredDeduction) / 30}
+                  </span>{" "}
+                  vencido(s)
+                </span>
+              </div>
+            )}
+            {riskScore.breakdown.almostExpiredDeduction < 0 && (
+              <div className="flex items-center gap-1.5 text-xs text-amber-700">
+                <span>⏰</span>
+                <span>
+                  <span className="font-semibold">
+                    {Math.abs(riskScore.breakdown.almostExpiredDeduction) / 10}
+                  </span>{" "}
+                  vencendo
+                </span>
+              </div>
+            )}
+            {riskScore.breakdown.pendingDeduction < 0 && (
+              <div className="flex items-center gap-1.5 text-xs text-blue-700">
+                <span>📋</span>
+                <span>
+                  <span className="font-semibold">
+                    {Math.abs(riskScore.breakdown.pendingDeduction) / 15}
+                  </span>{" "}
+                  pendente(s)
+                </span>
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }

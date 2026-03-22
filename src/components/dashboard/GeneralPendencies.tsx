@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import RiskScoreBadge from "@/components/dashboard/RiskScoreBadge";
+import RiskScoreHoverCard from "@/components/dashboard/RiskScoreHoverCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { calculateRiskScore } from "@/lib/risk-score";
 import {
@@ -145,7 +146,7 @@ export default function GeneralPendencies({
           </div>
         ) : (
           <div
-            className="max-h-96 overflow-y-auto divide-y divide-slate-200"
+            className="max-h-96 overflow-y-auto divide-y divide-slate-200 relative"
             style={{
               maskImage:
                 "linear-gradient(to bottom, black 95%, transparent 100%)",
@@ -196,7 +197,9 @@ export default function GeneralPendencies({
 
                     {/* Coluna 2: Score de risco */}
                     <div className="shrink-0">
-                      <RiskScoreBadge riskScore={group.riskScore} size="md" />
+                      <RiskScoreHoverCard riskScore={group.riskScore}>
+                        <RiskScoreBadge riskScore={group.riskScore} size="md" />
+                      </RiskScoreHoverCard>
                     </div>
 
                     {/* Coluna 3: faixa horizontal de mini-cards */}
