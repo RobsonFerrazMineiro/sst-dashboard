@@ -15,7 +15,10 @@ function startOfToday(): Date {
 
 function diffDaysTo(date: Date): number {
   const hoje = startOfToday();
-  return Math.ceil((date.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+  // Zera as horas da validade também para comparação justa
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return Math.ceil((d.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 export function getAsoStatus(

@@ -46,16 +46,20 @@ function getStatus(
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
 
-  const validade = toDateSafe(validadeStr);
-  if (!validade) return "Pendente";
+  try {
+    const validade = parseISO(validadeStr);
+    validade.setHours(0, 0, 0, 0);
 
-  const diffDays = Math.ceil(
-    (validade.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24),
-  );
+    const diffDays = Math.ceil(
+      (validade.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24),
+    );
 
-  if (diffDays < 0) return "Vencido";
-  if (diffDays <= 30) return "Prestes a vencer";
-  return "Em dia";
+    if (diffDays < 0) return "Vencido";
+    if (diffDays <= 30) return "Prestes a vencer";
+    return "Em dia";
+  } catch {
+    return "Pendente";
+  }
 }
 
 export default function ASOPanel({

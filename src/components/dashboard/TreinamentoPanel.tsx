@@ -24,6 +24,7 @@ import type {
   TreinamentoRecord,
 } from "@/types/dashboard";
 import { exportToCSV } from "@/utils/csvExport";
+import { getTrainingStatus } from "@/lib/validity";
 
 type StatusTreino =
   | "Em dia"
@@ -39,28 +40,8 @@ type ProcessedTreinamento = TreinamentoRecord & {
   tipo_nr: string;
 };
 
-function toDateSafe(value: unknown): Date | null {
-  if (!value) return null;
-  const d = new Date(String(value));
-  return Number.isNaN(d.getTime()) ? null : d;
-}
-
 function getStatus(validadeStr?: string | null): StatusTreino {
-  if (!validadeStr) return "Sem vencimento";
-
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-
-  const validade = toDateSafe(validadeStr);
-  if (!validade) return "Sem vencimento";
-
-  const diffDays = Math.ceil(
-    (validade.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24),
-  );
-
-  if (diffDays < 0) return "Vencido";
-  if (diffDays <= 30) return "Prestes a vencer";
-  return "Em dia";
+  return (getTrainingStatus(validadeStr) as unknown as StatusTreino) || "Sem vencimento";
 }
 
 export default function TreinamentoPanel({
@@ -118,8 +99,14 @@ export default function TreinamentoPanel({
         continue;
       }
 
-      const currentDate = toDateSafe(treinamento.data_treinamento);
-      const existingDate = toDateSafe(existing.data_treinamento);
+      let currentDate: Date | null = null;
+      let existingDate: Date | null = null;
+      try {
+        currentDate = treinamento.data_treinamento ? parseISO(treinamento.data_treinamento) : null;
+        existingDate = existing.data_treinamento ? parseISO(existing.data_treinamento) : null;
+      } catch {
+        // ignore parsing errors
+      }
 
       if (!currentDate) continue;
       if (!existingDate || currentDate > existingDate) {

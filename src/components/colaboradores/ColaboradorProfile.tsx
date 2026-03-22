@@ -129,7 +129,11 @@ function getStatus(validadeISO?: string | null) {
   if (!validadeISO) return "Sem vencimento";
 
   const hoje = new Date();
-  const validade = new Date(validadeISO);
+  hoje.setHours(0, 0, 0, 0);
+
+  const validade = parseISO(validadeISO);
+  validade.setHours(0, 0, 0, 0);
+
   const diffDays = Math.ceil(
     (validade.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24),
   );
