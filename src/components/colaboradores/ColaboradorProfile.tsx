@@ -1,8 +1,6 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { format, parseISO } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import {
   ArrowLeft,
   BriefcaseBusiness,
@@ -33,7 +31,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { StatusBadgeWithTemporal } from "@/components/ui/status-badge-with-temporal";
 import { api } from "@/lib/api";
+import { formatDate, parseLocalDate } from "@/lib/utils";
 import type { AsoRecord, TreinamentoRecord } from "@/types/dashboard";
 import { toast } from "sonner";
 
@@ -114,22 +114,17 @@ function splitLatestSingle<T extends Record<string, unknown>>(
 
 // =========== FIM DOS HELPERS PARA NÍVEL 2 ===========
 
-function statusBadge(status: string) {
-  const map: Record<string, string> = {
-    "Em dia": "bg-emerald-100 text-emerald-700 border-emerald-200",
-    "Prestes a vencer": "bg-amber-100 text-amber-700 border-amber-200",
-    Vencido: "bg-rose-100 text-rose-700 border-rose-200",
-    Pendente: "bg-slate-100 text-slate-700 border-slate-200",
-    "Sem vencimento": "bg-blue-100 text-blue-700 border-blue-200",
-  };
-  return map[status] ?? "bg-slate-100 text-slate-700 border-slate-200";
-}
-
 function getStatus(validadeISO?: string | null) {
   if (!validadeISO) return "Sem vencimento";
 
   const hoje = new Date();
-  const validade = new Date(validadeISO);
+  hoje.setHours(0, 0, 0, 0);
+
+  const validade = parseLocalDate(validadeISO);
+  if (!validade) return "Sem vencimento";
+
+  validade.setHours(0, 0, 0, 0);
+
   const diffDays = Math.ceil(
     (validade.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24),
   );
@@ -137,6 +132,35 @@ function getStatus(validadeISO?: string | null) {
   if (diffDays < 0) return "Vencido";
   if (diffDays <= 30) return "Prestes a vencer";
   return "Em dia";
+}
+
+function getDiffDays(validadeISO?: string | null): number {
+  if (!validadeISO) return 0;
+
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  const validade = parseLocalDate(validadeISO);
+  if (!validade) return 0;
+
+  validade.setHours(0, 0, 0, 0);
+
+  return Math.ceil(
+    (validade.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24),
+  );
+}
+
+function getTemporalLabel(diffDays: number): string {
+  if (diffDays < 0) {
+    const absDays = Math.abs(diffDays);
+    return `há ${absDays} ${absDays === 1 ? "dia" : "dias"}`;
+  } else if (diffDays === 0) {
+    return "vence hoje";
+  } else if (diffDays <= 30) {
+    return `em ${diffDays} ${diffDays === 1 ? "dia" : "dias"}`;
+  } else {
+    return `${diffDays} ${diffDays === 1 ? "dia" : "dias"} restantes`;
+  }
 }
 
 const statusRank: Record<string, number> = {
@@ -164,12 +188,16 @@ function byStatusThenDate(
 
 type TreinamentoProfileRow = TreinamentoRecord & {
   status: string;
+  diffDays: number;
+  temporalLabel: string;
   dataFmt: string;
   validadeFmt: string;
 };
 
 type AsoProfileRow = AsoRecord & {
   status: string;
+  diffDays: number;
+  temporalLabel: string;
   dataFmt: string;
   validadeFmt: string;
 };
@@ -223,16 +251,17 @@ export default function ColaboradorProfile({ id }: { id: string }) {
   const treinamentosDoColab = useMemo(() => {
     const filtered = (treinamentos as TreinamentoRecord[])
       .filter((t) => t.colaborador_id === id)
-      .map((t) => ({
-        ...t,
-        status: getStatus(t.validade ?? null),
-        dataFmt: t.data_treinamento
-          ? format(parseISO(t.data_treinamento), "dd/MM/yyyy", { locale: ptBR })
-          : "-",
-        validadeFmt: t.validade
-          ? format(parseISO(t.validade), "dd/MM/yyyy", { locale: ptBR })
-          : "Indeterminada",
-      }))
+      .map((t) => {
+        const diffDays = getDiffDays(t.validade ?? null);
+        return {
+          ...t,
+          status: getStatus(t.validade ?? null),
+          diffDays,
+          temporalLabel: getTemporalLabel(diffDays),
+          dataFmt: formatDate(t.data_treinamento, "-"),
+          validadeFmt: formatDate(t.validade, "Indeterminada"),
+        };
+      })
       .sort((a, b) =>
         byStatusThenDate(a.status, a.validade, b.status, b.validade),
       );
@@ -259,16 +288,17 @@ export default function ColaboradorProfile({ id }: { id: string }) {
   const asosDoColab = useMemo(() => {
     return (asos as AsoRecord[])
       .filter((a) => a.colaborador_id === id)
-      .map((a) => ({
-        ...a,
-        status: getStatus(a.validade_aso ?? null),
-        dataFmt: a.data_aso
-          ? format(parseISO(a.data_aso), "dd/MM/yyyy", { locale: ptBR })
-          : "-",
-        validadeFmt: a.validade_aso
-          ? format(parseISO(a.validade_aso), "dd/MM/yyyy", { locale: ptBR })
-          : "Indeterminada",
-      }));
+      .map((a) => {
+        const diffDays = getDiffDays(a.validade_aso ?? null);
+        return {
+          ...a,
+          status: getStatus(a.validade_aso ?? null),
+          diffDays,
+          temporalLabel: getTemporalLabel(diffDays),
+          dataFmt: formatDate(a.data_aso, "-"),
+          validadeFmt: formatDate(a.validade_aso, "Indeterminada"),
+        };
+      });
   }, [asos, id]);
 
   const { atual: asosAtuais, historico: asosHistorico } = useMemo(() => {
@@ -537,25 +567,25 @@ export default function ColaboradorProfile({ id }: { id: string }) {
             </h3>
             <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full table-fixed">
                   <thead className="bg-slate-50">
                     <tr>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
                         Treinamento / NR
                       </th>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
                         Data
                       </th>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
                         Validade
                       </th>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
                         Carga (h)
                       </th>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
                         Status
                       </th>
-                      <th className="px-4 py-2.5 text-right text-sm font-semibold text-slate-600">
+                      <th className="px-4 py-2.5 text-right text-sm font-semibold text-slate-600 w-1/6">
                         Acoes
                       </th>
                     </tr>
@@ -618,12 +648,19 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                             {t.carga_horaria ?? "-"}
                           </td>
                           <td className="px-4 py-2.5">
-                            <Badge
-                              variant="outline"
-                              className={`font-medium ${statusBadge(t.status)}`}
-                            >
-                              {t.status}
-                            </Badge>
+                            <StatusBadgeWithTemporal
+                              statusInfo={{
+                                status: t.status as
+                                  | "Em dia"
+                                  | "Prestes a vencer"
+                                  | "Vencido"
+                                  | "Pendente"
+                                  | "Sem vencimento",
+                                diffDays: t.diffDays,
+                                temporalLabel: t.temporalLabel,
+                              }}
+                              showTemporalBelow={true}
+                            />
                           </td>
                           <td className="px-4 py-2.5">
                             <div className="flex justify-end gap-2">
@@ -694,25 +731,25 @@ export default function ColaboradorProfile({ id }: { id: string }) {
             </h3>
             <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full table-fixed">
                   <thead className="bg-slate-50">
                     <tr>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
                         Treinamento / NR
                       </th>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
                         Data
                       </th>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
                         Validade
                       </th>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
                         Carga (h)
                       </th>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
                         Status
                       </th>
-                      <th className="px-4 py-2.5 text-right text-sm font-semibold text-slate-600">
+                      <th className="px-4 py-2.5 text-right text-sm font-semibold text-slate-600 w-1/6">
                         Acoes
                       </th>
                     </tr>
@@ -767,12 +804,19 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                               {t.carga_horaria ?? "-"}
                             </td>
                             <td className="px-4 py-2.5">
-                              <Badge
-                                variant="outline"
-                                className={`font-medium ${statusBadge(t.status)}`}
-                              >
-                                {t.status}
-                              </Badge>
+                              <StatusBadgeWithTemporal
+                                statusInfo={{
+                                  status: t.status as
+                                    | "Em dia"
+                                    | "Prestes a vencer"
+                                    | "Vencido"
+                                    | "Pendente"
+                                    | "Sem vencimento",
+                                  diffDays: t.diffDays,
+                                  temporalLabel: t.temporalLabel,
+                                }}
+                                showTemporalBelow={true}
+                              />
                             </td>
                             <td className="px-4 py-2.5">
                               <div className="flex justify-end gap-2">
@@ -854,25 +898,25 @@ export default function ColaboradorProfile({ id }: { id: string }) {
             </h3>
             <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full table-fixed">
                   <thead className="bg-slate-50">
                     <tr>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
                         Tipo de ASO
                       </th>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
                         Data
                       </th>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
                         Validade
                       </th>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
                         Clinica
                       </th>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
                         Status
                       </th>
-                      <th className="px-4 py-2.5 text-right text-sm font-semibold text-slate-600">
+                      <th className="px-4 py-2.5 text-right text-sm font-semibold text-slate-600 w-1/6">
                         Acoes
                       </th>
                     </tr>
@@ -930,12 +974,19 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                             {a.clinica ?? "-"}
                           </td>
                           <td className="px-4 py-2.5">
-                            <Badge
-                              variant="outline"
-                              className={`font-medium ${statusBadge(a.status)}`}
-                            >
-                              {a.status}
-                            </Badge>
+                            <StatusBadgeWithTemporal
+                              statusInfo={{
+                                status: a.status as
+                                  | "Em dia"
+                                  | "Prestes a vencer"
+                                  | "Vencido"
+                                  | "Pendente"
+                                  | "Sem vencimento",
+                                diffDays: a.diffDays,
+                                temporalLabel: a.temporalLabel,
+                              }}
+                              showTemporalBelow={true}
+                            />
                           </td>
                           <td className="px-4 py-2.5">
                             <div className="flex justify-end gap-2">
@@ -1006,25 +1057,25 @@ export default function ColaboradorProfile({ id }: { id: string }) {
             </h3>
             <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full table-fixed">
                   <thead className="bg-slate-50">
                     <tr>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
                         Tipo de ASO
                       </th>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
                         Data
                       </th>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
                         Validade
                       </th>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
                         Clinica
                       </th>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600">
+                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
                         Status
                       </th>
-                      <th className="px-4 py-2.5 text-right text-sm font-semibold text-slate-600">
+                      <th className="px-4 py-2.5 text-right text-sm font-semibold text-slate-600 w-1/6">
                         Acoes
                       </th>
                     </tr>
@@ -1073,12 +1124,19 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                             {a.clinica ?? "-"}
                           </td>
                           <td className="px-4 py-2.5">
-                            <Badge
-                              variant="outline"
-                              className={`font-medium ${statusBadge(a.status)}`}
-                            >
-                              {a.status}
-                            </Badge>
+                            <StatusBadgeWithTemporal
+                              statusInfo={{
+                                status: a.status as
+                                  | "Em dia"
+                                  | "Prestes a vencer"
+                                  | "Vencido"
+                                  | "Pendente"
+                                  | "Sem vencimento",
+                                diffDays: a.diffDays,
+                                temporalLabel: a.temporalLabel,
+                              }}
+                              showTemporalBelow={true}
+                            />
                           </td>
                           <td className="px-4 py-2.5">
                             <div className="flex justify-end gap-2">

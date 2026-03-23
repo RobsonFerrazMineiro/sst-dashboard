@@ -65,6 +65,71 @@ function getStatusPriority(status: ValidityStatus): number {
 }
 
 /**
+ * Filtra ASOs para apenas o mais recente por colaborador
+ * (equivalente ao "ASO atual" no ColaboradorProfile)
+ */
+function filterCurrentAsos(asos: AsoRecord[]): AsoRecord[] {
+  const currentByColaborador = new Map<string, AsoRecord>();
+
+  asos.forEach((aso) => {
+    const key = aso.colaborador_id || "unknown";
+    const current = currentByColaborador.get(key);
+
+    if (!current) {
+      currentByColaborador.set(key, aso);
+    } else {
+      // Mantém o mais recente (por data_aso)
+      const currentDate = current.data_aso
+        ? new Date(current.data_aso)
+        : new Date(0);
+      const asoDate = aso.data_aso ? new Date(aso.data_aso) : new Date(0);
+
+      if (asoDate > currentDate) {
+        currentByColaborador.set(key, aso);
+      }
+    }
+  });
+
+  return Array.from(currentByColaborador.values());
+}
+
+/**
+ * Filtra Treinamentos para apenas o mais recente por (colaborador + tipo/NR)
+ * (equivalente ao "Treinamento atual" no ColaboradorProfile)
+ */
+function filterCurrentTreinamentos(
+  treinamentos: TreinamentoRecord[],
+): TreinamentoRecord[] {
+  const currentByKey = new Map<string, TreinamentoRecord>();
+
+  treinamentos.forEach((tre) => {
+    const colaboradorId = tre.colaborador_id || "unknown";
+    const tipo = tre.tipoTreinamento || tre.nr || "unknown";
+    const key = `${colaboradorId}|${tipo}`;
+
+    const current = currentByKey.get(key);
+
+    if (!current) {
+      currentByKey.set(key, tre);
+    } else {
+      // Mantém o mais recente (por data_treinamento)
+      const currentDate = current.data_treinamento
+        ? new Date(current.data_treinamento)
+        : new Date(0);
+      const treDate = tre.data_treinamento
+        ? new Date(tre.data_treinamento)
+        : new Date(0);
+
+      if (treDate > currentDate) {
+        currentByKey.set(key, tre);
+      }
+    }
+  });
+
+  return Array.from(currentByKey.values());
+}
+
+/**
  * Cria lista unificada de pendências
  */
 export function createUnifiedPendingsList(
@@ -175,7 +240,14 @@ export function createRealPendingsList(
   asos: AsoRecord[],
   treinamentos: TreinamentoRecord[],
 ): UnifiedPendingItem[] {
-  const allItems = createUnifiedPendingsList(asos, treinamentos);
+  // Filtra apenas registros "atuais" (mais recentes por colaborador/tipo)
+  const currentAsos = filterCurrentAsos(asos);
+  const currentTreinamentos = filterCurrentTreinamentos(treinamentos);
+
+  // Cria lista unificada a partir dos registros atuais
+  const allItems = createUnifiedPendingsList(currentAsos, currentTreinamentos);
+
+  // Filtra apenas pendências reais (vencido ou prestes a vencer)
   return allItems.filter((item) => isRealPending(item.status));
 }
 

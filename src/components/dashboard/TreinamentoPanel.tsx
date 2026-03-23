@@ -1,7 +1,6 @@
 "use client";
 
-import { format, parseISO } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { parseISO } from "date-fns";
 import {
   AlertTriangle,
   CalendarDays,
@@ -18,6 +17,9 @@ import FilterBar from "./FilterBar";
 import Pagination from "./Pagination";
 import StatCard from "./StatCard";
 
+import { StatusBadgeWithTemporal } from "@/components/ui/status-badge-with-temporal";
+import { formatDate } from "@/lib/utils";
+import { getTrainingStatus } from "@/lib/validity";
 import type {
   ColumnDef,
   TipoTreinamento,
@@ -33,34 +35,44 @@ type StatusTreino =
 
 type ProcessedTreinamento = TreinamentoRecord & {
   status: StatusTreino;
+  diffDays: number;
+  temporalLabel: string;
   data_treinamento_formatted: string;
   validade_formatted: string;
   tipo_display: string;
   tipo_nr: string;
 };
 
-function toDateSafe(value: unknown): Date | null {
-  if (!value) return null;
-  const d = new Date(String(value));
-  return Number.isNaN(d.getTime()) ? null : d;
+function getStatus(validadeStr?: string | null): StatusTreino {
+  return (
+    (getTrainingStatus(validadeStr) as unknown as StatusTreino) ||
+    "Sem vencimento"
+  );
 }
 
-function getStatus(validadeStr?: string | null): StatusTreino {
-  if (!validadeStr) return "Sem vencimento";
+function getDiffDays(validadeStr?: string | null): number {
+  if (!validadeStr) return 0;
 
+  const validade = parseISO(validadeStr);
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
+  const v = new Date(validade);
+  v.setHours(0, 0, 0, 0);
 
-  const validade = toDateSafe(validadeStr);
-  if (!validade) return "Sem vencimento";
+  return Math.ceil((v.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+}
 
-  const diffDays = Math.ceil(
-    (validade.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24),
-  );
-
-  if (diffDays < 0) return "Vencido";
-  if (diffDays <= 30) return "Prestes a vencer";
-  return "Em dia";
+function getTemporalLabel(diffDays: number): string {
+  if (diffDays < 0) {
+    const absDays = Math.abs(diffDays);
+    return `há ${absDays} ${absDays === 1 ? "dia" : "dias"}`;
+  } else if (diffDays === 0) {
+    return "vence hoje";
+  } else if (diffDays <= 30) {
+    return `em ${diffDays} ${diffDays === 1 ? "dia" : "dias"}`;
+  } else {
+    return `${diffDays} ${diffDays === 1 ? "dia" : "dias"} restantes`;
+  }
 }
 
 export default function TreinamentoPanel({
@@ -118,8 +130,18 @@ export default function TreinamentoPanel({
         continue;
       }
 
-      const currentDate = toDateSafe(treinamento.data_treinamento);
-      const existingDate = toDateSafe(existing.data_treinamento);
+      let currentDate: Date | null = null;
+      let existingDate: Date | null = null;
+      try {
+        currentDate = treinamento.data_treinamento
+          ? parseISO(treinamento.data_treinamento)
+          : null;
+        existingDate = existing.data_treinamento
+          ? parseISO(existing.data_treinamento)
+          : null;
+      } catch {
+        // ignore parsing errors
+      }
 
       if (!currentDate) continue;
       if (!existingDate || currentDate > existingDate) {
@@ -132,19 +154,18 @@ export default function TreinamentoPanel({
         ? tiposMap[treinamento.tipoTreinamento]
         : null;
 
+      const diffDays = getDiffDays(treinamento.validade);
+
       return {
         ...treinamento,
         status: getStatus(treinamento.validade),
-        data_treinamento_formatted: treinamento.data_treinamento
-          ? format(parseISO(treinamento.data_treinamento), "dd/MM/yyyy", {
-              locale: ptBR,
-            })
-          : "-",
-        validade_formatted: treinamento.validade
-          ? format(parseISO(treinamento.validade), "dd/MM/yyyy", {
-              locale: ptBR,
-            })
-          : "Indeterminada",
+        diffDays,
+        temporalLabel: getTemporalLabel(diffDays),
+        data_treinamento_formatted: formatDate(
+          treinamento.data_treinamento,
+          "-",
+        ),
+        validade_formatted: formatDate(treinamento.validade, "Indeterminada"),
         tipo_display: tipo
           ? `${tipo.nr} – ${tipo.nome}`
           : (treinamento.nr ?? "-"),
@@ -233,7 +254,20 @@ export default function TreinamentoPanel({
         </span>
       ),
     },
-    { header: "Status", accessor: "status" },
+    {
+      header: "Status",
+      accessor: "status",
+      render: (row) => (
+        <StatusBadgeWithTemporal
+          statusInfo={{
+            status: row.status,
+            diffDays: row.diffDays,
+            temporalLabel: row.temporalLabel,
+          }}
+          showTemporalBelow={true}
+        />
+      ),
+    },
   ];
 
   const filters = [
@@ -260,11 +294,10 @@ export default function TreinamentoPanel({
   const handleExportCSV = () =>
     exportToCSV(filteredData, "treinamentos", columns);
 
-  const handleCardClick = (status: string) =>
-    {
-      setActiveCard(activeCard === status ? null : status);
-      setCurrentPage(1);
-    };
+  const handleCardClick = (status: string) => {
+    setActiveCard(activeCard === status ? null : status);
+    setCurrentPage(1);
+  };
 
   const clearFilters = () => {
     setSearchTerm("");

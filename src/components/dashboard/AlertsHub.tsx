@@ -1,8 +1,7 @@
 "use client";
 
 import { Bell } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { useEffect, useMemo } from "react";
 
 import AlertsModalContent from "@/components/dashboard/AlertsModalContent";
 import { Button } from "@/components/ui/button";
@@ -12,11 +11,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { toastNotification } from "@/lib/notification-manager";
 import {
   createRealPendingsList,
   groupPendingsByColaborador,
 } from "@/lib/unified-pending";
 import type { AsoRecord, TreinamentoRecord } from "@/types/dashboard";
+import { useState } from "react";
 
 interface AlertsHubProps {
   asos: AsoRecord[];
@@ -38,7 +39,6 @@ export default function AlertsHub({
   isLoading = false,
 }: AlertsHubProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [toastsShown, setToastsShown] = useState(false);
 
   const alerts = useMemo<Alert[]>(() => {
     if (isLoading) return [];
@@ -107,36 +107,34 @@ export default function AlertsHub({
     return generatedAlerts;
   }, [asos, treinamentos, isLoading]);
 
-  // Show toasts only once on initial load, prioritize critical alerts
+  // Show toasts with deduplication
   useEffect(() => {
-    if (toastsShown || alerts.length === 0 || isLoading) return;
+    if (alerts.length === 0 || isLoading) return;
 
-    // Mark as shown first to prevent re-renders
-    const timer = setTimeout(() => {
-      setToastsShown(true);
+    // Show only critical alerts or first 2 most important
+    const criticalAlerts = alerts.filter((a) => a.severity === "critical");
+    const toShow =
+      criticalAlerts.length > 0
+        ? criticalAlerts.slice(0, 1)
+        : alerts.slice(0, 2);
 
-      // Show only critical alerts or first 2 most important
-      const criticalAlerts = alerts.filter((a) => a.severity === "critical");
-      const toShow =
-        criticalAlerts.length > 0
-          ? criticalAlerts.slice(0, 1)
-          : alerts.slice(0, 2);
+    toShow.forEach((alert) => {
+      // Use alert.id directly with hash for uniqueness
+      const hash = btoa(`${alert.id}|${alert.message}`).substring(0, 8);
+      const notificationId = `alert_${alert.id}_${hash}`;
 
-      toShow.forEach((alert) => {
-        toast[alert.severity === "critical" ? "error" : "warning"](
-          alert.message,
-          {
-            description: alert.colaborador
-              ? `Colaborador: ${alert.colaborador}`
-              : undefined,
-            duration: 5000,
-          },
-        );
-      });
-    }, 0);
-
-    return () => clearTimeout(timer);
-  }, [alerts, isLoading, toastsShown]);
+      toastNotification[alert.severity === "critical" ? "error" : "warning"](
+        alert.message,
+        {
+          id: notificationId,
+          description: alert.colaborador
+            ? `Colaborador: ${alert.colaborador}`
+            : undefined,
+          deduplicateFor: 24 * 60 * 60 * 1000, // 24 horas
+        },
+      );
+    });
+  }, [alerts, isLoading]);
 
   if (alerts.length === 0) return null;
 
@@ -146,7 +144,7 @@ export default function AlertsHub({
         variant="ghost"
         size="icon"
         onClick={() => setIsOpen(true)}
-        className="relative"
+        className="relative mr-2"
         title="Ver alertas"
       >
         <Bell className="h-5 w-5" />
