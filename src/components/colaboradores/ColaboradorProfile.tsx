@@ -18,6 +18,7 @@ import { useMemo, useState } from "react";
 
 import AddASOModal from "@/components/colaboradores/modals/AddASOModal";
 import AddTreinamentoModal from "@/components/colaboradores/modals/AddTreinamentoModal";
+import RiskScoreProfileCard from "@/components/colaboradores/RiskScoreProfileCard";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -475,16 +476,22 @@ export default function ColaboradorProfile({ id }: { id: string }) {
         </Link>
       </header>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-6 grid grid-rows-2 grid-cols-1 gap-4">
-        <div className="flex items-center gap-3 mb-5">
-          <div className="p-2 bg-emerald-50 rounded-lg">
-            <UserRound className="w-6 h-6 text-slate-700" />
+      <section className="rounded-xl border border-slate-200 bg-white p-6">
+        {/* Header com nome e score */}
+        <div className="flex items-start justify-between gap-4 mb-5">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-emerald-50 rounded-lg">
+              <UserRound className="w-6 h-6 text-slate-700" />
+            </div>
+            <h1 className="text-2xl font-bold text-slate-900">
+              {colaborador.nome}
+            </h1>
           </div>
-          <h1 className="text-2xl font-bold text-slate-900">
-            {colaborador.nome}
-          </h1>
+          {/* Score de Risco ao lado */}
+          <RiskScoreProfileCard asos={asos} treinamentos={treinamentos} />
         </div>
 
+        {/* Informações básicas */}
         <div className="flex gap-4 text-sm">
           <div className="flex items-center gap-2 text-slate-600">
             <Building2 className="w-4 h-4 text-slate-400" />
