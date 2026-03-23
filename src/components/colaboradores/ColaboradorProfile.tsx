@@ -485,7 +485,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
         </Link>
       </header>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-6">
+      <section className="rounded-xl border border-slate-300 bg-white p-6 shadow-sm">
         {/* Header com nome e score */}
         <div className="flex items-start justify-between gap-4 mb-5">
           <div className="flex items-center gap-3">
@@ -524,7 +524,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
 
       <section className="space-y-4">
         {/* Filtro Global - Posicionado acima do título */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+        <div className="bg-white rounded-xl border border-slate-300 p-4 space-y-3 shadow-sm">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {/* Busca Global */}
             <input
@@ -583,27 +583,27 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                 Atuais
               </Badge>
             </h3>
-            <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+            <div className="rounded-xl border border-slate-300 bg-white overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
                 <table className="w-full table-fixed">
-                  <thead className="bg-slate-50">
+                  <thead className="bg-slate-50 border-b border-slate-300">
                     <tr>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
                         Treinamento / NR
                       </th>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
                         Data
                       </th>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
                         Validade
                       </th>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
                         Carga (h)
                       </th>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
                         Status
                       </th>
-                      <th className="px-4 py-2.5 text-right text-sm font-semibold text-slate-600 w-1/6">
+                      <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700 w-1/6">
                         Acoes
                       </th>
                     </tr>
@@ -631,9 +631,9 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                       treinamentosFiltrados.map((t: TreinamentoProfileRow) => (
                         <tr
                           key={t.id}
-                          className="border-t border-slate-100 hover:bg-slate-50"
+                          className="border-t border-slate-200 hover:bg-slate-50"
                         >
-                          <td className="max-w-85 px-4 py-2.5 text-sm font-medium text-slate-900">
+                          <td className="max-w-85 px-4 py-3 text-sm font-medium text-slate-900">
                             <div className="flex items-center gap-2">
                               {t.tipoTreinamento_nome ? (
                                 <span>{t.tipoTreinamento_nome}</span>
@@ -650,22 +650,22 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                               ) : null}
                             </div>
                           </td>
-                          <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                          <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
                             <span className="inline-flex items-center gap-2">
                               <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
                               {t.dataFmt}
                             </span>
                           </td>
-                          <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                          <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
                             <span className="inline-flex items-center gap-2">
                               <Clock3 className="h-3.5 w-3.5 text-slate-400" />
                               {t.validadeFmt}
                             </span>
                           </td>
-                          <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                          <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
                             {t.carga_horaria ?? "-"}
                           </td>
-                          <td className="px-4 py-2.5">
+                          <td className="px-4 py-3">
                             <StatusBadgeWithTemporal
                               statusInfo={{
                                 status: t.status as
@@ -680,7 +680,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                               showTemporalBelow={true}
                             />
                           </td>
-                          <td className="px-4 py-2.5">
+                          <td className="px-4 py-3">
                             <div className="flex justify-end gap-2">
                               <Button
                                 variant="ghost"
@@ -747,27 +747,27 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                 Histórico
               </Badge>
             </h3>
-            <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+            <div className="rounded-xl border border-slate-300 bg-white overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
                 <table className="w-full table-fixed">
-                  <thead className="bg-slate-50">
+                  <thead className="bg-slate-50 border-b border-slate-300">
                     <tr>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
                         Treinamento / NR
                       </th>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
                         Data
                       </th>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
                         Validade
                       </th>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
                         Carga (h)
                       </th>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
                         Status
                       </th>
-                      <th className="px-4 py-2.5 text-right text-sm font-semibold text-slate-600 w-1/6">
+                      <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700 w-1/6">
                         Acoes
                       </th>
                     </tr>
@@ -787,9 +787,9 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                         (t: TreinamentoProfileRow) => (
                           <tr
                             key={t.id}
-                            className="border-t border-slate-100 hover:bg-slate-50 opacity-75"
+                            className="border-t border-slate-200 hover:bg-slate-50 opacity-75"
                           >
-                            <td className="max-w-85 px-4 py-2.5 text-sm font-medium text-slate-900">
+                            <td className="max-w-85 px-4 py-3 text-sm font-medium text-slate-900">
                               <div className="flex items-center gap-2">
                                 {t.tipoTreinamento_nome ? (
                                   <span>{t.tipoTreinamento_nome}</span>
@@ -806,22 +806,22 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                                 ) : null}
                               </div>
                             </td>
-                            <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                            <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
                               <span className="inline-flex items-center gap-2">
                                 <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
                                 {t.dataFmt}
                               </span>
                             </td>
-                            <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                            <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
                               <span className="inline-flex items-center gap-2">
                                 <Clock3 className="h-3.5 w-3.5 text-slate-400" />
                                 {t.validadeFmt}
                               </span>
                             </td>
-                            <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                            <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
                               {t.carga_horaria ?? "-"}
                             </td>
-                            <td className="px-4 py-2.5">
+                            <td className="px-4 py-3">
                               <StatusBadgeWithTemporal
                                 statusInfo={{
                                   status: t.status as
@@ -836,7 +836,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                                 showTemporalBelow={true}
                               />
                             </td>
-                            <td className="px-4 py-2.5">
+                            <td className="px-4 py-3">
                               <div className="flex justify-end gap-2">
                                 <Button
                                   variant="ghost"
@@ -914,27 +914,27 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                 Atuais
               </Badge>
             </h3>
-            <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+            <div className="rounded-xl border border-slate-300 bg-white overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
                 <table className="w-full table-fixed">
-                  <thead className="bg-slate-50">
+                  <thead className="bg-slate-50 border-b border-slate-300">
                     <tr>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
                         Tipo de ASO
                       </th>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
                         Data
                       </th>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
                         Validade
                       </th>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
                         Clinica
                       </th>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
                         Status
                       </th>
-                      <th className="px-4 py-2.5 text-right text-sm font-semibold text-slate-600 w-1/6">
+                      <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700 w-1/6">
                         Acoes
                       </th>
                     </tr>
@@ -962,9 +962,9 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                       asosFiltrados.map((a: AsoProfileRow) => (
                         <tr
                           key={a.id}
-                          className="border-t border-slate-100 hover:bg-slate-50"
+                          className="border-t border-slate-200 hover:bg-slate-50"
                         >
-                          <td className="px-4 py-2.5 text-sm text-slate-900 whitespace-nowrap">
+                          <td className="px-4 py-3 text-sm text-slate-900 whitespace-nowrap">
                             {a.tipoASO_nome ? (
                               <Badge
                                 variant="outline"
@@ -976,22 +976,22 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                               "-"
                             )}
                           </td>
-                          <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                          <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
                             <span className="inline-flex items-center gap-2">
                               <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
                               {a.dataFmt}
                             </span>
                           </td>
-                          <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                          <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
                             <span className="inline-flex items-center gap-2">
                               <Clock3 className="h-3.5 w-3.5 text-slate-400" />
                               {a.validadeFmt}
                             </span>
                           </td>
-                          <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                          <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
                             {a.clinica ?? "-"}
                           </td>
-                          <td className="px-4 py-2.5">
+                          <td className="px-4 py-3">
                             <StatusBadgeWithTemporal
                               statusInfo={{
                                 status: a.status as
@@ -1006,7 +1006,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                               showTemporalBelow={true}
                             />
                           </td>
-                          <td className="px-4 py-2.5">
+                          <td className="px-4 py-3">
                             <div className="flex justify-end gap-2">
                               <Button
                                 variant="ghost"
@@ -1073,27 +1073,27 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                 Histórico
               </Badge>
             </h3>
-            <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+            <div className="rounded-xl border border-slate-300 bg-white overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
                 <table className="w-full table-fixed">
-                  <thead className="bg-slate-50">
+                  <thead className="bg-slate-50 border-b border-slate-300">
                     <tr>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
                         Tipo de ASO
                       </th>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
                         Data
                       </th>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
                         Validade
                       </th>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
                         Clinica
                       </th>
-                      <th className="px-4 py-2.5 text-left text-sm font-semibold text-slate-600 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
                         Status
                       </th>
-                      <th className="px-4 py-2.5 text-right text-sm font-semibold text-slate-600 w-1/6">
+                      <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700 w-1/6">
                         Acoes
                       </th>
                     </tr>
@@ -1112,9 +1112,9 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                       asosHistoricoFiltrados.map((a: AsoProfileRow) => (
                         <tr
                           key={a.id}
-                          className="border-t border-slate-100 hover:bg-slate-50 opacity-75"
+                          className="border-t border-slate-200 hover:bg-slate-50 opacity-75"
                         >
-                          <td className="px-4 py-2.5 text-sm text-slate-900 whitespace-nowrap">
+                          <td className="px-4 py-3 text-sm text-slate-900 whitespace-nowrap">
                             {a.tipoASO_nome ? (
                               <Badge
                                 variant="outline"
@@ -1126,22 +1126,22 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                               "-"
                             )}
                           </td>
-                          <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                          <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
                             <span className="inline-flex items-center gap-2">
                               <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
                               {a.dataFmt}
                             </span>
                           </td>
-                          <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                          <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
                             <span className="inline-flex items-center gap-2">
                               <Clock3 className="h-3.5 w-3.5 text-slate-400" />
                               {a.validadeFmt}
                             </span>
                           </td>
-                          <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                          <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
                             {a.clinica ?? "-"}
                           </td>
-                          <td className="px-4 py-2.5">
+                          <td className="px-4 py-3">
                             <StatusBadgeWithTemporal
                               statusInfo={{
                                 status: a.status as
@@ -1156,7 +1156,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                               showTemporalBelow={true}
                             />
                           </td>
-                          <td className="px-4 py-2.5">
+                          <td className="px-4 py-3">
                             <div className="flex justify-end gap-2">
                               <Button
                                 variant="ghost"
