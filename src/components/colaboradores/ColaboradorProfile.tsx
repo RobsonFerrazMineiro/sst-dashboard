@@ -18,7 +18,8 @@ import { useMemo, useState } from "react";
 
 import AddASOModal from "@/components/colaboradores/modals/AddASOModal";
 import AddTreinamentoModal from "@/components/colaboradores/modals/AddTreinamentoModal";
-import RiskScoreProfileCard from "@/components/colaboradores/RiskScoreProfileCard";
+import RiskScoreBadge from "@/components/dashboard/RiskScoreBadge";
+import RiskScoreHoverCard from "@/components/dashboard/RiskScoreHoverCard";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,6 +35,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StatusBadgeWithTemporal } from "@/components/ui/status-badge-with-temporal";
 import { api } from "@/lib/api";
+import { calculateRiskScore } from "@/lib/risk-score";
+import { createRealPendingsList } from "@/lib/unified-pending";
 import { formatDate, parseLocalDate } from "@/lib/utils";
 import type { AsoRecord, TreinamentoRecord } from "@/types/dashboard";
 import { toast } from "sonner";
@@ -248,6 +251,12 @@ export default function ColaboradorProfile({ id }: { id: string }) {
     queryKey: ["tiposASO"],
     queryFn: api.tiposASO.list,
   });
+
+  // Calcula o score de risco
+  const riskScore = useMemo(() => {
+    const pendingsList = createRealPendingsList(asos, treinamentos);
+    return calculateRiskScore(pendingsList);
+  }, [asos, treinamentos]);
 
   const treinamentosDoColab = useMemo(() => {
     const filtered = (treinamentos as TreinamentoRecord[])
@@ -488,7 +497,9 @@ export default function ColaboradorProfile({ id }: { id: string }) {
             </h1>
           </div>
           {/* Score de Risco ao lado */}
-          <RiskScoreProfileCard asos={asos} treinamentos={treinamentos} />
+          <RiskScoreHoverCard riskScore={riskScore}>
+            <RiskScoreBadge riskScore={riskScore} showLabel />
+          </RiskScoreHoverCard>
         </div>
 
         {/* Informações básicas */}
