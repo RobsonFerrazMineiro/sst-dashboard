@@ -118,7 +118,7 @@ export default function TiposASOPage() {
         </div>
       </header>
 
-      <div className="bg-white rounded-xl border border-slate-200 p-4">
+      <div className="bg-white rounded-xl border border-slate-300 p-4 shadow-sm">
         <div className="flex items-center gap-3">
           <Search className="w-4 h-4 text-slate-400" />
           <Input
@@ -130,21 +130,21 @@ export default function TiposASOPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-300 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full min-w-215">
-            <thead className="bg-slate-50">
+            <thead className="bg-slate-50 border-b border-slate-300">
               <tr>
-                <th className="text-left text-sm font-semibold text-slate-600 px-4 py-3 min-w-65">
+                <th className="text-left text-sm font-semibold text-slate-700 px-4 py-3 min-w-65">
                   Nome
                 </th>
-                <th className="text-left text-sm font-semibold text-slate-600 px-4 py-3">
+                <th className="text-left text-sm font-semibold text-slate-700 px-4 py-3">
                   Validade (meses)
                 </th>
-                <th className="text-left text-sm font-semibold text-slate-600 px-4 py-3">
+                <th className="text-left text-sm font-semibold text-slate-700 px-4 py-3">
                   Descrição
                 </th>
-                <th className="text-right text-sm font-semibold text-slate-600 px-4 py-3">
+                <th className="text-right text-sm font-semibold text-slate-700 px-4 py-3">
                   Ações
                 </th>
               </tr>
@@ -173,7 +173,7 @@ export default function TiposASOPage() {
                 filtered.map((row) => (
                   <tr
                     key={row.id}
-                    className="border-t border-slate-100 hover:bg-slate-50"
+                    className="border-t border-slate-200 hover:bg-slate-50"
                   >
                     <td className="px-4 py-3 text-sm text-slate-900 whitespace-nowrap min-w-65">
                       <Badge

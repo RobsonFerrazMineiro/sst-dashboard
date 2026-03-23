@@ -135,7 +135,7 @@ export default function ColaboradoresPage() {
           </div>
         </header>
 
-        <div className="bg-white rounded-xl border border-slate-200 p-4">
+        <div className="bg-white rounded-xl border border-slate-300 p-4 shadow-sm">
           <div className="flex items-center gap-3">
             <Search className="w-4 h-4 text-slate-400" />
             <Input
@@ -147,24 +147,24 @@ export default function ColaboradoresPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="bg-white rounded-xl border border-slate-300 overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full min-w-230">
-              <thead className="bg-slate-50">
+              <thead className="bg-slate-50 border-b border-slate-300">
                 <tr>
-                  <th className="text-left text-sm font-semibold text-slate-600 px-4 py-2.5">
+                  <th className="text-left text-sm font-semibold text-slate-700 px-4 py-3">
                     Nome
                   </th>
-                  <th className="text-left text-sm font-semibold text-slate-600 px-4 py-2.5">
+                  <th className="text-left text-sm font-semibold text-slate-700 px-4 py-3">
                     Setor
                   </th>
-                  <th className="text-left text-sm font-semibold text-slate-600 px-4 py-2.5 min-w-70">
+                  <th className="text-left text-sm font-semibold text-slate-700 px-4 py-3 min-w-70">
                     Cargo
                   </th>
-                  <th className="text-left text-sm font-semibold text-slate-600 px-4 py-2.5">
+                  <th className="text-left text-sm font-semibold text-slate-700 px-4 py-3">
                     Matrícula
                   </th>
-                  <th className="text-right text-sm font-semibold text-slate-600 px-4 py-2.5">
+                  <th className="text-right text-sm font-semibold text-slate-700 px-4 py-3">
                     Ações
                   </th>
                 </tr>
@@ -193,12 +193,12 @@ export default function ColaboradoresPage() {
                   filtered.map((row) => (
                     <tr
                       key={row.id}
-                      className="border-t border-slate-100 hover:bg-slate-50"
+                      className="border-t-2 border-slate-200 hover:bg-slate-50"
                     >
-                      <td className="px-4 py-2.5 text-sm text-slate-900 whitespace-nowrap">
+                      <td className="px-4 py-3 text-sm text-slate-900 whitespace-nowrap">
                         {row.nome}
                       </td>
-                      <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap">
+                      <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">
                         <Badge
                           variant="outline"
                           className="border-slate-200 bg-slate-100 text-slate-700 shadow-none"
@@ -206,14 +206,14 @@ export default function ColaboradoresPage() {
                           {row.setor}
                         </Badge>
                       </td>
-                      <td className="px-4 py-2.5 text-sm text-slate-700 whitespace-nowrap min-w-70">
+                      <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap min-w-70">
                         {row.cargo}
                       </td>
-                      <td className="px-4 py-2.5 text-sm text-slate-600 whitespace-nowrap">
+                      <td className="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">
                         {row.matricula ?? "-"}
                       </td>
 
-                      <td className="px-4 py-2.5">
+                      <td className="px-4 py-3">
                         <div className="flex justify-end gap-2">
                           <Link href={`/colaboradores/${row.id}`}>
                             <Button
