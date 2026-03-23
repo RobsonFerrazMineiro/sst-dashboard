@@ -4,7 +4,10 @@ import { AlertCircle, CheckCircle2, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
+import RiskScoreBadge from "@/components/dashboard/RiskScoreBadge";
+import RiskScoreHoverCard from "@/components/dashboard/RiskScoreHoverCard";
 import { Card, CardContent } from "@/components/ui/card";
+import { calculateRiskScore } from "@/lib/risk-score";
 import {
   createRealPendingsList,
   filterGroupsByStatus,
@@ -78,6 +81,16 @@ export default function GeneralPendencies({
     [groupedPendencies, filterType],
   );
 
+  // Calcula score de risco para cada grupo
+  const groupsWithRiskScores = useMemo(
+    () =>
+      filteredGroups.map((group) => ({
+        ...group,
+        riskScore: calculateRiskScore(group.items),
+      })),
+    [filteredGroups],
+  );
+
   const handleNavegaColaborador = (colaboradorId: string | null) => {
     if (colaboradorId) {
       router.push(`/colaboradores/${colaboradorId}`);
@@ -133,22 +146,22 @@ export default function GeneralPendencies({
           </div>
         ) : (
           <div
-            className="max-h-96 overflow-y-auto divide-y divide-slate-200"
+            className="max-h-96 overflow-y-auto divide-y divide-slate-200 relative"
             style={{
               maskImage:
                 "linear-gradient(to bottom, black 95%, transparent 100%)",
             }}
           >
-            {filteredGroups.map((group, index) => {
+            {groupsWithRiskScores.map((group, index) => {
               return (
                 <div
                   key={group.colaboradorId || group.colaborador}
-                  className={`px-4 sm:px-6 py-2 hover:bg-slate-50 transition-colors ${
+                  className={`px-4 sm:px-6 py-3 hover:bg-slate-50 transition-colors ${
                     index % 2 === 1 ? "bg-slate-50/30" : ""
                   }`}
                 >
-                  <div className="grid grid-cols-1 lg:grid-cols-[minmax(140px,auto)_1fr] gap-3 items-center">
-                    {/* Coluna esquerda: nome + badges resumo - compacto */}
+                  <div className="grid grid-cols-1 lg:grid-cols-[minmax(140px,auto)_auto_1fr] gap-3 items-start lg:items-center">
+                    {/* Coluna 1: nome + badges resumo - compacto */}
                     <div className="flex flex-col gap-1">
                       {/* Nome clicável */}
                       <button
@@ -182,7 +195,14 @@ export default function GeneralPendencies({
                       </div>
                     </div>
 
-                    {/* Coluna direita: faixa horizontal de mini-cards */}
+                    {/* Coluna 2: Score de risco */}
+                    <div className="shrink-0">
+                      <RiskScoreHoverCard riskScore={group.riskScore}>
+                        <RiskScoreBadge riskScore={group.riskScore} size="md" />
+                      </RiskScoreHoverCard>
+                    </div>
+
+                    {/* Coluna 3: faixa horizontal de mini-cards */}
                     <div
                       style={{
                         overflowX: "auto",
