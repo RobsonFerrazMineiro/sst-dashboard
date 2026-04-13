@@ -77,6 +77,8 @@ export default function StatCard({
     <Card
       className={cn(
         "cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1",
+        onClick &&
+          "focus-within:ring-2 focus-within:ring-emerald-500 focus-within:ring-offset-2",
         style.bg,
         style.border,
         isActive && style.activeBorder,
@@ -84,11 +86,27 @@ export default function StatCard({
       onClick={onClick}
       role={onClick ? "button" : undefined}
       aria-pressed={onClick ? !!isActive : undefined}
+      aria-label={
+        onClick
+          ? `Filtrar por ${title}, ${count} registro${count === 1 ? "" : "s"}, ${percentage}%`
+          : undefined
+      }
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={
+        onClick
+          ? (event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
     >
       <CardContent className="p-6">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <p className="text-sm font-medium text-slate-500 uppercase tracking-wide">
+            <p className="text-sm font-medium text-slate-600 uppercase tracking-wide">
               {title}
             </p>
             <div className="flex items-baseline gap-2">

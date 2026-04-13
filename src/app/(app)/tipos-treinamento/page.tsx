@@ -126,8 +126,11 @@ export default function TiposTreinamentoPage() {
 
       <div className="bg-white rounded-xl border border-slate-300 p-4 shadow-sm">
         <div className="flex items-center gap-3">
-          <Search className="w-4 h-4 text-slate-400" />
+          <Search aria-hidden="true" className="w-4 h-4 text-slate-400" />
           <Input
+            name="buscarTiposTreinamento"
+            aria-label="Buscar tipos de treinamento por nome ou NR"
+            autoComplete="off"
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Buscar por nome ou NR..."
@@ -211,10 +214,11 @@ export default function TiposTreinamentoPage() {
                             <Button
                               variant="ghost"
                               size="icon"
+                              aria-label={`Editar tipo de treinamento ${row.nome}`}
                               onClick={() => onEdit(row)}
                               className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                             >
-                              <Pencil className="w-4 h-4" />
+                              <Pencil aria-hidden="true" className="w-4 h-4" />
                             </Button>
 
                             <AlertDialog>
@@ -222,9 +226,10 @@ export default function TiposTreinamentoPage() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
+                                  aria-label={`Excluir tipo de treinamento ${row.nome}`}
                                   className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
                                 >
-                                  <Trash2 className="w-4 h-4" />
+                                  <Trash2 aria-hidden="true" className="w-4 h-4" />
                                 </Button>
                               </AlertDialogTrigger>
                               <AlertDialogContent>

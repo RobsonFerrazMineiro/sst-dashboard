@@ -118,6 +118,7 @@ export default function ColaboradorModal({
             <Label htmlFor="nome">Nome *</Label>
             <Input
               id="nome"
+              name="nomeColaborador"
               value={formData.nome}
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, nome: e.target.value }))
@@ -130,6 +131,7 @@ export default function ColaboradorModal({
             <Label htmlFor="setor">Setor *</Label>
             <Input
               id="setor"
+              name="setorColaborador"
               value={formData.setor}
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, setor: e.target.value }))
@@ -142,6 +144,7 @@ export default function ColaboradorModal({
             <Label htmlFor="cargo">Cargo *</Label>
             <Input
               id="cargo"
+              name="cargoColaborador"
               value={formData.cargo}
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, cargo: e.target.value }))
@@ -154,6 +157,7 @@ export default function ColaboradorModal({
             <Label htmlFor="matricula">Matrícula</Label>
             <Input
               id="matricula"
+              name="matriculaColaborador"
               value={formData.matricula}
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, matricula: e.target.value }))

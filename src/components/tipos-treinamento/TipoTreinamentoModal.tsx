@@ -152,6 +152,7 @@ export default function TipoTreinamentoModal({
             <Label htmlFor="nr">NR</Label>
             <Input
               id="nr"
+              name="nrTipoTreinamento"
               value={form.nr}
               onChange={(e) => setForm((p) => ({ ...p, nr: e.target.value }))}
               placeholder="Ex.: NR-10"
@@ -167,6 +168,7 @@ export default function TipoTreinamentoModal({
             <Label htmlFor="nome">Nome</Label>
             <Input
               id="nome"
+              name="nomeTipoTreinamento"
               value={form.nome}
               onChange={(e) => setForm((p) => ({ ...p, nome: e.target.value }))}
               placeholder="Ex.: Segurança em Instalações Elétricas"
@@ -182,6 +184,7 @@ export default function TipoTreinamentoModal({
             <Label htmlFor="validadeMeses">Validade (meses)</Label>
             <Input
               id="validadeMeses"
+              name="validadeMesesTipoTreinamento"
               inputMode="numeric"
               value={form.validadeMeses}
               onChange={(e) =>
@@ -200,6 +203,7 @@ export default function TipoTreinamentoModal({
             <Label htmlFor="descricao">Descrição</Label>
             <Textarea
               id="descricao"
+              name="descricaoTipoTreinamento"
               value={form.descricao}
               onChange={(e) =>
                 setForm((p) => ({ ...p, descricao: e.target.value }))

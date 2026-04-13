@@ -17,6 +17,8 @@ export type FilterOption = { value: string; label: string };
 export type FilterDef = {
   value: string;
   onChange: (value: string) => void;
+  label?: string;
+  name?: string;
   placeholder?: string;
   options: FilterOption[];
 };
@@ -45,6 +47,8 @@ export default function FilterBar({
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <Input
+            name="search"
+            aria-label={searchPlaceholder}
             placeholder={searchPlaceholder}
             value={searchValue}
             onChange={(e) => onSearchChange(e.target.value)}
@@ -59,7 +63,11 @@ export default function FilterBar({
               value={filter.value}
               onValueChange={filter.onChange}
             >
-              <SelectTrigger className="w-45 bg-slate-50 border-slate-200">
+              <SelectTrigger
+                name={filter.name ?? `filter-${index + 1}`}
+                aria-label={filter.label ?? filter.placeholder ?? `Filtro ${index + 1}`}
+                className="w-45 bg-slate-50 border-slate-200"
+              >
                 <SelectValue placeholder={filter.placeholder} />
               </SelectTrigger>
 

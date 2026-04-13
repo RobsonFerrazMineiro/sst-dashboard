@@ -533,6 +533,9 @@ export default function ColaboradorProfile({ id }: { id: string }) {
             {/* Busca Global */}
             <input
               type="text"
+              name="buscarPerfilColaborador"
+              aria-label="Buscar treinamentos por nome ou NR"
+              autoComplete="off"
               placeholder="Buscar por nome ou NR..."
               value={buscaGlobal}
               onChange={(e) => setBuscaGlobal(e.target.value)}
@@ -541,6 +544,8 @@ export default function ColaboradorProfile({ id }: { id: string }) {
 
             {/* Filtro de Status Global */}
             <select
+              name="statusGlobalPerfil"
+              aria-label="Filtrar perfil por status"
               value={statusGlobalFiltro ?? ""}
               onChange={(e) => setStatusGlobalFiltro(e.target.value || null)}
               className="px-3 py-2 rounded-lg border border-slate-300 bg-slate-50 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -554,6 +559,8 @@ export default function ColaboradorProfile({ id }: { id: string }) {
 
             {/* Filtro de Visualização Global */}
             <select
+              name="visualizacaoGlobalPerfil"
+              aria-label="Filtrar perfil por visualização"
               value={visualizacaoGlobal}
               onChange={(e) =>
                 setVisualizacaoGlobal(
@@ -696,6 +703,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                                   <Button
                                     variant="ghost"
                                     size="icon"
+                                    aria-label={`Editar treinamento ${t.tipoTreinamento_nome ?? t.nr ?? ""}`}
                                     title="Editar"
                                     onClick={() => {
                                       setEditingTreinamento(t);
@@ -703,7 +711,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                                     }}
                                     className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                                   >
-                                    <Pencil className="w-4 h-4" />
+                                    <Pencil aria-hidden="true" className="w-4 h-4" />
                                   </Button>
 
                                   <AlertDialog>
@@ -711,9 +719,10 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                                       <Button
                                         variant="ghost"
                                         size="icon"
+                                        aria-label={`Excluir treinamento ${t.tipoTreinamento_nome ?? t.nr ?? ""}`}
                                         className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
                                       >
-                                        <Trash2 className="w-4 h-4" />
+                                        <Trash2 aria-hidden="true" className="w-4 h-4" />
                                       </Button>
                                     </AlertDialogTrigger>
                                     <AlertDialogContent>
@@ -856,6 +865,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                                     <Button
                                       variant="ghost"
                                       size="icon"
+                                      aria-label={`Editar treinamento ${t.tipoTreinamento_nome ?? t.nr ?? ""}`}
                                       title="Editar"
                                       onClick={() => {
                                         setEditingTreinamento(t);
@@ -863,7 +873,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                                       }}
                                       className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                                     >
-                                      <Pencil className="w-4 h-4" />
+                                      <Pencil aria-hidden="true" className="w-4 h-4" />
                                     </Button>
 
                                     <AlertDialog>
@@ -871,9 +881,10 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                                         <Button
                                           variant="ghost"
                                           size="icon"
+                                          aria-label={`Excluir treinamento ${t.tipoTreinamento_nome ?? t.nr ?? ""}`}
                                           className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
                                         >
-                                          <Trash2 className="w-4 h-4" />
+                                          <Trash2 aria-hidden="true" className="w-4 h-4" />
                                         </Button>
                                       </AlertDialogTrigger>
                                       <AlertDialogContent>
@@ -1032,6 +1043,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                                   <Button
                                     variant="ghost"
                                     size="icon"
+                                    aria-label={`Editar ASO ${a.tipoASO_nome ?? ""}`}
                                     title="Editar"
                                     onClick={() => {
                                       setEditingASO(a);
@@ -1039,7 +1051,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                                     }}
                                     className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                                   >
-                                    <Pencil className="w-4 h-4" />
+                                    <Pencil aria-hidden="true" className="w-4 h-4" />
                                   </Button>
 
                                   <AlertDialog>
@@ -1047,9 +1059,10 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                                       <Button
                                         variant="ghost"
                                         size="icon"
+                                        aria-label={`Excluir ASO ${a.tipoASO_nome ?? ""}`}
                                         className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
                                       >
-                                        <Trash2 className="w-4 h-4" />
+                                        <Trash2 aria-hidden="true" className="w-4 h-4" />
                                       </Button>
                                     </AlertDialogTrigger>
                                     <AlertDialogContent>
@@ -1186,6 +1199,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                                   <Button
                                     variant="ghost"
                                     size="icon"
+                                    aria-label={`Editar ASO ${a.tipoASO_nome ?? ""}`}
                                     title="Editar"
                                     onClick={() => {
                                       setEditingASO(a);
@@ -1193,7 +1207,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                                     }}
                                     className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                                   >
-                                    <Pencil className="w-4 h-4" />
+                                    <Pencil aria-hidden="true" className="w-4 h-4" />
                                   </Button>
 
                                   <AlertDialog>
@@ -1201,9 +1215,10 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                                       <Button
                                         variant="ghost"
                                         size="icon"
+                                        aria-label={`Excluir ASO ${a.tipoASO_nome ?? ""}`}
                                         className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
                                       >
-                                        <Trash2 className="w-4 h-4" />
+                                        <Trash2 aria-hidden="true" className="w-4 h-4" />
                                       </Button>
                                     </AlertDialogTrigger>
                                     <AlertDialogContent>

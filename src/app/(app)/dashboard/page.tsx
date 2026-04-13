@@ -125,15 +125,27 @@ export default function DashboardPage() {
       {/* Content Panels */}
       <div className="transition-all duration-300">
         {activeTab === "asos" && (
-          <ASOPanel data={asos} isLoading={loadingASOs} />
+          <div
+            id="dashboard-panel-asos"
+            role="tabpanel"
+            aria-labelledby="dashboard-tab-asos"
+          >
+            <ASOPanel data={asos} isLoading={loadingASOs} />
+          </div>
         )}
 
         {activeTab === "treinamentos" && (
-          <TreinamentoPanel
-            data={treinamentos}
-            isLoading={loadingTreinamentos}
-            tiposTreinamento={tiposTreinamento}
-          />
+          <div
+            id="dashboard-panel-treinamentos"
+            role="tabpanel"
+            aria-labelledby="dashboard-tab-treinamentos"
+          >
+            <TreinamentoPanel
+              data={treinamentos}
+              isLoading={loadingTreinamentos}
+              tiposTreinamento={tiposTreinamento}
+            />
+          </div>
         )}
       </div>
     </div>

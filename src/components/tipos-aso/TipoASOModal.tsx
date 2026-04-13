@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
@@ -106,8 +107,10 @@ export default function TipoASOModal({
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">Nome</label>
+            <Label htmlFor="tipo-aso-nome">Nome</Label>
             <Input
+              id="tipo-aso-nome"
+              name="nomeTipoASO"
               value={nome}
               onChange={(e) => setNome(e.target.value)}
               placeholder="Ex: Admissional"
@@ -116,10 +119,10 @@ export default function TipoASOModal({
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">
-              Validade (meses)
-            </label>
+            <Label htmlFor="tipo-aso-validade">Validade (meses)</Label>
             <Input
+              id="tipo-aso-validade"
+              name="validadeMesesTipoASO"
               value={validadeMeses}
               onChange={(e) => setValidadeMeses(e.target.value)}
               placeholder="Ex: 12"
@@ -136,6 +139,8 @@ export default function TipoASOModal({
               Descrição
             </label>
             <Textarea
+              id="tipo-aso-descricao"
+              name="descricaoTipoASO"
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
               placeholder="Observações sobre o tipo de ASO..."

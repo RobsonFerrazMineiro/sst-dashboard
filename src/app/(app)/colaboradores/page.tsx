@@ -142,8 +142,11 @@ export default function ColaboradoresPage() {
 
         <div className="bg-white rounded-xl border border-slate-300 p-4 shadow-sm">
           <div className="flex items-center gap-3">
-            <Search className="w-4 h-4 text-slate-400" />
+            <Search aria-hidden="true" className="w-4 h-4 text-slate-400" />
             <Input
+              name="buscarColaboradores"
+              aria-label="Buscar colaboradores por nome, setor, cargo ou matrícula"
+              autoComplete="off"
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Buscar por nome, setor, cargo ou matrícula..."
@@ -224,10 +227,11 @@ export default function ColaboradoresPage() {
                             <Button
                               variant="ghost"
                               size="icon"
+                              aria-label={`Ver perfil de ${row.nome}`}
                               title="Ver perfil"
                               className="text-sky-600 hover:bg-sky-50 hover:text-sky-700"
                             >
-                              <Eye className="w-4 h-4" />
+                              <Eye aria-hidden="true" className="w-4 h-4" />
                             </Button>
                           </Link>
                           {canManageColaboradores ? (
@@ -235,10 +239,11 @@ export default function ColaboradoresPage() {
                               <Button
                                 variant="ghost"
                                 size="icon"
+                                aria-label={`Editar colaborador ${row.nome}`}
                                 onClick={() => onEdit(row)}
                                 className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                               >
-                                <Pencil className="w-4 h-4" />
+                                <Pencil aria-hidden="true" className="w-4 h-4" />
                               </Button>
 
                               <AlertDialog>
@@ -246,10 +251,11 @@ export default function ColaboradoresPage() {
                                   <Button
                                     variant="ghost"
                                     size="icon"
+                                    aria-label={`Excluir colaborador ${row.nome}`}
                                     className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
                                     disabled={deleteMutation.isPending}
                                   >
-                                    <Trash2 className="w-4 h-4" />
+                                    <Trash2 aria-hidden="true" className="w-4 h-4" />
                                   </Button>
                                 </AlertDialogTrigger>
 

@@ -132,11 +132,19 @@ export default function AddASOModal({
 
         <div className="space-y-4">
           <div className="grid gap-2">
-            <label className="text-sm font-medium text-slate-700">
+            <label
+              htmlFor="aso-tipo"
+              className="text-sm font-medium text-slate-700"
+            >
               Tipo de ASO *
             </label>
             <Select value={tipoId} onValueChange={setTipoId}>
-              <SelectTrigger className="bg-slate-50 border-slate-200">
+              <SelectTrigger
+                id="aso-tipo"
+                name="asoTipo"
+                aria-label="Tipo de ASO"
+                className="bg-slate-50 border-slate-200"
+              >
                 <SelectValue placeholder="Selecione o tipo..." />
               </SelectTrigger>
               <SelectContent>
@@ -151,10 +159,15 @@ export default function AddASOModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="grid gap-2">
-              <label className="text-sm font-medium text-slate-700">
+              <label
+                htmlFor="aso-data"
+                className="text-sm font-medium text-slate-700"
+              >
                 Data do ASO *
               </label>
               <Input
+                id="aso-data"
+                name="dataASO"
                 type="date"
                 value={dataASO}
                 onChange={(e) => setDataASO(e.target.value)}
@@ -162,10 +175,15 @@ export default function AddASOModal({
             </div>
 
             <div className="grid gap-2">
-              <label className="text-sm font-medium text-slate-700">
+              <label
+                htmlFor="aso-validade"
+                className="text-sm font-medium text-slate-700"
+              >
                 Validade
               </label>
               <Input
+                id="aso-validade"
+                name="validadeASO"
                 type="date"
                 value={validade}
                 onChange={(e) => setValidade(e.target.value)}
@@ -178,6 +196,8 @@ export default function AddASOModal({
               Clínica
             </label>
             <Input
+              id="aso-clinica"
+              name="clinica"
               value={clinica}
               onChange={(e) => setClinica(e.target.value)}
               placeholder="Nome da clínica"
@@ -189,6 +209,8 @@ export default function AddASOModal({
               Observação
             </label>
             <Textarea
+              id="aso-observacao"
+              name="observacaoASO"
               value={observacao}
               onChange={(e) => setObservacao(e.target.value)}
               placeholder="Observações..."

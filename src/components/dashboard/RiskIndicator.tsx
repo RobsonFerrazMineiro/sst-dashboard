@@ -104,10 +104,10 @@ export default function RiskIndicator({
       <div className="flex items-start gap-3">
         {config.icon}
         <div className="flex-1">
-          <h3 className={`font-semibold ${config.textColor}`}>
+          <h2 className={`text-lg font-semibold ${config.textColor}`}>
             Risco Geral: {config.label}
-          </h3>
-          <p className={`text-sm ${config.textColor} opacity-80 mt-1`}>
+          </h2>
+          <p className={`mt-1 text-sm ${config.textColor}`}>
             {riskData.vencidosCount} vencidos • {riskData.vendoCount} vencendo •{" "}
             {riskData.colaboradoresComRisco} colaboradores críticos
           </p>
