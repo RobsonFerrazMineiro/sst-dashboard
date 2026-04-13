@@ -478,7 +478,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-7">
       <header className="space-y-3">
         <Link
           href="/colaboradores"
@@ -489,38 +489,47 @@ export default function ColaboradorProfile({ id }: { id: string }) {
         </Link>
       </header>
 
-      <section className="rounded-xl border border-slate-300 bg-white p-6 shadow-sm">
+      <section className="rounded-xl border border-slate-300 bg-white p-4 shadow-sm sm:p-6">
         {/* Header com nome e score */}
-        <div className="flex items-start justify-between gap-4 mb-5">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-emerald-50 rounded-lg">
-              <UserRound className="w-6 h-6 text-slate-700" />
+        <div className="mb-4 flex flex-col gap-4 sm:mb-5 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start gap-3">
+              <div className="rounded-lg bg-emerald-50 p-2 shrink-0">
+                <UserRound className="w-6 h-6 text-slate-700" />
+              </div>
+              <div className="min-w-0">
+                <h1 className="break-words text-xl font-bold text-slate-900 sm:text-2xl">
+                  {colaborador.nome}
+                </h1>
+                <p className="mt-1 text-sm text-slate-500 sm:hidden">
+                  Perfil do colaborador
+                </p>
+              </div>
             </div>
-            <h1 className="text-2xl font-bold text-slate-900">
-              {colaborador.nome}
-            </h1>
           </div>
           {/* Score de Risco ao lado */}
-          <RiskScoreHoverCard riskScore={riskScore}>
-            <RiskScoreBadge riskScore={riskScore} showLabel />
-          </RiskScoreHoverCard>
+          <div className="self-start sm:self-auto">
+            <RiskScoreHoverCard riskScore={riskScore}>
+              <RiskScoreBadge riskScore={riskScore} showLabel />
+            </RiskScoreHoverCard>
+          </div>
         </div>
 
         {/* Informações básicas */}
-        <div className="flex gap-4 text-sm">
-          <div className="flex items-center gap-2 text-slate-600">
-            <Building2 className="w-4 h-4 text-slate-400" />
-            <span className="font-medium">Setor:</span>{" "}
+        <div className="grid grid-cols-1 gap-2 text-sm sm:flex sm:flex-wrap sm:gap-4">
+          <div className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-slate-600 sm:bg-transparent sm:px-0 sm:py-0">
+            <Building2 className="w-4 h-4 shrink-0 text-slate-400" />
+            <span className="font-medium shrink-0">Setor:</span>{" "}
             {colaborador.setor || "-"}
           </div>
-          <div className="flex items-center gap-2 text-slate-600">
-            <BriefcaseBusiness className="w-4 h-4 text-slate-400" />
-            <span className="font-medium">Cargo:</span>{" "}
+          <div className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-slate-600 sm:bg-transparent sm:px-0 sm:py-0">
+            <BriefcaseBusiness className="w-4 h-4 shrink-0 text-slate-400" />
+            <span className="font-medium shrink-0">Cargo:</span>{" "}
             {colaborador.cargo || "-"}
           </div>
-          <div className="flex items-center gap-2 text-slate-600">
-            <Hash className="w-4 h-4 text-slate-400" />
-            <span className="font-medium">Matrícula:</span>{" "}
+          <div className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-slate-600 sm:bg-transparent sm:px-0 sm:py-0">
+            <Hash className="w-4 h-4 shrink-0 text-slate-400" />
+            <span className="font-medium shrink-0">Matrícula:</span>{" "}
             {colaborador.matricula ?? "-"}
           </div>
         </div>
@@ -528,8 +537,8 @@ export default function ColaboradorProfile({ id }: { id: string }) {
 
       <section className="space-y-4">
         {/* Filtro Global - Posicionado acima do título */}
-        <div className="bg-white rounded-xl border border-slate-300 p-4 space-y-3 shadow-sm">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="bg-white rounded-xl border border-slate-300 p-4 shadow-sm">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {/* Busca Global */}
             <input
               type="text"
@@ -539,7 +548,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
               placeholder="Buscar por nome ou NR..."
               value={buscaGlobal}
               onChange={(e) => setBuscaGlobal(e.target.value)}
-              className="px-3 py-2 rounded-lg border border-slate-300 bg-slate-50 text-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="min-w-0 px-3 py-2 rounded-lg border border-slate-300 bg-slate-50 text-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
 
             {/* Filtro de Status Global */}
@@ -548,7 +557,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
               aria-label="Filtrar perfil por status"
               value={statusGlobalFiltro ?? ""}
               onChange={(e) => setStatusGlobalFiltro(e.target.value || null)}
-              className="px-3 py-2 rounded-lg border border-slate-300 bg-slate-50 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="min-w-0 px-3 py-2 rounded-lg border border-slate-300 bg-slate-50 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
               <option value="">Todos os status</option>
               <option value="Em dia">Em dia</option>
@@ -567,7 +576,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                   e.target.value as "todos" | "atuais" | "historico",
                 )
               }
-              className="px-3 py-2 rounded-lg border border-slate-300 bg-slate-50 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="min-w-0 px-3 py-2 rounded-lg border border-slate-300 bg-slate-50 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
               <option value="todos">Todos (Atuais + Histórico)</option>
               <option value="atuais">Apenas Atuais</option>
@@ -576,14 +585,14 @@ export default function ColaboradorProfile({ id }: { id: string }) {
           </div>
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-2xl font-semibold text-slate-900">
             Treinamentos
           </h2>
           {canManageTreinamentos ? (
             <Button
               onClick={() => setOpenTreinamento(true)}
-              className="gap-2"
+              className="gap-2 self-start sm:self-auto"
             >
               <Plus className="w-4 h-4" />
               Adicionar treinamento
@@ -601,25 +610,25 @@ export default function ColaboradorProfile({ id }: { id: string }) {
             </h3>
             <div className="rounded-xl border border-slate-300 bg-white overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
-                <table className="w-full table-fixed">
+                <table className="w-full min-w-[860px]">
                   <thead className="bg-slate-50 border-b border-slate-300">
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[220px]">
                         Treinamento / NR
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[120px]">
                         Data
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[120px]">
                         Validade
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[110px]">
                         Carga (h)
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[180px]">
                         Status
                       </th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700 min-w-[108px]">
                         Acoes
                       </th>
                     </tr>
@@ -697,7 +706,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                             />
                           </td>
                           <td className="px-4 py-3">
-                            <div className="flex justify-end gap-2">
+                            <div className="flex justify-end gap-1.5 sm:gap-2">
                               {canManageTreinamentos ? (
                                 <>
                                   <Button
@@ -709,7 +718,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                                       setEditingTreinamento(t);
                                       setOpenTreinamento(true);
                                     }}
-                                    className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                                    className="h-9 w-9 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                                   >
                                     <Pencil aria-hidden="true" className="w-4 h-4" />
                                   </Button>
@@ -720,7 +729,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                                         variant="ghost"
                                         size="icon"
                                         aria-label={`Excluir treinamento ${t.tipoTreinamento_nome ?? t.nr ?? ""}`}
-                                        className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                                        className="h-9 w-9 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
                                       >
                                         <Trash2 aria-hidden="true" className="w-4 h-4" />
                                       </Button>
@@ -771,25 +780,25 @@ export default function ColaboradorProfile({ id }: { id: string }) {
             </h3>
             <div className="rounded-xl border border-slate-300 bg-white overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
-                <table className="w-full table-fixed">
+                <table className="w-full min-w-[860px]">
                   <thead className="bg-slate-50 border-b border-slate-300">
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[220px]">
                         Treinamento / NR
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[120px]">
                         Data
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[120px]">
                         Validade
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[110px]">
                         Carga (h)
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[180px]">
                         Status
                       </th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700 min-w-[108px]">
                         Acoes
                       </th>
                     </tr>
@@ -859,7 +868,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                               />
                             </td>
                             <td className="px-4 py-3">
-                              <div className="flex justify-end gap-2">
+                              <div className="flex justify-end gap-1.5 sm:gap-2">
                                 {canManageTreinamentos ? (
                                   <>
                                     <Button
@@ -871,7 +880,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                                         setEditingTreinamento(t);
                                         setOpenTreinamento(true);
                                       }}
-                                      className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                                      className="h-9 w-9 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                                     >
                                       <Pencil aria-hidden="true" className="w-4 h-4" />
                                     </Button>
@@ -882,7 +891,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                                           variant="ghost"
                                           size="icon"
                                           aria-label={`Excluir treinamento ${t.tipoTreinamento_nome ?? t.nr ?? ""}`}
-                                          className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                                          className="h-9 w-9 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
                                         >
                                           <Trash2 aria-hidden="true" className="w-4 h-4" />
                                         </Button>
@@ -929,7 +938,10 @@ export default function ColaboradorProfile({ id }: { id: string }) {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-2xl font-semibold text-slate-900">ASOs</h2>
           {canManageASOs ? (
-            <Button onClick={() => setOpenASO(true)} className="gap-2">
+            <Button
+              onClick={() => setOpenASO(true)}
+              className="gap-2 self-start sm:self-auto"
+            >
               <Plus className="w-4 h-4" />
               Adicionar ASO
             </Button>
@@ -946,25 +958,25 @@ export default function ColaboradorProfile({ id }: { id: string }) {
             </h3>
             <div className="rounded-xl border border-slate-300 bg-white overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
-                <table className="w-full table-fixed">
+                <table className="w-full min-w-[900px]">
                   <thead className="bg-slate-50 border-b border-slate-300">
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[200px]">
                         Tipo de ASO
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[120px]">
                         Data
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[120px]">
                         Validade
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[150px]">
                         Clinica
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[180px]">
                         Status
                       </th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700 min-w-[108px]">
                         Acoes
                       </th>
                     </tr>
@@ -1037,7 +1049,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                             />
                           </td>
                           <td className="px-4 py-3">
-                            <div className="flex justify-end gap-2">
+                            <div className="flex justify-end gap-1.5 sm:gap-2">
                               {canManageASOs ? (
                                 <>
                                   <Button
@@ -1049,7 +1061,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                                       setEditingASO(a);
                                       setOpenASO(true);
                                     }}
-                                    className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                                    className="h-9 w-9 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                                   >
                                     <Pencil aria-hidden="true" className="w-4 h-4" />
                                   </Button>
@@ -1060,7 +1072,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                                         variant="ghost"
                                         size="icon"
                                         aria-label={`Excluir ASO ${a.tipoASO_nome ?? ""}`}
-                                        className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                                        className="h-9 w-9 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
                                       >
                                         <Trash2 aria-hidden="true" className="w-4 h-4" />
                                       </Button>
@@ -1111,25 +1123,25 @@ export default function ColaboradorProfile({ id }: { id: string }) {
             </h3>
             <div className="rounded-xl border border-slate-300 bg-white overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
-                <table className="w-full table-fixed">
+                <table className="w-full min-w-[900px]">
                   <thead className="bg-slate-50 border-b border-slate-300">
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[200px]">
                         Tipo de ASO
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[120px]">
                         Data
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[120px]">
                         Validade
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[150px]">
                         Clinica
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[180px]">
                         Status
                       </th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700 min-w-[108px]">
                         Acoes
                       </th>
                     </tr>
@@ -1193,7 +1205,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                             />
                           </td>
                           <td className="px-4 py-3">
-                            <div className="flex justify-end gap-2">
+                            <div className="flex justify-end gap-1.5 sm:gap-2">
                               {canManageASOs ? (
                                 <>
                                   <Button
@@ -1205,7 +1217,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                                       setEditingASO(a);
                                       setOpenASO(true);
                                     }}
-                                    className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                                    className="h-9 w-9 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                                   >
                                     <Pencil aria-hidden="true" className="w-4 h-4" />
                                   </Button>
@@ -1216,7 +1228,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                                         variant="ghost"
                                         size="icon"
                                         aria-label={`Excluir ASO ${a.tipoASO_nome ?? ""}`}
-                                        className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                                        className="h-9 w-9 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
                                       >
                                         <Trash2 aria-hidden="true" className="w-4 h-4" />
                                       </Button>
