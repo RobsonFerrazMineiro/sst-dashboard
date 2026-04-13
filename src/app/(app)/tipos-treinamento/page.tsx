@@ -28,11 +28,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
+import { useAuthPermissions } from "@/lib/permissions-client";
 import type { TipoTreinamento } from "@/types/dashboard";
 import { toast } from "sonner";
 
 export default function TiposTreinamentoPage() {
   const qc = useQueryClient();
+  const { hasPermission } = useAuthPermissions();
+  const canManageTiposTreinamento = hasPermission(
+    "tipos-treinamento.gerenciar",
+  );
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<TipoTreinamento | null>(null);
@@ -110,10 +115,12 @@ export default function TiposTreinamentoPage() {
             <RefreshCw className="w-4 h-4" />
             Atualizar
           </Button>
-          <Button onClick={onNew} className="gap-2">
-            <Plus className="w-4 h-4" />
-            Novo tipo
-          </Button>
+          {canManageTiposTreinamento ? (
+            <Button onClick={onNew} className="gap-2">
+              <Plus className="w-4 h-4" />
+              Novo tipo
+            </Button>
+          ) : null}
         </div>
       </header>
 
@@ -199,45 +206,51 @@ export default function TiposTreinamentoPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => onEdit(row)}
-                          className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
+                        {canManageTiposTreinamento ? (
+                          <>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                              onClick={() => onEdit(row)}
+                              className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Pencil className="w-4 h-4" />
                             </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Excluir tipo?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Isso remove o tipo do sistema. Se ele estiver
-                                sendo usado em treinamentos, o banco pode
-                                bloquear a exclusão.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => deleteMutation.mutate(row.id)}
-                                className="bg-rose-600 hover:bg-rose-700"
-                              >
-                                Excluir
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    Excluir tipo?
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Isso remove o tipo do sistema. Se ele
+                                    estiver sendo usado em treinamentos, o banco
+                                    pode bloquear a exclusão.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => deleteMutation.mutate(row.id)}
+                                    className="bg-rose-600 hover:bg-rose-700"
+                                  >
+                                    Excluir
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </>
+                        ) : null}
                       </div>
                     </td>
                   </tr>
@@ -248,14 +261,16 @@ export default function TiposTreinamentoPage() {
         </div>
       </div>
 
-      <TipoTreinamentoModal
-        open={open}
-        onOpenChange={setOpen}
-        initial={editing}
-        onSaved={async () => {
-          await qc.invalidateQueries({ queryKey: ["tiposTreinamento"] });
-        }}
-      />
+      {canManageTiposTreinamento ? (
+        <TipoTreinamentoModal
+          open={open}
+          onOpenChange={setOpen}
+          initial={editing}
+          onSaved={async () => {
+            await qc.invalidateQueries({ queryKey: ["tiposTreinamento"] });
+          }}
+        />
+      ) : null}
     </div>
   );
 }

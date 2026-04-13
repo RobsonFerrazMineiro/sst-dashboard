@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -98,6 +99,9 @@ export default function TipoASOModal({
           <DialogTitle>
             {isEdit ? "Editar tipo de ASO" : "Novo tipo de ASO"}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Cadastre o tipo de ASO para usar nos ASOs. Validade é obrigatório.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">

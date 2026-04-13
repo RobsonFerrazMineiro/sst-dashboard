@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/db";
-import { NR, Prisma } from "@prisma/client";
+import { formatNR, parseNRInput } from "@/lib/nr";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth";
+import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 function parseDateOrNull(value: unknown): Date | null {
@@ -8,55 +10,71 @@ function parseDateOrNull(value: unknown): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-function parseNR(value: unknown): NR | null {
-  if (!value) return null;
-  const s = String(value).trim(); // ex: "NR-35"
-  const key = s.replace("-", "_") as keyof typeof NR; // "NR_35"
-  return NR[key] ?? null;
+function serializeTreinamento(
+  item: Awaited<ReturnType<typeof prisma.treinamento.findFirstOrThrow>>,
+) {
+  return {
+    ...item,
+    colaborador_id: item.colaboradorId,
+    tipoTreinamento: item.tipoTreinamentoId,
+    nr: formatNR(item.nr),
+  };
 }
 
 export async function GET(req: Request) {
+  const auth = await getAuthenticatedUser(req);
+  if (!auth) return unauthorizedResponse();
   const { searchParams } = new URL(req.url);
   const colaboradorId = searchParams.get("colaboradorId");
 
   const itens = await prisma.treinamento.findMany({
-    where: colaboradorId ? { colaborador_id: colaboradorId } : undefined,
+    where: {
+      empresaId: auth.session.empresaId,
+      ...(colaboradorId ? { colaboradorId } : {}),
+    },
     orderBy: { data_treinamento: "desc" },
   });
 
-  return NextResponse.json(itens);
+  return NextResponse.json(itens.map(serializeTreinamento));
 }
 
 export async function POST(req: Request) {
   const body = await req.json();
+  const auth = await getAuthenticatedUser(req);
+  if (!auth) return unauthorizedResponse();
 
-  const colaborador_id = body.colaborador_id
-    ? String(body.colaborador_id)
-    : null;
-  const tipoTreinamento = body.tipoTreinamento
-    ? String(body.tipoTreinamento)
-    : null;
+  const colaboradorId = body.colaboradorId
+    ? String(body.colaboradorId)
+    : body.colaborador_id
+      ? String(body.colaborador_id)
+      : null;
+
+  const tipoTreinamentoId = body.tipoTreinamentoId
+    ? String(body.tipoTreinamentoId)
+    : body.tipoTreinamento
+      ? String(body.tipoTreinamento)
+      : null;
 
   const data_treinamento = parseDateOrNull(body.data_treinamento);
   if (!data_treinamento) {
     return NextResponse.json(
-      { error: "Campo obrigatório: data_treinamento (data válida)" },
+      { error: "Campo obrigatorio: data_treinamento (data valida)" },
       { status: 400 },
     );
   }
 
   let colaborador_nome = String(body.colaborador_nome ?? "").trim();
 
-  // snapshot automático do colaborador
-  if (colaborador_id) {
-    const colab = await prisma.colaborador.findUnique({
-      where: { id: colaborador_id },
+  if (colaboradorId) {
+    const colab = await prisma.colaborador.findFirst({
+      where: { id: colaboradorId, empresaId: auth.session.empresaId },
     });
-    if (!colab)
+    if (!colab) {
       return NextResponse.json(
-        { error: "colaborador_id inválido" },
+        { error: "colaborador_id invalido" },
         { status: 400 },
       );
+    }
     colaborador_nome = colab.nome;
   }
 
@@ -64,33 +82,28 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         error:
-          "Campo obrigatório: colaborador_nome (ou informe colaborador_id válido)",
+          "Campo obrigatorio: colaborador_nome (ou informe colaborador_id valido)",
       },
       { status: 400 },
     );
   }
 
-  // validade
   let validade = parseDateOrNull(body.validade);
+  let nr = parseNRInput(body.nr);
 
-  // nr legado (enum)
-  let nr = parseNR(body.nr);
-
-  // se tiver tipoTreinamento, podemos inferir nr (e validade se quiser)
-  if (tipoTreinamento) {
-    const tipo = await prisma.tipoTreinamento.findUnique({
-      where: { id: tipoTreinamento },
+  if (tipoTreinamentoId) {
+    const tipo = await prisma.tipoTreinamento.findFirst({
+      where: { id: tipoTreinamentoId, empresaId: auth.session.empresaId },
     });
-    if (!tipo)
+    if (!tipo) {
       return NextResponse.json(
-        { error: "tipoTreinamento inválido" },
+        { error: "tipoTreinamento invalido" },
         { status: 400 },
       );
+    }
 
-    // se não veio nr, tenta inferir do tipo.nr (string "NR-35")
-    if (!nr) nr = parseNR(tipo.nr);
+    if (!nr) nr = tipo.nr;
 
-    // se não veio validade e o tipo tem validadeMeses, calcula
     if (!validade && tipo.validadeMeses && tipo.validadeMeses > 0) {
       const d = new Date(data_treinamento);
       d.setMonth(d.getMonth() + tipo.validadeMeses);
@@ -107,15 +120,16 @@ export async function POST(req: Request) {
 
   if (carga_horaria !== null && Number.isNaN(carga_horaria)) {
     return NextResponse.json(
-      { error: "carga_horaria inválida" },
+      { error: "carga_horaria invalida" },
       { status: 400 },
     );
   }
 
   const data: Prisma.TreinamentoUncheckedCreateInput = {
-    colaborador_id,
+    empresaId: auth.session.empresaId,
+    colaboradorId,
     colaborador_nome,
-    tipoTreinamento,
+    tipoTreinamentoId,
     nr,
     data_treinamento,
     validade,
@@ -123,5 +137,5 @@ export async function POST(req: Request) {
   };
 
   const created = await prisma.treinamento.create({ data });
-  return NextResponse.json(created, { status: 201 });
+  return NextResponse.json(serializeTreinamento(created), { status: 201 });
 }

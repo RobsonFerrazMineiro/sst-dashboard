@@ -1,16 +1,23 @@
 import { prisma } from "@/lib/db";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
 type Ctx = { params: Promise<{ id: string }> };
 
-export async function GET(_req: Request, ctx: Ctx) {
+export async function GET(req: Request, ctx: Ctx) {
   try {
     const { id } = await ctx.params;
     if (!id) return NextResponse.json({ error: "id ausente" }, { status: 400 });
 
-    const item = await prisma.colaborador.findUnique({ where: { id } });
-    if (!item)
-      return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
+    const auth = await getAuthenticatedUser(req);
+    if (!auth) return unauthorizedResponse();
+    const item = await prisma.colaborador.findFirst({
+      where: { id, empresaId: auth.session.empresaId },
+    });
+
+    if (!item) {
+      return NextResponse.json({ error: "Nao encontrado" }, { status: 404 });
+    }
 
     return NextResponse.json(item);
   } catch (err: any) {
@@ -22,11 +29,20 @@ export async function GET(_req: Request, ctx: Ctx) {
   }
 }
 
-// PATCH
 export async function PATCH(req: Request, { params }: Ctx) {
   try {
     const { id } = await params;
     if (!id) return NextResponse.json({ error: "id ausente" }, { status: 400 });
+
+    const auth = await getAuthenticatedUser(req);
+    if (!auth) return unauthorizedResponse();
+    const exists = await prisma.colaborador.findFirst({
+      where: { id, empresaId: auth.session.empresaId },
+    });
+
+    if (!exists) {
+      return NextResponse.json({ error: "Nao encontrado" }, { status: 404 });
+    }
 
     const body = await req.json();
 
@@ -39,8 +55,9 @@ export async function PATCH(req: Request, { params }: Ctx) {
 
     if (body.nome !== undefined) {
       const v = String(body.nome).trim();
-      if (!v)
-        return NextResponse.json({ error: "nome inválido" }, { status: 400 });
+      if (!v) {
+        return NextResponse.json({ error: "nome invalido" }, { status: 400 });
+      }
       data.nome = v;
     }
 
@@ -66,10 +83,19 @@ export async function PATCH(req: Request, { params }: Ctx) {
   }
 }
 
-// DELETE
-export async function DELETE(_req: Request, { params }: Ctx) {
+export async function DELETE(req: Request, { params }: Ctx) {
   try {
     const { id } = await params;
+    const auth = await getAuthenticatedUser(req);
+    if (!auth) return unauthorizedResponse();
+
+    const exists = await prisma.colaborador.findFirst({
+      where: { id, empresaId: auth.session.empresaId },
+    });
+
+    if (!exists) {
+      return NextResponse.json({ error: "Nao encontrado" }, { status: 404 });
+    }
 
     await prisma.colaborador.delete({ where: { id } });
 

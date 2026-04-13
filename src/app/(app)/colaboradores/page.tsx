@@ -28,6 +28,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
+import { useAuthPermissions } from "@/lib/permissions-client";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -43,6 +44,8 @@ export type Colaborador = {
 
 export default function ColaboradoresPage() {
   const qc = useQueryClient();
+  const { hasPermission } = useAuthPermissions();
+  const canManageColaboradores = hasPermission("colaboradores.gerenciar");
 
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
@@ -128,10 +131,12 @@ export default function ColaboradoresPage() {
               Atualizar
             </Button>
 
-            <Button onClick={onNew} className="gap-2">
-              <Plus className="w-4 h-4" />
-              Novo colaborador
-            </Button>
+            {canManageColaboradores ? (
+              <Button onClick={onNew} className="gap-2">
+                <Plus className="w-4 h-4" />
+                Novo colaborador
+              </Button>
+            ) : null}
           </div>
         </header>
 
@@ -225,50 +230,59 @@ export default function ColaboradoresPage() {
                               <Eye className="w-4 h-4" />
                             </Button>
                           </Link>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => onEdit(row)}
-                            className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
+                          {canManageColaboradores ? (
+                            <>
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
-                                disabled={deleteMutation.isPending}
+                                onClick={() => onEdit(row)}
+                                className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <Pencil className="w-4 h-4" />
                               </Button>
-                            </AlertDialogTrigger>
 
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>
-                                  Excluir colaborador?
-                                </AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Isso remove o colaborador do sistema. Se ele
-                                  estiver sendo usado em ASOs/Treinamentos, o
-                                  banco pode bloquear a exclusão.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                                    disabled={deleteMutation.isPending}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
 
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => deleteMutation.mutate(row.id)}
-                                  className="bg-rose-600 hover:bg-rose-700"
-                                >
-                                  Excluir
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                      Excluir colaborador?
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Isso remove o colaborador do sistema. Se
+                                      ele estiver sendo usado em
+                                      ASOs/Treinamentos, o banco pode bloquear a
+                                      exclusão.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>
+                                      Cancelar
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() =>
+                                        deleteMutation.mutate(row.id)
+                                      }
+                                      className="bg-rose-600 hover:bg-rose-700"
+                                    >
+                                      Excluir
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </>
+                          ) : null}
                         </div>
                       </td>
                     </tr>
@@ -279,16 +293,18 @@ export default function ColaboradoresPage() {
           </div>
         </div>
 
-        <ColaboradorModal
-          open={open}
-          onOpenChange={setOpen}
-          initial={editing}
-          onSaved={async () => {
-            await qc.invalidateQueries({ queryKey: ["colaboradores"] });
-            await qc.invalidateQueries({ queryKey: ["asos"] });
-            await qc.invalidateQueries({ queryKey: ["treinamentos"] });
-          }}
-        />
+        {canManageColaboradores ? (
+          <ColaboradorModal
+            open={open}
+            onOpenChange={setOpen}
+            initial={editing}
+            onSaved={async () => {
+              await qc.invalidateQueries({ queryKey: ["colaboradores"] });
+              await qc.invalidateQueries({ queryKey: ["asos"] });
+              await qc.invalidateQueries({ queryKey: ["treinamentos"] });
+            }}
+          />
+        ) : null}
       </div>
     </div>
   );

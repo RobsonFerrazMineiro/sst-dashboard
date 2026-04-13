@@ -1,7 +1,14 @@
 import { PrismaPg } from "@prisma/adapter-pg";
-import { NR, PrismaClient } from "@prisma/client";
+import {
+  NR,
+  PlanoEmpresa,
+  PrismaClient,
+  StatusEmpresa,
+} from "@prisma/client";
 import "dotenv/config";
 import { Pool } from "pg";
+import { hashPassword } from "../src/lib/auth";
+import { EMPRESA_PADRAO_SLUG } from "../src/lib/tenant";
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) throw new Error("DATABASE_URL is not set");
@@ -24,73 +31,193 @@ function monthsFrom(date: Date, months: number) {
   return d;
 }
 
-async function main() {
-  console.log("🌱 Seeding database...");
+const mapNR: Record<string, NR> = {
+  "NR-05": NR.NR_05,
+  "NR-06": NR.NR_06,
+  "NR-10": NR.NR_10,
+  "NR-11": NR.NR_11,
+  "NR-12": NR.NR_12,
+  "NR-18": NR.NR_18,
+  "NR-20": NR.NR_20,
+  "NR-33": NR.NR_33,
+  "NR-35": NR.NR_35,
+};
 
-  // Limpeza (ordem importa por FK)
+async function main() {
+  console.log("Seeding database...");
+
+  await prisma.usuarioPapel.deleteMany();
+  await prisma.papelPermissao.deleteMany();
+  await prisma.usuario.deleteMany();
+  await prisma.papel.deleteMany();
+  await prisma.permissao.deleteMany();
   await prisma.treinamento.deleteMany();
   await prisma.aSO.deleteMany();
   await prisma.tipoTreinamento.deleteMany();
   await prisma.tipoASO.deleteMany();
   await prisma.colaborador.deleteMany();
+  await prisma.empresa.deleteMany();
 
-  // Tipos ASO
+  const empresa = await prisma.empresa.create({
+    data: {
+      nome: "Empresa Padrao SST Lite",
+      slug: EMPRESA_PADRAO_SLUG,
+      status: StatusEmpresa.ATIVA,
+      plano: PlanoEmpresa.LITE,
+    },
+  });
+
+  const permissoes = [
+    {
+      codigo: "dashboard.visualizar",
+      nome: "Visualizar dashboard",
+      modulo: "dashboard",
+    },
+    {
+      codigo: "colaboradores.gerenciar",
+      nome: "Gerenciar colaboradores",
+      modulo: "colaboradores",
+    },
+    {
+      codigo: "tipos-aso.gerenciar",
+      nome: "Gerenciar tipos de ASO",
+      modulo: "tipos-aso",
+    },
+    {
+      codigo: "tipos-treinamento.gerenciar",
+      nome: "Gerenciar tipos de treinamento",
+      modulo: "tipos-treinamento",
+    },
+    {
+      codigo: "asos.gerenciar",
+      nome: "Gerenciar ASOs",
+      modulo: "asos",
+    },
+    {
+      codigo: "treinamentos.gerenciar",
+      nome: "Gerenciar treinamentos",
+      modulo: "treinamentos",
+    },
+  ];
+
+  await prisma.permissao.createMany({ data: permissoes });
+
+  const papelAdmin = await prisma.papel.create({
+    data: {
+      empresaId: empresa.id,
+      nome: "Administrador",
+      codigo: "ADMIN",
+      descricao: "Acesso completo ao SST Lite",
+    },
+  });
+
+  const permissoesCriadas = await prisma.permissao.findMany({
+    orderBy: { codigo: "asc" },
+  });
+
+  await prisma.papelPermissao.createMany({
+    data: permissoesCriadas.map((permissao) => ({
+      papelId: papelAdmin.id,
+      permissaoId: permissao.id,
+    })),
+  });
+
+  const adminEmail = (process.env.SEED_ADMIN_EMAIL ?? "admin@sstlite.local")
+    .trim()
+    .toLowerCase();
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? "Admin@123";
+
+  const admin = await prisma.usuario.create({
+    data: {
+      empresaId: empresa.id,
+      nome: "Administrador SST Lite",
+      email: adminEmail,
+      senhaHash: await hashPassword(adminPassword),
+      status: "ATIVO",
+    },
+  });
+
+  await prisma.usuarioPapel.create({
+    data: {
+      usuarioId: admin.id,
+      papelId: papelAdmin.id,
+    },
+  });
+
   await prisma.tipoASO.createMany({
     data: [
-      { nome: "Admissional", validadeMeses: 12, descricao: "ASO de admissão" },
       {
-        nome: "Periódico",
+        empresaId: empresa.id,
+        nome: "Admissional",
         validadeMeses: 12,
-        descricao: "ASO periódico anual",
+        descricao: "ASO de admissao",
       },
       {
+        empresaId: empresa.id,
+        nome: "Periodico",
+        validadeMeses: 12,
+        descricao: "ASO periodico anual",
+      },
+      {
+        empresaId: empresa.id,
         nome: "Retorno ao Trabalho",
         validadeMeses: 12,
-        descricao: "Retorno após afastamento",
+        descricao: "Retorno apos afastamento",
       },
       {
-        nome: "Mudança de Função",
+        empresaId: empresa.id,
+        nome: "Mudanca de Funcao",
         validadeMeses: 12,
-        descricao: "Mudança de função",
+        descricao: "Mudanca de funcao",
       },
-      { nome: "Demissional", validadeMeses: 0, descricao: "ASO demissional" },
+      {
+        empresaId: empresa.id,
+        nome: "Demissional",
+        validadeMeses: 0,
+        descricao: "ASO demissional",
+      },
     ],
   });
 
   const tiposASOList = await prisma.tipoASO.findMany({
+    where: { empresaId: empresa.id },
     orderBy: { nome: "asc" },
   });
 
-  // Tipos Treinamento
   await prisma.tipoTreinamento.createMany({
     data: [
       {
-        nr: "NR-35",
+        empresaId: empresa.id,
+        nr: NR.NR_35,
         nome: "Trabalho em Altura",
         validadeMeses: 24,
-        descricao: "Capacitação NR-35",
+        descricao: "Capacitacao NR-35",
       },
       {
-        nr: "NR-10",
-        nome: "Segurança em Instalações Elétricas",
+        empresaId: empresa.id,
+        nr: NR.NR_10,
+        nome: "Seguranca em Instalacoes Eletricas",
         validadeMeses: 24,
-        descricao: "Capacitação NR-10",
+        descricao: "Capacitacao NR-10",
       },
       {
-        nr: "NR-33",
-        nome: "Espaço Confinado",
+        empresaId: empresa.id,
+        nr: NR.NR_33,
+        nome: "Espaco Confinado",
         validadeMeses: 12,
-        descricao: "Capacitação NR-33",
+        descricao: "Capacitacao NR-33",
       },
       {
-        nr: "NR-06",
+        empresaId: empresa.id,
+        nr: NR.NR_06,
         nome: "EPI",
         validadeMeses: 12,
         descricao: "Treinamento de EPI",
       },
       {
-        nr: "NR-11",
-        nome: "Transporte e Movimentação",
+        empresaId: empresa.id,
+        nr: NR.NR_11,
+        nome: "Transporte e Movimentacao",
         validadeMeses: 24,
         descricao: "NR-11",
       },
@@ -98,27 +225,27 @@ async function main() {
   });
 
   const tiposTreinoList = await prisma.tipoTreinamento.findMany({
+    where: { empresaId: empresa.id },
     orderBy: [{ nr: "asc" }, { nome: "asc" }],
   });
 
-  // Colaboradores
   const colaboradores = [
     {
       nome: "Gabriel Souza",
-      setor: "Operação",
+      setor: "Operacao",
       cargo: "Operador",
       matricula: "MAT-1001",
     },
     {
       nome: "Ana Paula Lima",
-      setor: "Manutenção",
-      cargo: "Técnica",
+      setor: "Manutencao",
+      cargo: "Tecnica",
       matricula: "MAT-1002",
     },
     {
       nome: "Bruno Martins",
       setor: "SMS",
-      cargo: "Técnico",
+      cargo: "Tecnico",
       matricula: "MAT-1003",
     },
     {
@@ -129,19 +256,19 @@ async function main() {
     },
     {
       nome: "Diego Santos",
-      setor: "Operação",
+      setor: "Operacao",
       cargo: "Supervisor",
       matricula: "MAT-1005",
     },
     {
       nome: "Eduarda Alves",
-      setor: "Manutenção",
+      setor: "Manutencao",
       cargo: "Auxiliar",
       matricula: "MAT-1006",
     },
     {
       nome: "Felipe Costa",
-      setor: "Operação",
+      setor: "Operacao",
       cargo: "Operador",
       matricula: "MAT-1007",
     },
@@ -154,62 +281,61 @@ async function main() {
   ];
 
   await prisma.colaborador.createMany({
-    data: colaboradores,
+    data: colaboradores.map((colaborador) => ({
+      empresaId: empresa.id,
+      ...colaborador,
+    })),
   });
+
   const colabs = await prisma.colaborador.findMany({
+    where: { empresaId: empresa.id },
     orderBy: { nome: "asc" },
   });
 
-  // ASOs (mistura de em dia / prestes / vencido / pendente)
   const today = daysFromToday(0);
 
-  // Helper: escolhe tipo ASO
-  const tipoPeriodic =
-    tiposASOList.find((t) => t.nome === "Periódico") ?? tiposASOList[0];
+  const tipoPeriodico =
+    tiposASOList.find((tipo) => tipo.nome === "Periodico") ?? tiposASOList[0];
   const tipoAdmissional =
-    tiposASOList.find((t) => t.nome === "Admissional") ?? tiposASOList[0];
+    tiposASOList.find((tipo) => tipo.nome === "Admissional") ??
+    tiposASOList[0];
 
   const asoData = [
-    // Em dia
     {
       colab: colabs[0],
-      tipo: tipoPeriodic,
+      tipo: tipoPeriodico,
       data_aso: monthsFrom(today, -10),
       validade_aso: monthsFrom(today, 2),
-      clinica: "Clínica Vida",
+      clinica: "Clinica Vida",
       observacao: "Apto",
     },
-    // Prestes a vencer (<=30 dias)
     {
       colab: colabs[1],
-      tipo: tipoPeriodic,
+      tipo: tipoPeriodico,
       data_aso: monthsFrom(today, -11),
       validade_aso: daysFromToday(20),
-      clinica: "Clínica Saúde Total",
+      clinica: "Clinica Saude Total",
       observacao: "Apto",
     },
-    // Vencido
     {
       colab: colabs[2],
-      tipo: tipoPeriodic,
+      tipo: tipoPeriodico,
       data_aso: monthsFrom(today, -14),
       validade_aso: daysFromToday(-15),
-      clinica: "Clínica Vida",
+      clinica: "Clinica Vida",
       observacao: "Apto",
     },
-    // Pendente (sem validade/data => mas Base44 exige data_aso; aqui vamos simular pendente removendo validade e deixando data antiga)
     {
       colab: colabs[3],
       tipo: tipoAdmissional,
       data_aso: monthsFrom(today, -24),
       validade_aso: null,
-      clinica: "Clínica Ocupacional",
-      observacao: "Pendente de atualização",
+      clinica: "Clinica Ocupacional",
+      observacao: "Pendente de atualizacao",
     },
   ];
 
-  // gerar alguns ASOs extras para dar volume
-  const extraASOs = colabs.slice(4).map((c, idx) => {
+  const extraASOs = colabs.slice(4).map((colaborador, idx) => {
     const bucket = idx % 3;
     const validade =
       bucket === 0
@@ -219,11 +345,11 @@ async function main() {
           : daysFromToday(-5);
 
     return {
-      colab: c,
-      tipo: tipoPeriodic,
+      colab: colaborador,
+      tipo: tipoPeriodico,
       data_aso: monthsFrom(today, -12),
       validade_aso: validade,
-      clinica: "Clínica Saúde Total",
+      clinica: "Clinica Saude Total",
       observacao: bucket === 2 ? "Apto (vencido)" : "Apto",
     };
   });
@@ -231,11 +357,12 @@ async function main() {
   for (const item of [...asoData, ...extraASOs]) {
     await prisma.aSO.create({
       data: {
-        colaborador_id: item.colab.id,
+        empresaId: empresa.id,
+        colaboradorId: item.colab.id,
         colaborador_nome: item.colab.nome,
         setor: item.colab.setor,
         cargo: item.colab.cargo,
-        tipoASO_id: item.tipo.id,
+        tipoASOId: item.tipo.id,
         tipoASO_nome: item.tipo.nome,
         data_aso: item.data_aso,
         validade_aso: item.validade_aso,
@@ -245,36 +372,17 @@ async function main() {
     });
   }
 
-  // Treinamentos
-  // Vamos espalhar: em dia / prestes / vencido / sem vencimento
-  const mapNR: Record<string, NR> = {
-    "NR-05": NR.NR_05,
-    "NR-06": NR.NR_06,
-    "NR-10": NR.NR_10,
-    "NR-11": NR.NR_11,
-    "NR-12": NR.NR_12,
-    "NR-18": NR.NR_18,
-    "NR-20": NR.NR_20,
-    "NR-33": NR.NR_33,
-    "NR-35": NR.NR_35,
-  };
-
   const pickTipoTreino = (nr: string) =>
-    tiposTreinoList.find((t) => t.nr === nr) ?? tiposTreinoList[0];
+    tiposTreinoList.find((tipo) => tipo.nr === mapNR[nr]) ?? tiposTreinoList[0];
 
   const treinoSeeds = [
-    // Em dia
     { colab: colabs[0], nr: "NR-35", validade: daysFromToday(90), ch: 8 },
-    // Prestes a vencer
     { colab: colabs[1], nr: "NR-10", validade: daysFromToday(15), ch: 16 },
-    // Vencido
     { colab: colabs[2], nr: "NR-33", validade: daysFromToday(-10), ch: 16 },
-    // Sem vencimento (validade null)
     { colab: colabs[3], nr: "NR-06", validade: null, ch: 2 },
   ];
 
-  // extras para volume
-  const extraTreinos = colabs.flatMap((c, idx) => {
+  const extraTreinos = colabs.flatMap((colaborador, idx) => {
     const nrs = ["NR-35", "NR-10", "NR-33", "NR-11"] as const;
     const chosen = nrs[idx % nrs.length];
     const bucket = idx % 4;
@@ -288,32 +396,38 @@ async function main() {
             : null;
 
     return [
-      { colab: c, nr: chosen, validade, ch: chosen === "NR-35" ? 8 : 16 },
+      {
+        colab: colaborador,
+        nr: chosen,
+        validade,
+        ch: chosen === "NR-35" ? 8 : 16,
+      },
     ];
   });
 
-  for (const t of [...treinoSeeds, ...extraTreinos]) {
-    const tipo = pickTipoTreino(t.nr);
+  for (const treino of [...treinoSeeds, ...extraTreinos]) {
+    const tipo = pickTipoTreino(treino.nr);
 
     await prisma.treinamento.create({
       data: {
-        colaborador_id: t.colab.id,
-        colaborador_nome: t.colab.nome,
-        tipoTreinamento: tipo.id,
-        nr: mapNR[t.nr], // legado enum
+        empresaId: empresa.id,
+        colaboradorId: treino.colab.id,
+        colaborador_nome: treino.colab.nome,
+        tipoTreinamentoId: tipo.id,
+        nr: mapNR[treino.nr],
         data_treinamento: monthsFrom(today, -10),
-        validade: t.validade,
-        carga_horaria: t.ch,
+        validade: treino.validade,
+        carga_horaria: treino.ch,
       },
     });
   }
 
-  console.log("✅ Seed concluído!");
+  console.log("Seed concluido.");
 }
 
 main()
-  .catch((e) => {
-    console.error("❌ Seed falhou:", e);
+  .catch((error) => {
+    console.error("Seed falhou:", error);
     process.exit(1);
   })
   .finally(async () => {

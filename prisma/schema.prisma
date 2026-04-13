@@ -6,37 +6,192 @@ datasource db {
   provider = "postgresql"
 }
 
+enum StatusEmpresa {
+  ATIVA
+  INATIVA
+  SUSPENSA
+}
+
+enum StatusUsuario {
+  ATIVO
+  INATIVO
+  BLOQUEADO
+}
+
+enum PlanoEmpresa {
+  LITE
+}
+
 enum NR {
+  NR_01
+  NR_02
+  NR_03
+  NR_04
   NR_05
   NR_06
+  NR_07
+  NR_08
+  NR_09
   NR_10
   NR_11
   NR_12
+  NR_13
+  NR_14
+  NR_15
+  NR_16
+  NR_17
   NR_18
+  NR_19
   NR_20
+  NR_21
+  NR_22
+  NR_23
+  NR_24
+  NR_25
+  NR_26
+  NR_27
+  NR_28
+  NR_29
+  NR_30
+  NR_31
+  NR_32
   NR_33
+  NR_34
   NR_35
+  NR_36
+  NR_37
+  NR_38
+}
+
+model Empresa {
+  id     String        @id @default(cuid())
+  nome   String
+  slug   String        @unique
+  cnpj   String?       @unique
+  status StatusEmpresa @default(ATIVA)
+  plano  PlanoEmpresa  @default(LITE)
+
+  usuarios         Usuario[]
+  papeis           Papel[]
+  colaboradores    Colaborador[]
+  tiposASO         TipoASO[]
+  asos             ASO[]
+  tiposTreinamento TipoTreinamento[]
+  treinamentos     Treinamento[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([plano])
+}
+
+model Usuario {
+  id            String        @id @default(cuid())
+  empresaId     String        @map("empresa_id")
+  empresa       Empresa       @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  nome          String
+  email         String
+  senhaHash     String
+  status        StatusUsuario @default(ATIVO)
+  ultimoLoginAt DateTime?
+
+  usuarioPapeis UsuarioPapel[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([empresaId, email])
+  @@index([empresaId])
+  @@index([empresaId, status])
+  @@index([nome])
+}
+
+model Papel {
+  id        String  @id @default(cuid())
+  empresaId String  @map("empresa_id")
+  empresa   Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  nome      String
+  codigo    String
+  descricao String?
+
+  usuarios   UsuarioPapel[]
+  permissoes PapelPermissao[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([empresaId, nome])
+  @@unique([empresaId, codigo])
+  @@index([empresaId])
+}
+
+model Permissao {
+  id        String  @id @default(cuid())
+  codigo    String  @unique
+  nome      String
+  descricao String?
+  modulo    String?
+
+  papeis PapelPermissao[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([modulo])
+}
+
+model UsuarioPapel {
+  usuarioId String  @map("usuario_id")
+  papelId   String  @map("papel_id")
+  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  papel     Papel   @relation(fields: [papelId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@id([usuarioId, papelId])
+  @@index([papelId])
+}
+
+model PapelPermissao {
+  papelId     String    @map("papel_id")
+  permissaoId String    @map("permissao_id")
+  papel       Papel     @relation(fields: [papelId], references: [id], onDelete: Cascade)
+  permissao   Permissao @relation(fields: [permissaoId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@id([papelId, permissaoId])
+  @@index([permissaoId])
 }
 
 model Colaborador {
-  id        String  @id @default(cuid())
+  id        String   @id @default(cuid())
+  empresaId String?  @map("empresa_id")
+  empresa   Empresa? @relation(fields: [empresaId], references: [id], onDelete: Cascade)
   nome      String
   setor     String
   cargo     String
-  matricula String? @unique
+  matricula String?
 
-  asos        ASO[]
+  asos         ASO[]
   treinamentos Treinamento[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([empresaId, matricula])
+  @@index([empresaId])
+  @@index([empresaId, nome])
+  @@index([empresaId, setor])
   @@index([nome])
   @@index([setor])
 }
 
 model TipoASO {
-  id            String  @id @default(cuid())
+  id            String   @id @default(cuid())
+  empresaId     String?  @map("empresa_id")
+  empresa       Empresa? @relation(fields: [empresaId], references: [id], onDelete: Cascade)
   nome          String
   validadeMeses Int?
   descricao     String?
@@ -46,24 +201,25 @@ model TipoASO {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([nome])
+  @@unique([empresaId, nome])
+  @@index([empresaId])
 }
 
 model ASO {
   id String @id @default(cuid())
 
+  empresaId String?  @map("empresa_id")
+  empresa   Empresa? @relation(fields: [empresaId], references: [id], onDelete: Cascade)
 
-  colaborador_id String?
-  colaborador    Colaborador? @relation(fields: [colaborador_id], references: [id], onDelete: SetNull)
+  colaboradorId String?      @map("colaborador_id")
+  colaborador   Colaborador? @relation(fields: [colaboradorId], references: [id], onDelete: SetNull)
 
-  
   colaborador_nome String
   setor            String?
   cargo            String?
 
-
-  tipoASO_id   String?
-  tipoASO      TipoASO? @relation(fields: [tipoASO_id], references: [id], onDelete: SetNull)
+  tipoASOId    String?  @map("tipoASO_id")
+  tipoASO      TipoASO? @relation(fields: [tipoASOId], references: [id], onDelete: SetNull)
   tipoASO_nome String?
 
   data_aso     DateTime
@@ -75,16 +231,20 @@ model ASO {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([colaborador_id])
-  @@index([tipoASO_id])
+  @@index([empresaId])
+  @@index([empresaId, data_aso])
+  @@index([colaboradorId])
+  @@index([tipoASOId])
   @@index([data_aso])
   @@index([validade_aso])
 }
 
 model TipoTreinamento {
-  id            String  @id @default(cuid())
+  id            String   @id @default(cuid())
+  empresaId     String?  @map("empresa_id")
+  empresa       Empresa? @relation(fields: [empresaId], references: [id], onDelete: Cascade)
   nome          String
-  nr            String
+  nr            NR
   validadeMeses Int?
   descricao     String?
 
@@ -93,22 +253,25 @@ model TipoTreinamento {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([nr, nome])
+  @@unique([empresaId, nr, nome])
+  @@index([empresaId])
+  @@index([empresaId, nr])
   @@index([nr])
 }
 
 model Treinamento {
   id String @id @default(cuid())
 
- 
-  colaborador_id String?
-  colaborador    Colaborador? @relation(fields: [colaborador_id], references: [id], onDelete: SetNull)
+  empresaId String?  @map("empresa_id")
+  empresa   Empresa? @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+
+  colaboradorId String?      @map("colaborador_id")
+  colaborador   Colaborador? @relation(fields: [colaboradorId], references: [id], onDelete: SetNull)
 
   colaborador_nome String
 
-
-  tipoTreinamento String?
-  tipoTreinamentoRel TipoTreinamento? @relation(fields: [tipoTreinamento], references: [id], onDelete: SetNull)
+  tipoTreinamentoId  String?          @map("tipoTreinamento")
+  tipoTreinamentoRel TipoTreinamento? @relation(fields: [tipoTreinamentoId], references: [id], onDelete: SetNull)
 
   nr NR?
 
@@ -119,8 +282,10 @@ model Treinamento {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([colaborador_id])
-  @@index([tipoTreinamento])
+  @@index([empresaId])
+  @@index([empresaId, data_treinamento])
+  @@index([colaboradorId])
+  @@index([tipoTreinamentoId])
   @@index([validade])
   @@index([data_treinamento])
 }

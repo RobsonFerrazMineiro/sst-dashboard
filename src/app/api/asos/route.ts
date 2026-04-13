@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth";
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 
@@ -8,17 +9,30 @@ function parseDateOrNull(value: unknown): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
+function serializeASO(item: Awaited<ReturnType<typeof prisma.aSO.findFirstOrThrow>>) {
+  return {
+    ...item,
+    colaborador_id: item.colaboradorId,
+    tipoASO_id: item.tipoASOId,
+  };
+}
+
 export async function GET(req: Request) {
   try {
+    const auth = await getAuthenticatedUser(req);
+    if (!auth) return unauthorizedResponse();
     const { searchParams } = new URL(req.url);
     const colaboradorId = searchParams.get("colaboradorId");
 
     const itens = await prisma.aSO.findMany({
-      where: colaboradorId ? { colaborador_id: colaboradorId } : undefined,
+      where: {
+        empresaId: auth.session.empresaId,
+        ...(colaboradorId ? { colaboradorId } : {}),
+      },
       orderBy: { data_aso: "desc" },
     });
 
-    return NextResponse.json(itens);
+    return NextResponse.json(itens.map(serializeASO));
   } catch (err: any) {
     console.error("GET /api/asos ->", err);
     return NextResponse.json(
@@ -31,34 +45,40 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({}));
+    const auth = await getAuthenticatedUser(req);
+    if (!auth) return unauthorizedResponse();
 
-    const colaborador_id = body.colaborador_id
-      ? String(body.colaborador_id)
-      : null;
+    const colaboradorId = body.colaboradorId
+      ? String(body.colaboradorId)
+      : body.colaborador_id
+        ? String(body.colaborador_id)
+        : null;
 
-    const tipoASO_id = body.tipoASO_id ? String(body.tipoASO_id) : null;
+    const tipoASOId = body.tipoASOId
+      ? String(body.tipoASOId)
+      : body.tipoASO_id
+        ? String(body.tipoASO_id)
+        : null;
 
     const data_aso = parseDateOrNull(body.data_aso);
     if (!data_aso) {
       return NextResponse.json(
-        { error: "Campo obrigatório: data_aso (data válida)" },
+        { error: "Campo obrigatorio: data_aso (data valida)" },
         { status: 400 },
       );
     }
 
-    // snapshot inicial (pode vir do body, mas se tiver colaborador_id, sobrescreve)
     let colaborador_nome = String(body.colaborador_nome ?? "").trim();
     let setor = body.setor !== undefined ? String(body.setor).trim() : null;
     let cargo = body.cargo !== undefined ? String(body.cargo).trim() : null;
 
-    // se veio colaborador_id, busca e preenche snapshot correto
-    if (colaborador_id) {
-      const colab = await prisma.colaborador.findUnique({
-        where: { id: colaborador_id },
+    if (colaboradorId) {
+      const colab = await prisma.colaborador.findFirst({
+        where: { id: colaboradorId, empresaId: auth.session.empresaId },
       });
       if (!colab) {
         return NextResponse.json(
-          { error: "colaborador_id inválido" },
+          { error: "colaborador_id invalido" },
           { status: 400 },
         );
       }
@@ -71,35 +91,32 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           error:
-            "Campo obrigatório: colaborador_nome (ou informe colaborador_id válido)",
+            "Campo obrigatorio: colaborador_nome (ou informe colaborador_id valido)",
         },
         { status: 400 },
       );
     }
 
-    // tipoASO cache (nome)
     let tipoASO_nome: string | null = body.tipoASO_nome
       ? String(body.tipoASO_nome).trim()
       : null;
 
-    // validade (pode ser null)
     let validade_aso = parseDateOrNull(body.validade_aso);
 
-    if (tipoASO_id) {
-      const tipo = await prisma.tipoASO.findUnique({
-        where: { id: tipoASO_id },
+    if (tipoASOId) {
+      const tipo = await prisma.tipoASO.findFirst({
+        where: { id: tipoASOId, empresaId: auth.session.empresaId },
       });
 
       if (!tipo) {
         return NextResponse.json(
-          { error: "tipoASO_id inválido" },
+          { error: "tipoASO_id invalido" },
           { status: 400 },
         );
       }
 
       tipoASO_nome = tipo.nome;
 
-      // se não veio validade_aso e o tipo tem validadeMeses, calcula
       if (!validade_aso && tipo.validadeMeses && tipo.validadeMeses > 0) {
         const d = new Date(data_aso);
         d.setMonth(d.getMonth() + tipo.validadeMeses);
@@ -118,11 +135,12 @@ export async function POST(req: Request) {
         : String(body.observacao).trim() || null;
 
     const data: Prisma.ASOUncheckedCreateInput = {
-      colaborador_id,
+      empresaId: auth.session.empresaId,
+      colaboradorId,
       colaborador_nome,
       setor,
       cargo,
-      tipoASO_id,
+      tipoASOId,
       tipoASO_nome,
       data_aso,
       validade_aso,
@@ -131,7 +149,7 @@ export async function POST(req: Request) {
     };
 
     const created = await prisma.aSO.create({ data });
-    return NextResponse.json(created, { status: 201 });
+    return NextResponse.json(serializeASO(created), { status: 201 });
   } catch (err: any) {
     console.error("POST /api/asos ->", err);
     return NextResponse.json(

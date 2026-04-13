@@ -1,7 +1,18 @@
+import { formatNR, parseNRInput } from "@/lib/nr";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { NextResponse } from "next/server";
 
 type Ctx = { params: Promise<{ id: string }> };
+
+function serializeTipoTreinamento(
+  item: Awaited<ReturnType<typeof prisma.tipoTreinamento.findFirstOrThrow>>,
+) {
+  return {
+    ...item,
+    nr: formatNR(item.nr),
+  };
+}
 
 export async function PATCH(req: Request, { params }: Ctx) {
   try {
@@ -9,26 +20,30 @@ export async function PATCH(req: Request, { params }: Ctx) {
     if (!id) return NextResponse.json({ error: "id ausente" }, { status: 400 });
 
     const body = await req.json();
+    const auth = await getAuthenticatedUser(req);
+    if (!auth) return unauthorizedResponse();
 
     const data: {
       nome?: string;
-      nr?: string;
+      nr?: NonNullable<ReturnType<typeof parseNRInput>>;
       validadeMeses?: number | null;
       descricao?: string | null;
     } = {};
 
     if (body.nome !== undefined) {
       const v = String(body.nome).trim();
-      if (!v)
-        return NextResponse.json({ error: "nome inválido" }, { status: 400 });
+      if (!v) {
+        return NextResponse.json({ error: "nome invalido" }, { status: 400 });
+      }
       data.nome = v;
     }
 
     if (body.nr !== undefined) {
-      const v = String(body.nr).trim();
-      if (!v)
-        return NextResponse.json({ error: "nr inválido" }, { status: 400 });
-      data.nr = v;
+      const nr = parseNRInput(body.nr);
+      if (!nr) {
+        return NextResponse.json({ error: "nr invalido" }, { status: 400 });
+      }
+      data.nr = nr;
     }
 
     if (body.validadeMeses !== undefined) {
@@ -38,7 +53,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
         const n = Number(body.validadeMeses);
         if (!Number.isFinite(n) || n < 0) {
           return NextResponse.json(
-            { error: "validadeMeses inválido" },
+            { error: "validadeMeses invalido" },
             { status: 400 },
           );
         }
@@ -58,9 +73,11 @@ export async function PATCH(req: Request, { params }: Ctx) {
       );
     }
 
-    const exists = await prisma.tipoTreinamento.findUnique({ where: { id } });
+    const exists = await prisma.tipoTreinamento.findFirst({
+      where: { id, empresaId: auth.session.empresaId },
+    });
     if (!exists) {
-      return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
+      return NextResponse.json({ error: "Nao encontrado" }, { status: 404 });
     }
 
     const updated = await prisma.tipoTreinamento.update({
@@ -68,7 +85,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
       data,
     });
 
-    return NextResponse.json(updated);
+    return NextResponse.json(serializeTipoTreinamento(updated));
   } catch (err: any) {
     console.error("PATCH /api/tipos-treinamento/[id] ->", err);
     return NextResponse.json(
@@ -78,14 +95,19 @@ export async function PATCH(req: Request, { params }: Ctx) {
   }
 }
 
-export async function DELETE(_req: Request, { params }: Ctx) {
+export async function DELETE(req: Request, { params }: Ctx) {
   try {
     const { id } = await params;
     if (!id) return NextResponse.json({ error: "id ausente" }, { status: 400 });
 
-    const exists = await prisma.tipoTreinamento.findUnique({ where: { id } });
+    const auth = await getAuthenticatedUser(req);
+    if (!auth) return unauthorizedResponse();
+    const exists = await prisma.tipoTreinamento.findFirst({
+      where: { id, empresaId: auth.session.empresaId },
+    });
+
     if (!exists) {
-      return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
+      return NextResponse.json({ error: "Nao encontrado" }, { status: 404 });
     }
 
     await prisma.tipoTreinamento.delete({ where: { id } });
