@@ -87,14 +87,15 @@ model Empresa {
 }
 
 model Usuario {
-  id            String        @id @default(cuid())
-  empresaId     String        @map("empresa_id")
-  empresa       Empresa       @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  nome          String
-  email         String
-  senhaHash     String
-  status        StatusUsuario @default(ATIVO)
-  ultimoLoginAt DateTime?
+  id             String        @id @default(cuid())
+  empresaId      String        @map("empresa_id")
+  empresa        Empresa       @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  nome           String
+  email          String
+  senhaHash      String
+  isAccountOwner Boolean       @default(false) @map("is_account_owner")
+  status         StatusUsuario @default(ATIVO)
+  ultimoLoginAt  DateTime?
 
   usuarioPapeis UsuarioPapel[]
 
@@ -103,6 +104,7 @@ model Usuario {
 
   @@unique([empresaId, email])
   @@index([empresaId])
+  @@index([empresaId, isAccountOwner])
   @@index([empresaId, status])
   @@index([nome])
 }

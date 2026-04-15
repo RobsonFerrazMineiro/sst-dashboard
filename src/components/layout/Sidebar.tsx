@@ -2,6 +2,7 @@
 
 import {
   ClipboardList,
+  KeyRound,
   LayoutDashboard,
   LogOut,
   ShieldCheck,
@@ -22,6 +23,7 @@ type NavItem = {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   permission: string;
+  role?: string;
 };
 
 const navItems: NavItem[] = [
@@ -49,6 +51,13 @@ const navItems: NavItem[] = [
     icon: Tags,
     permission: "tipos-aso.gerenciar",
   },
+  {
+    href: "/acessos",
+    label: "Acessos",
+    icon: KeyRound,
+    permission: "dashboard.visualizar",
+    role: "ADMIN",
+  },
 ];
 
 export default function Sidebar({
@@ -61,9 +70,12 @@ export default function Sidebar({
   const pathname = usePathname();
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
-  const { hasPermission } = useAuthPermissions();
+  const { hasPermission, hasRole } = useAuthPermissions();
 
-  const visibleNavItems = navItems.filter((item) => hasPermission(item.permission));
+  const visibleNavItems = navItems.filter((item) => {
+    if (item.role && !hasRole(item.role)) return false;
+    return hasPermission(item.permission);
+  });
 
   async function handleLogout() {
     setLoggingOut(true);

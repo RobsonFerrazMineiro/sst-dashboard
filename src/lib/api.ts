@@ -5,6 +5,7 @@ import type {
   TipoTreinamento,
   TreinamentoRecord,
 } from "@/types/dashboard";
+import type { AccessRoleOption, EmpresaUser } from "@/types/access";
 
 type JsonInit = Omit<RequestInit, "body"> & { json?: unknown };
 
@@ -119,6 +120,37 @@ export const api = {
     remove: (id: string) =>
       requestJSON<{ ok: boolean }>(`/api/tipos-treinamento/${id}`, {
         method: "DELETE",
+      }),
+  },
+
+  usuarios: {
+    list: () => requestJSON<EmpresaUser[]>("/api/usuarios"),
+
+    listRoles: () => requestJSON<AccessRoleOption[]>("/api/usuarios/papeis"),
+
+    create: (json: {
+      nome: string;
+      email: string;
+      senha: string;
+      papelCodigo: string;
+    }) =>
+      requestJSON<EmpresaUser>("/api/usuarios", {
+        method: "POST",
+        json,
+      }),
+
+    update: (
+      id: string,
+      json: {
+        nome?: string;
+        email?: string;
+        status?: "ATIVO" | "INATIVO";
+        papelCodigo?: string;
+      },
+    ) =>
+      requestJSON<EmpresaUser>(`/api/usuarios/${id}`, {
+        method: "PATCH",
+        json,
       }),
   },
 };

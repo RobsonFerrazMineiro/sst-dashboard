@@ -17,6 +17,7 @@ export async function GET(req: Request) {
       nome: auth.user.nome,
       email: auth.user.email,
       empresaId: auth.user.empresaId,
+      isAccountOwner: auth.user.isAccountOwner,
       ultimoLoginAt: auth.user.ultimoLoginAt,
       roles: access.roles,
       permissions: access.permissions,

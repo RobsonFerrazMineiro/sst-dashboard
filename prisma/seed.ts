@@ -100,26 +100,70 @@ async function main() {
     },
   ];
 
-  await prisma.permissao.createMany({ data: permissoes });
-
-  const papelAdmin = await prisma.papel.create({
-    data: {
-      empresaId: empresa.id,
-      nome: "Administrador",
+  const papeisBase = [
+    {
       codigo: "ADMIN",
+      nome: "Administrador",
       descricao: "Acesso completo ao SST Lite",
+      permissoes: permissoes.map((item) => item.codigo),
     },
-  });
+    {
+      codigo: "GESTOR",
+      nome: "Gestor",
+      descricao: "Gestao operacional ampla no SST Lite",
+      permissoes: permissoes.map((item) => item.codigo),
+    },
+    {
+      codigo: "OPERADOR",
+      nome: "Operador",
+      descricao: "Operacao do dia a dia com foco em ASOs e treinamentos",
+      permissoes: [
+        "dashboard.visualizar",
+        "asos.gerenciar",
+        "treinamentos.gerenciar",
+      ],
+    },
+    {
+      codigo: "LEITOR",
+      nome: "Leitor",
+      descricao: "Acompanhamento basico do dashboard",
+      permissoes: ["dashboard.visualizar"],
+    },
+  ] as const;
+
+  await prisma.permissao.createMany({ data: permissoes });
 
   const permissoesCriadas = await prisma.permissao.findMany({
     orderBy: { codigo: "asc" },
   });
+  const permissaoByCodigo = new Map(
+    permissoesCriadas.map((permissao) => [permissao.codigo, permissao]),
+  );
 
-  await prisma.papelPermissao.createMany({
-    data: permissoesCriadas.map((permissao) => ({
-      papelId: papelAdmin.id,
-      permissaoId: permissao.id,
-    })),
+  for (const papelBase of papeisBase) {
+    const papel = await prisma.papel.create({
+      data: {
+        empresaId: empresa.id,
+        nome: papelBase.nome,
+        codigo: papelBase.codigo,
+        descricao: papelBase.descricao,
+      },
+    });
+
+    await prisma.papelPermissao.createMany({
+      data: papelBase.permissoes
+        .map((codigo) => permissaoByCodigo.get(codigo))
+        .filter((permissao) => permissao !== undefined)
+        .map((permissao) => ({
+          papelId: papel.id,
+          permissaoId: permissao.id,
+        })),
+      skipDuplicates: true,
+    });
+  }
+
+  const papelAdmin = await prisma.papel.findFirstOrThrow({
+    where: { empresaId: empresa.id, codigo: "ADMIN" },
   });
 
   const adminEmail = (process.env.SEED_ADMIN_EMAIL ?? "admin@sstlite.local")
@@ -133,6 +177,7 @@ async function main() {
       nome: "Administrador SST Lite",
       email: adminEmail,
       senhaHash: await hashPassword(adminPassword),
+      isAccountOwner: true,
       status: "ATIVO",
     },
   });

@@ -50,6 +50,37 @@ const permissoesBase = [
   },
 ];
 
+const papeisBase = [
+  {
+    codigo: "ADMIN",
+    nome: "Administrador",
+    descricao: "Acesso completo ao SST Lite",
+    permissoes: permissoesBase.map((item) => item.codigo),
+  },
+  {
+    codigo: "GESTOR",
+    nome: "Gestor",
+    descricao: "Gestao operacional ampla no SST Lite",
+    permissoes: permissoesBase.map((item) => item.codigo),
+  },
+  {
+    codigo: "OPERADOR",
+    nome: "Operador",
+    descricao: "Operacao do dia a dia com foco em ASOs e treinamentos",
+    permissoes: [
+      "dashboard.visualizar",
+      "asos.gerenciar",
+      "treinamentos.gerenciar",
+    ],
+  },
+  {
+    codigo: "LEITOR",
+    nome: "Leitor",
+    descricao: "Acompanhamento basico do dashboard",
+    permissoes: ["dashboard.visualizar"],
+  },
+] as const;
+
 async function main() {
   const empresa = await prisma.empresa.upsert({
     where: { slug: EMPRESA_PADRAO_SLUG },
@@ -76,39 +107,50 @@ async function main() {
     });
   }
 
-  const papelAdmin =
-    (await prisma.papel.findFirst({
-      where: { empresaId: empresa.id, codigo: "ADMIN" },
-    })) ??
-    (await prisma.papel.create({
-      data: {
-        empresaId: empresa.id,
-        nome: "Administrador",
-        codigo: "ADMIN",
-        descricao: "Acesso completo ao SST Lite",
-      },
-    }));
-
   const permissoes = await prisma.permissao.findMany({
     where: { codigo: { in: permissoesBase.map((item) => item.codigo) } },
   });
+  const permissaoByCodigo = new Map(
+    permissoes.map((permissao) => [permissao.codigo, permissao]),
+  );
 
-  for (const permissao of permissoes) {
-    const exists = await prisma.papelPermissao.findUnique({
-      where: {
-        papelId_permissaoId: {
-          papelId: papelAdmin.id,
-          permissaoId: permissao.id,
+  for (const papelBase of papeisBase) {
+    const papel =
+      (await prisma.papel.findFirst({
+        where: { empresaId: empresa.id, codigo: papelBase.codigo },
+      })) ??
+      (await prisma.papel.create({
+        data: {
+          empresaId: empresa.id,
+          nome: papelBase.nome,
+          codigo: papelBase.codigo,
+          descricao: papelBase.descricao,
         },
+      }));
+
+    await prisma.papel.update({
+      where: { id: papel.id },
+      data: {
+        nome: papelBase.nome,
+        descricao: papelBase.descricao,
       },
     });
 
-    if (!exists) {
-      await prisma.papelPermissao.create({
-        data: {
-          papelId: papelAdmin.id,
+    await prisma.papelPermissao.deleteMany({
+      where: { papelId: papel.id },
+    });
+
+    const papelPermissoes = papelBase.permissoes
+      .map((codigo) => permissaoByCodigo.get(codigo))
+      .filter((permissao) => permissao !== undefined);
+
+    if (papelPermissoes.length > 0) {
+      await prisma.papelPermissao.createMany({
+        data: papelPermissoes.map((permissao) => ({
+          papelId: papel.id,
           permissaoId: permissao.id,
-        },
+        })),
+        skipDuplicates: true,
       });
     }
   }
@@ -117,6 +159,10 @@ async function main() {
     .trim()
     .toLowerCase();
   const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? "Admin@123";
+
+  const papelAdmin = await prisma.papel.findFirstOrThrow({
+    where: { empresaId: empresa.id, codigo: "ADMIN" },
+  });
 
   const usuarioExistente = await prisma.usuario.findFirst({
     where: { empresaId: empresa.id, email: adminEmail },
@@ -131,15 +177,23 @@ async function main() {
           status: StatusUsuario.ATIVO,
         },
       })
-    : await prisma.usuario.create({
+      : await prisma.usuario.create({
         data: {
           empresaId: empresa.id,
           nome: "Administrador SST Lite",
           email: adminEmail,
           senhaHash: await hashPassword(adminPassword),
+          isAccountOwner: true,
           status: StatusUsuario.ATIVO,
         },
       });
+
+  if (!usuario.isAccountOwner) {
+    await prisma.usuario.update({
+      where: { id: usuario.id },
+      data: { isAccountOwner: true, status: StatusUsuario.ATIVO },
+    });
+  }
 
   const vinculo = await prisma.usuarioPapel.findUnique({
     where: {
