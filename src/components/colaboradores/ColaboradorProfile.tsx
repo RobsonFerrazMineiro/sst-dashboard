@@ -498,7 +498,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                 <UserRound className="w-6 h-6 text-slate-700" />
               </div>
               <div className="min-w-0">
-                <h1 className="break-words text-xl font-bold text-slate-900 sm:text-2xl">
+                <h1 className="wrap-break-word text-xl font-bold text-slate-900 sm:text-2xl">
                   {colaborador.nome}
                 </h1>
                 <p className="mt-1 text-sm text-slate-500 sm:hidden">
@@ -610,25 +610,25 @@ export default function ColaboradorProfile({ id }: { id: string }) {
             </h3>
             <div className="rounded-xl border border-slate-300 bg-white overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[860px]">
+                <table className="w-full min-w-215">
                   <thead className="bg-slate-50 border-b border-slate-300">
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[220px]">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-55">
                         Treinamento / NR
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[120px]">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-30">
                         Data
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[120px]">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-30">
                         Validade
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[110px]">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-27.5">
                         Carga (h)
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[180px]">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-45">
                         Status
                       </th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700 min-w-[108px]">
+                      <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700 min-w-27">
                         Acoes
                       </th>
                     </tr>
@@ -720,7 +720,10 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                                     }}
                                     className="h-9 w-9 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                                   >
-                                    <Pencil aria-hidden="true" className="w-4 h-4" />
+                                    <Pencil
+                                      aria-hidden="true"
+                                      className="w-4 h-4"
+                                    />
                                   </Button>
 
                                   <AlertDialog>
@@ -731,7 +734,10 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                                         aria-label={`Excluir treinamento ${t.tipoTreinamento_nome ?? t.nr ?? ""}`}
                                         className="h-9 w-9 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
                                       >
-                                        <Trash2 aria-hidden="true" className="w-4 h-4" />
+                                        <Trash2
+                                          aria-hidden="true"
+                                          className="w-4 h-4"
+                                        />
                                       </Button>
                                     </AlertDialogTrigger>
                                     <AlertDialogContent>
@@ -780,25 +786,25 @@ export default function ColaboradorProfile({ id }: { id: string }) {
             </h3>
             <div className="rounded-xl border border-slate-300 bg-white overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[860px]">
+                <table className="w-full min-w-215">
                   <thead className="bg-slate-50 border-b border-slate-300">
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[220px]">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-55">
                         Treinamento / NR
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[120px]">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-30">
                         Data
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[120px]">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-30">
                         Validade
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[110px]">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-27.5">
                         Carga (h)
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[180px]">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-45">
                         Status
                       </th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700 min-w-[108px]">
+                      <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700 min-w-27">
                         Acoes
                       </th>
                     </tr>
@@ -882,7 +888,10 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                                       }}
                                       className="h-9 w-9 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                                     >
-                                      <Pencil aria-hidden="true" className="w-4 h-4" />
+                                      <Pencil
+                                        aria-hidden="true"
+                                        className="w-4 h-4"
+                                      />
                                     </Button>
 
                                     <AlertDialog>
@@ -893,7 +902,10 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                                           aria-label={`Excluir treinamento ${t.tipoTreinamento_nome ?? t.nr ?? ""}`}
                                           className="h-9 w-9 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
                                         >
-                                          <Trash2 aria-hidden="true" className="w-4 h-4" />
+                                          <Trash2
+                                            aria-hidden="true"
+                                            className="w-4 h-4"
+                                          />
                                         </Button>
                                       </AlertDialogTrigger>
                                       <AlertDialogContent>
@@ -958,25 +970,25 @@ export default function ColaboradorProfile({ id }: { id: string }) {
             </h3>
             <div className="rounded-xl border border-slate-300 bg-white overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[900px]">
+                <table className="w-full min-w-225">
                   <thead className="bg-slate-50 border-b border-slate-300">
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[200px]">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-50">
                         Tipo de ASO
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[120px]">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-30">
                         Data
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[120px]">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-30">
                         Validade
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[150px]">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-37.5">
                         Clinica
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[180px]">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-45">
                         Status
                       </th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700 min-w-[108px]">
+                      <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700 min-w-27">
                         Acoes
                       </th>
                     </tr>
@@ -1063,7 +1075,10 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                                     }}
                                     className="h-9 w-9 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                                   >
-                                    <Pencil aria-hidden="true" className="w-4 h-4" />
+                                    <Pencil
+                                      aria-hidden="true"
+                                      className="w-4 h-4"
+                                    />
                                   </Button>
 
                                   <AlertDialog>
@@ -1074,7 +1089,10 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                                         aria-label={`Excluir ASO ${a.tipoASO_nome ?? ""}`}
                                         className="h-9 w-9 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
                                       >
-                                        <Trash2 aria-hidden="true" className="w-4 h-4" />
+                                        <Trash2
+                                          aria-hidden="true"
+                                          className="w-4 h-4"
+                                        />
                                       </Button>
                                     </AlertDialogTrigger>
                                     <AlertDialogContent>
@@ -1123,25 +1141,25 @@ export default function ColaboradorProfile({ id }: { id: string }) {
             </h3>
             <div className="rounded-xl border border-slate-300 bg-white overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[900px]">
+                <table className="w-full min-w-225">
                   <thead className="bg-slate-50 border-b border-slate-300">
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[200px]">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-50">
                         Tipo de ASO
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[120px]">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-30">
                         Data
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[120px]">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-30">
                         Validade
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[150px]">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-37.5">
                         Clinica
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-[180px]">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-45">
                         Status
                       </th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700 min-w-[108px]">
+                      <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700 min-w-27">
                         Acoes
                       </th>
                     </tr>
@@ -1219,7 +1237,10 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                                     }}
                                     className="h-9 w-9 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                                   >
-                                    <Pencil aria-hidden="true" className="w-4 h-4" />
+                                    <Pencil
+                                      aria-hidden="true"
+                                      className="w-4 h-4"
+                                    />
                                   </Button>
 
                                   <AlertDialog>
@@ -1230,7 +1251,10 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                                         aria-label={`Excluir ASO ${a.tipoASO_nome ?? ""}`}
                                         className="h-9 w-9 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
                                       >
-                                        <Trash2 aria-hidden="true" className="w-4 h-4" />
+                                        <Trash2
+                                          aria-hidden="true"
+                                          className="w-4 h-4"
+                                        />
                                       </Button>
                                     </AlertDialogTrigger>
                                     <AlertDialogContent>

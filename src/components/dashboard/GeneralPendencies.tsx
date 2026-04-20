@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 import RiskScoreBadge from "@/components/dashboard/RiskScoreBadge";
 import RiskScoreHoverCard from "@/components/dashboard/RiskScoreHoverCard";
 import { Card, CardContent } from "@/components/ui/card";
+import type { PendingFilterType } from "@/lib/dashboard-analytics";
 import { calculateRiskScore } from "@/lib/risk-score";
 import {
   createRealPendingsList,
@@ -14,6 +15,7 @@ import {
   getStatusColorClasses,
   groupPendingsByColaborador,
 } from "@/lib/unified-pending";
+import { cn } from "@/lib/utils";
 import type { AsoRecord, TreinamentoRecord } from "@/types/dashboard";
 
 interface GeneralPendenciesProps {
@@ -59,9 +61,7 @@ export default function GeneralPendencies({
   isLoading = false,
 }: GeneralPendenciesProps) {
   const router = useRouter();
-  const [filterType, setFilterType] = useState<
-    "todos" | "vencidos" | "vencendo" | "pendencias"
-  >("todos");
+  const [filterType, setFilterType] = useState<PendingFilterType>("todos");
 
   // Cria lista de apenas pendências reais
   const realPendingsList = useMemo(
@@ -91,6 +91,25 @@ export default function GeneralPendencies({
     [filteredGroups],
   );
 
+  // Contagens por filtro para enriquecer os botões
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const counts = useMemo(() => {
+    const total = realPendingsList.length;
+    const vencidos = realPendingsList.filter(
+      (i) => i.status === "Vencido",
+    ).length;
+    const vencendo = realPendingsList.filter(
+      (i) => i.status === "Prestes a vencer",
+    ).length;
+    const hoje = realPendingsList.filter(
+      (i) => i.validade?.slice(0, 10) === todayStr,
+    ).length;
+    const pendencias = realPendingsList.filter(
+      (i) => i.status === "Pendente",
+    ).length;
+    return { total, vencidos, vencendo, hoje, pendencias };
+  }, [realPendingsList, todayStr]);
+
   const handleNavegaColaborador = (colaboradorId: string | null) => {
     if (colaboradorId) {
       router.push(`/colaboradores/${colaboradorId}`);
@@ -105,25 +124,75 @@ export default function GeneralPendencies({
           <h2 className="text-lg font-bold text-slate-900">
             Pendências Gerais
           </h2>
-          <div className="flex flex-wrap gap-2">
-            {["todos", "vencidos", "vencendo", "pendencias"].map((filter) => (
-              <button
-                key={filter}
-                onClick={() => {
-                  setFilterType(filter as typeof filterType);
-                }}
-                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                  filterType === filter
-                    ? "bg-emerald-100 text-emerald-700 border border-emerald-300"
-                    : "bg-slate-100 text-slate-600 border border-slate-200 hover:border-slate-300"
-                }`}
-              >
-                {filter === "todos" && "Todos"}
-                {filter === "vencidos" && "Vencidos"}
-                {filter === "vencendo" && "Vencendo"}
-                {filter === "pendencias" && "Pendências"}
-              </button>
-            ))}
+          <div className="flex flex-wrap gap-1.5">
+            {[
+              {
+                id: "todos" as const,
+                label: "Todos",
+                count: counts.total,
+                icon: null,
+                activeClass: "bg-slate-800 text-white border-slate-800",
+                countClass: "bg-slate-600 text-white",
+              },
+              {
+                id: "vencidos" as const,
+                label: "Vencidos",
+                count: counts.vencidos,
+                icon: <AlertCircle className="w-3.5 h-3.5" />,
+                activeClass: "bg-rose-600 text-white border-rose-600",
+                countClass: "bg-rose-500 text-white",
+              },
+              {
+                id: "vencendo" as const,
+                label: "Vencendo",
+                count: counts.vencendo,
+                icon: <Clock className="w-3.5 h-3.5" />,
+                activeClass: "bg-amber-500 text-white border-amber-500",
+                countClass: "bg-amber-400 text-white",
+              },
+              {
+                id: "hoje" as const,
+                label: "Hoje",
+                count: counts.hoje,
+                icon: <Clock className="w-3.5 h-3.5" />,
+                activeClass: "bg-blue-600 text-white border-blue-600",
+                countClass: "bg-blue-500 text-white",
+              },
+              {
+                id: "pendencias" as const,
+                label: "Pendências",
+                count: counts.pendencias,
+                icon: <AlertCircle className="w-3.5 h-3.5" />,
+                activeClass: "bg-emerald-600 text-white border-emerald-600",
+                countClass: "bg-emerald-500 text-white",
+              },
+            ].map(({ id, label, count, icon, activeClass, countClass }) => {
+              const isActive = filterType === id;
+              return (
+                <button
+                  key={id}
+                  onClick={() => setFilterType(id)}
+                  aria-pressed={isActive}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs border transition-all",
+                    isActive
+                      ? cn("font-semibold shadow-sm", activeClass)
+                      : "font-medium bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:border-slate-300 hover:shadow-sm",
+                  )}
+                >
+                  {icon}
+                  <span>{label}</span>
+                  <span
+                    className={cn(
+                      "inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full text-[10px] font-bold tabular-nums",
+                      isActive ? countClass : "bg-slate-200 text-slate-600",
+                    )}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>

@@ -1,5 +1,10 @@
+import {
+  forbiddenResponse,
+  getAuthenticatedUser,
+  unauthorizedResponse,
+} from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth";
+import { getAccessFromUser, hasPermission } from "@/lib/permissions";
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
@@ -7,25 +12,41 @@ export async function GET(req: Request) {
     const auth = await getAuthenticatedUser(req);
     if (!auth) return unauthorizedResponse();
 
+    const access = getAccessFromUser(auth.user);
+    // Qualquer um que possa visualizar ou gerenciar colaboradores pode listar
+    if (
+      !hasPermission(access, "colaboradores.visualizar") &&
+      !hasPermission(access, "colaboradores.gerenciar")
+    ) {
+      return forbiddenResponse();
+    }
+
     const items = await prisma.colaborador.findMany({
       where: { empresaId: auth.session.empresaId },
       orderBy: { createdAt: "desc" },
     });
 
     return NextResponse.json(items);
-  } catch (err: any) {
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
     console.error("GET /api/colaboradores ->", err);
     return NextResponse.json(
-      { error: "Erro interno", detail: err?.message ?? String(err) },
+      { error: "Erro interno", detail },
       { status: 500 },
     );
   }
 }
 
 export async function POST(req: Request) {
-  const body = await req.json();
   const auth = await getAuthenticatedUser(req);
   if (!auth) return unauthorizedResponse();
+
+  const access = getAccessFromUser(auth.user);
+  if (!hasPermission(access, "colaboradores.gerenciar")) {
+    return forbiddenResponse();
+  }
+
+  const body = await req.json();
 
   const nome = String(body.nome ?? "").trim();
   const setor = String(body.setor ?? "").trim();

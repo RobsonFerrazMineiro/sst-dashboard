@@ -5,19 +5,23 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const email = String(body?.email ?? "").trim().toLowerCase();
+
+    // Aceita "login" (matrícula ou e-mail) ou "email" para compatibilidade retroativa
+    const loginInput = String(body?.login ?? body?.email ?? "")
+      .trim()
+      .toLowerCase();
     const senha = String(body?.senha ?? "");
 
-    if (!email || !senha) {
+    if (!loginInput || !senha) {
       return NextResponse.json(
-        { error: "Email e senha são obrigatórios" },
+        { error: "Login e senha são obrigatórios" },
         { status: 400 },
       );
     }
 
     const user = await prisma.usuario.findFirst({
       where: {
-        email,
+        login: loginInput,
         status: "ATIVO",
         empresa: { status: "ATIVA" },
       },
@@ -31,12 +35,18 @@ export async function POST(req: Request) {
     });
 
     if (!user) {
-      return NextResponse.json({ error: "Credenciais inválidas" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Credenciais inválidas" },
+        { status: 401 },
+      );
     }
 
     const senhaOk = await verifyPassword(senha, user.senhaHash);
     if (!senhaOk) {
-      return NextResponse.json({ error: "Credenciais inválidas" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Credenciais inválidas" },
+        { status: 401 },
+      );
     }
 
     await prisma.usuario.update({
@@ -56,6 +66,7 @@ export async function POST(req: Request) {
         id: user.id,
         nome: user.nome,
         email: user.email,
+        login: user.login,
         empresaId: user.empresaId,
         roles: user.usuarioPapeis.map((item) => item.papel.codigo),
       },

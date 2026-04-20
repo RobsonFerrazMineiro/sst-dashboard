@@ -1,10 +1,5 @@
 import { PrismaPg } from "@prisma/adapter-pg";
-import {
-  NR,
-  PlanoEmpresa,
-  PrismaClient,
-  StatusEmpresa,
-} from "@prisma/client";
+import { NR, PlanoEmpresa, PrismaClient, StatusEmpresa } from "@prisma/client";
 import "dotenv/config";
 import { Pool } from "pg";
 import { hashPassword } from "../src/lib/auth";
@@ -74,6 +69,11 @@ async function main() {
       modulo: "dashboard",
     },
     {
+      codigo: "colaboradores.visualizar",
+      nome: "Visualizar colaboradores",
+      modulo: "colaboradores",
+    },
+    {
       codigo: "colaboradores.gerenciar",
       nome: "Gerenciar colaboradores",
       modulo: "colaboradores",
@@ -98,28 +98,84 @@ async function main() {
       nome: "Gerenciar treinamentos",
       modulo: "treinamentos",
     },
+    {
+      codigo: "colaborador.visualizar-proprio",
+      nome: "Visualizar próprio perfil",
+      modulo: "perfil",
+    },
   ];
 
-  await prisma.permissao.createMany({ data: permissoes });
-
-  const papelAdmin = await prisma.papel.create({
-    data: {
-      empresaId: empresa.id,
-      nome: "Administrador",
+  const papeisBase = [
+    {
       codigo: "ADMIN",
+      nome: "Administrador",
       descricao: "Acesso completo ao SST Lite",
+      permissoes: permissoes.map((item) => item.codigo),
     },
-  });
+    {
+      codigo: "GESTOR",
+      nome: "Gestor",
+      descricao: "Consulta colaboradores e dashboard. Sem CRUD operacional.",
+      permissoes: [
+        "dashboard.visualizar",
+        "colaboradores.visualizar",
+        "colaborador.visualizar-proprio",
+      ],
+    },
+    {
+      codigo: "TECNICO_SST",
+      nome: "Técnico SST",
+      descricao: "Gerencia colaboradores, ASOs e treinamentos",
+      permissoes: [
+        "dashboard.visualizar",
+        "colaboradores.visualizar",
+        "colaboradores.gerenciar",
+        "asos.gerenciar",
+        "treinamentos.gerenciar",
+        "colaborador.visualizar-proprio",
+      ],
+    },
+    {
+      codigo: "COLABORADOR",
+      nome: "Colaborador",
+      descricao: "Acesso restrito ao proprio perfil",
+      permissoes: ["colaborador.visualizar-proprio"],
+    },
+  ] as const;
+
+  await prisma.permissao.createMany({ data: permissoes });
 
   const permissoesCriadas = await prisma.permissao.findMany({
     orderBy: { codigo: "asc" },
   });
+  const permissaoByCodigo = new Map(
+    permissoesCriadas.map((permissao) => [permissao.codigo, permissao]),
+  );
 
-  await prisma.papelPermissao.createMany({
-    data: permissoesCriadas.map((permissao) => ({
-      papelId: papelAdmin.id,
-      permissaoId: permissao.id,
-    })),
+  for (const papelBase of papeisBase) {
+    const papel = await prisma.papel.create({
+      data: {
+        empresaId: empresa.id,
+        nome: papelBase.nome,
+        codigo: papelBase.codigo,
+        descricao: papelBase.descricao,
+      },
+    });
+
+    await prisma.papelPermissao.createMany({
+      data: papelBase.permissoes
+        .map((codigo) => permissaoByCodigo.get(codigo))
+        .filter((permissao) => permissao !== undefined)
+        .map((permissao) => ({
+          papelId: papel.id,
+          permissaoId: permissao.id,
+        })),
+      skipDuplicates: true,
+    });
+  }
+
+  const papelAdmin = await prisma.papel.findFirstOrThrow({
+    where: { empresaId: empresa.id, codigo: "ADMIN" },
   });
 
   const adminEmail = (process.env.SEED_ADMIN_EMAIL ?? "admin@sstlite.local")
@@ -131,8 +187,10 @@ async function main() {
     data: {
       empresaId: empresa.id,
       nome: "Administrador SST Lite",
+      login: adminEmail,
       email: adminEmail,
       senhaHash: await hashPassword(adminPassword),
+      isAccountOwner: true,
       status: "ATIVO",
     },
   });
@@ -297,8 +355,7 @@ async function main() {
   const tipoPeriodico =
     tiposASOList.find((tipo) => tipo.nome === "Periodico") ?? tiposASOList[0];
   const tipoAdmissional =
-    tiposASOList.find((tipo) => tipo.nome === "Admissional") ??
-    tiposASOList[0];
+    tiposASOList.find((tipo) => tipo.nome === "Admissional") ?? tiposASOList[0];
 
   const asoData = [
     {

@@ -1,5 +1,10 @@
+import {
+  forbiddenResponse,
+  getAuthenticatedUser,
+  unauthorizedResponse,
+} from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth";
+import { getAccessFromUser, hasPermission } from "@/lib/permissions";
 import { NextResponse } from "next/server";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -11,6 +16,15 @@ export async function GET(req: Request, ctx: Ctx) {
 
     const auth = await getAuthenticatedUser(req);
     if (!auth) return unauthorizedResponse();
+
+    const access = getAccessFromUser(auth.user);
+    if (
+      !hasPermission(access, "colaboradores.visualizar") &&
+      !hasPermission(access, "colaboradores.gerenciar")
+    ) {
+      return forbiddenResponse();
+    }
+
     const item = await prisma.colaborador.findFirst({
       where: { id, empresaId: auth.session.empresaId },
     });
@@ -20,10 +34,11 @@ export async function GET(req: Request, ctx: Ctx) {
     }
 
     return NextResponse.json(item);
-  } catch (err: any) {
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
     console.error("GET /api/colaboradores/[id] ->", err);
     return NextResponse.json(
-      { error: "Erro interno", detail: err?.message ?? String(err) },
+      { error: "Erro interno", detail },
       { status: 500 },
     );
   }
@@ -36,6 +51,12 @@ export async function PATCH(req: Request, { params }: Ctx) {
 
     const auth = await getAuthenticatedUser(req);
     if (!auth) return unauthorizedResponse();
+
+    const access = getAccessFromUser(auth.user);
+    if (!hasPermission(access, "colaboradores.gerenciar")) {
+      return forbiddenResponse();
+    }
+
     const exists = await prisma.colaborador.findFirst({
       where: { id, empresaId: auth.session.empresaId },
     });
@@ -74,10 +95,11 @@ export async function PATCH(req: Request, { params }: Ctx) {
     });
 
     return NextResponse.json(updated);
-  } catch (err: any) {
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
     console.error("PATCH /api/colaboradores/[id] ->", err);
     return NextResponse.json(
-      { error: "Erro interno", detail: err?.message },
+      { error: "Erro interno", detail },
       { status: 500 },
     );
   }
@@ -88,6 +110,11 @@ export async function DELETE(req: Request, { params }: Ctx) {
     const { id } = await params;
     const auth = await getAuthenticatedUser(req);
     if (!auth) return unauthorizedResponse();
+
+    const access = getAccessFromUser(auth.user);
+    if (!hasPermission(access, "colaboradores.gerenciar")) {
+      return forbiddenResponse();
+    }
 
     const exists = await prisma.colaborador.findFirst({
       where: { id, empresaId: auth.session.empresaId },
@@ -100,10 +127,11 @@ export async function DELETE(req: Request, { params }: Ctx) {
     await prisma.colaborador.delete({ where: { id } });
 
     return NextResponse.json({ ok: true });
-  } catch (err: any) {
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
     console.error("DELETE /api/colaboradores/[id] ->", err);
     return NextResponse.json(
-      { error: "Erro interno", detail: err?.message },
+      { error: "Erro interno", detail },
       { status: 500 },
     );
   }

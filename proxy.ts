@@ -9,6 +9,8 @@ function isPrivatePage(pathname: string) {
   return (
     pathname === "/dashboard" ||
     pathname.startsWith("/dashboard/") ||
+    pathname === "/acessos" ||
+    pathname.startsWith("/acessos/") ||
     pathname === "/colaboradores" ||
     pathname.startsWith("/colaboradores/") ||
     pathname === "/tipos-aso" ||
@@ -56,6 +58,7 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     "/login",
+    "/acessos/:path*",
     "/dashboard/:path*",
     "/colaboradores/:path*",
     "/tipos-aso/:path*",
