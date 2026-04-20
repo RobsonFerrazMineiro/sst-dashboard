@@ -110,12 +110,15 @@ export default function DashboardPage() {
         isLoading={loadingASOs || loadingTreinamentos}
       />
 
-      {/* Seção: Pendências Gerais */}
-      <GeneralPendencies
-        asos={asos}
-        treinamentos={treinamentos}
-        isLoading={loadingASOs || loadingTreinamentos}
-      />
+      {/* Espaço de respiro entre risco geral e pendências */}
+      <div className="mt-8">
+        {/* Seção: Pendências Gerais */}
+        <GeneralPendencies
+          asos={asos}
+          treinamentos={treinamentos}
+          isLoading={loadingASOs || loadingTreinamentos}
+        />
+      </div>
 
       {/* Tab Navigation */}
       <div className="mb-6">

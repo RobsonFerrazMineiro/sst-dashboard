@@ -2,6 +2,7 @@
 
 import RiskScoreBadge from "@/components/dashboard/RiskScoreBadge";
 import RiskScoreHoverCard from "@/components/dashboard/RiskScoreHoverCard";
+import { SSTProgressBar } from "@/components/ui/SSTProgressBar";
 import { StatusBadgeWithTemporal } from "@/components/ui/status-badge-with-temporal";
 import { api } from "@/lib/api";
 import { calculateRiskScore } from "@/lib/risk-score";
@@ -13,7 +14,9 @@ import { createRealPendingsList } from "@/lib/unified-pending";
 import { formatDate } from "@/lib/utils";
 import type { AsoRecord, TreinamentoRecord } from "@/types/dashboard";
 import { useQuery } from "@tanstack/react-query";
+import { differenceInDays } from "date-fns";
 import {
+  AlertTriangle,
   Briefcase,
   Building2,
   CalendarDays,
@@ -123,6 +126,63 @@ function EmptyState({ label }: { label: string }) {
   );
 }
 
+// ─── alerta de pendências ─────────────────────────────────────────────────────
+
+type PendenciaItem = {
+  label: string;
+  /** "critico" = vencido; "atencao" = prestes a vencer / pendente */
+  nivel: "critico" | "atencao";
+};
+
+function PendenciasAlert({ itens }: { itens: PendenciaItem[] }) {
+  if (itens.length === 0) return null;
+
+  const temCritico = itens.some((i) => i.nivel === "critico");
+
+  const containerCls = temCritico
+    ? "border-rose-200 bg-rose-50"
+    : "border-amber-200 bg-amber-50";
+  const iconCls = temCritico ? "text-rose-500" : "text-amber-500";
+  const titleCls = temCritico ? "text-rose-700" : "text-amber-700";
+  const itemCriticoCls = "text-rose-600 font-medium";
+  const itemAtencaoCls = "text-amber-600";
+
+  return (
+    <div
+      role="alert"
+      className={`rounded-lg border px-4 py-3 flex gap-3 ${containerCls}`}
+    >
+      <AlertTriangle
+        className={`h-4 w-4 shrink-0 mt-0.5 ${iconCls}`}
+        aria-hidden="true"
+      />
+      <div className="space-y-1 min-w-0">
+        <p className={`text-sm font-semibold ${titleCls}`}>
+          Pendências encontradas
+        </p>
+        <ul className="space-y-0.5">
+          {itens.map((item, idx) => (
+            <li
+              key={idx}
+              className={`text-xs flex items-center gap-1.5 ${
+                item.nivel === "critico" ? itemCriticoCls : itemAtencaoCls
+              }`}
+            >
+              <span
+                className={`inline-block h-1.5 w-1.5 rounded-full shrink-0 ${
+                  item.nivel === "critico" ? "bg-rose-500" : "bg-amber-400"
+                }`}
+                aria-hidden="true"
+              />
+              {item.label}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
 function TreinamentoCard({ t }: { t: TreinamentoRecord }) {
   const statusInfo = getTrainingStatusWithTemporal(t.validade);
   return (
@@ -222,44 +282,92 @@ function ResumoSST({
   ).length;
   const trPendentes = trAtual.length - trEmDia;
 
+  // Treinamentos vencidos vs "prestes a vencer"
+  const trVencidos = trAtual.filter(
+    (t) => getTrainingStatusWithTemporal(t.validade).status === "Vencido",
+  ).length;
+  const trPrestesVencer = trAtual.filter(
+    (t) =>
+      getTrainingStatusWithTemporal(t.validade).status === "Prestes a vencer",
+  ).length;
+
   const asoStatus = asoAtual
     ? getAsoStatusWithTemporal(asoAtual.validade_aso, asoAtual.data_aso).status
     : "Pendente";
 
-  // Próximo vencimento (entre todos os itens)
+  // Monta lista de pendências para o alerta
+  const pendenciasAlerta = useMemo<PendenciaItem[]>(() => {
+    const lista: PendenciaItem[] = [];
+
+    if (trVencidos > 0) {
+      lista.push({
+        label: `${trVencidos} treinamento${trVencidos > 1 ? "s" : ""} vencido${trVencidos > 1 ? "s" : ""}`,
+        nivel: "critico",
+      });
+    }
+    if (trPrestesVencer > 0) {
+      lista.push({
+        label: `${trPrestesVencer} treinamento${trPrestesVencer > 1 ? "s" : ""} prestes a vencer`,
+        nivel: "atencao",
+      });
+    }
+    if (asoStatus === "Vencido") {
+      lista.push({ label: "ASO vencido", nivel: "critico" });
+    } else if (asoStatus === "Pendente") {
+      lista.push({ label: "ASO pendente", nivel: "atencao" });
+    } else if (asoStatus === "Prestes a vencer") {
+      lista.push({ label: "ASO prestes a vencer", nivel: "atencao" });
+    }
+
+    return lista;
+  }, [trVencidos, trPrestesVencer, asoStatus]);
+
+  // Próximo vencimento (entre todos os itens — inclui vencidos para exibir "há X dias")
   const proximoVencimento = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const candidatos: { label: string; data: Date }[] = [];
+    const candidatos: { label: string; data: Date; diasRestantes: number }[] =
+      [];
 
     for (const t of trAtual) {
       if (!t.validade) continue;
       const d = new Date(t.validade);
-      if (d >= today)
-        candidatos.push({
-          label: t.tipoTreinamento_nome ?? "Treinamento",
-          data: d,
-        });
+      d.setHours(0, 0, 0, 0);
+      candidatos.push({
+        label: t.tipoTreinamento_nome ?? "Treinamento",
+        data: d,
+        diasRestantes: differenceInDays(d, today),
+      });
     }
     if (asoAtual?.validade_aso) {
       const d = new Date(asoAtual.validade_aso);
-      if (d >= today)
-        candidatos.push({ label: asoAtual.tipoASO_nome ?? "ASO", data: d });
+      d.setHours(0, 0, 0, 0);
+      candidatos.push({
+        label: asoAtual.tipoASO_nome ?? "ASO",
+        data: d,
+        diasRestantes: differenceInDays(d, today),
+      });
     }
 
     if (candidatos.length === 0) return null;
-    candidatos.sort((a, b) => a.data.getTime() - b.data.getTime());
-    return candidatos[0];
+    // Ordena: futuros primeiro (menor diasRestantes > 0), depois vencidos
+    const futuros = candidatos
+      .filter((c) => c.diasRestantes >= 0)
+      .sort((a, b) => a.diasRestantes - b.diasRestantes);
+    const vencidos = candidatos
+      .filter((c) => c.diasRestantes < 0)
+      .sort((a, b) => b.diasRestantes - a.diasRestantes); // mais recente primeiro
+    return futuros[0] ?? vencidos[0] ?? null;
   }, [trAtual, asoAtual]);
 
   const statCls = (ok: boolean) =>
     ok
-      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-      : "border-rose-200 bg-rose-50 text-rose-700";
+      ? "border-emerald-300 bg-emerald-100 text-emerald-800"
+      : "border-rose-300 bg-rose-100 text-rose-800";
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5 space-y-4">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5 space-y-5">
       <div className="flex items-center justify-between">
         <SectionTitle icon={<ShieldCheck className="h-4 w-4" />}>
           Situação SST
@@ -269,20 +377,32 @@ function ResumoSST({
         </RiskScoreHoverCard>
       </div>
 
+      {/* barra de progresso do score */}
+      <SSTProgressBar score={riskScore.score} />
+
+      {/* alerta de pendências — oculto quando não há nenhuma */}
+      <PendenciasAlert itens={pendenciasAlerta} />
+
       {/* cards de resumo */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div
           className={`rounded-lg border px-4 py-3 text-center ${statCls(trPendentes === 0)}`}
         >
-          <p className="text-2xl font-bold">{trEmDia}</p>
-          <p className="text-xs font-medium mt-0.5">
-            Treinamento{trEmDia !== 1 ? "s" : ""} em dia
+          <div className="flex justify-center mb-1">
+            {trPendentes === 0 ? (
+              <CheckCircle2 className="h-7 w-7" />
+            ) : (
+              <AlertTriangle className="h-7 w-7" />
+            )}
+          </div>
+          <p className="text-xs font-semibold mt-0.5">
+            Treinamento{trEmDia !== 1 ? "s" : ""}
           </p>
-          {trPendentes > 0 && (
-            <p className="text-xs mt-1 opacity-80">
-              {trPendentes} pendente{trPendentes > 1 ? "s" : ""}
-            </p>
-          )}
+          <p className="text-xs mt-1 font-medium opacity-90">
+            {trPendentes === 0
+              ? `${trEmDia} em dia`
+              : `${trPendentes} pendente${trPendentes > 1 ? "s" : ""}`}
+          </p>
         </div>
 
         <div
@@ -290,20 +410,28 @@ function ResumoSST({
             asoStatus === "Em dia" || asoStatus === "Sem vencimento",
           )}`}
         >
-          <p className="text-2xl font-bold">
-            {asoAtual ? (asoStatus === "Em dia" ? "✓" : "!") : "—"}
-          </p>
-          <p className="text-xs font-medium mt-0.5">ASO</p>
-          <p className="text-xs mt-1 opacity-80">
+          <div className="flex justify-center mb-1">
+            {asoStatus === "Em dia" || asoStatus === "Sem vencimento" ? (
+              <CheckCircle2 className="h-7 w-7" />
+            ) : (
+              <AlertTriangle className="h-7 w-7" />
+            )}
+          </div>
+          <p className="text-xs font-semibold mt-0.5">ASO</p>
+          <p className="text-xs mt-1 font-medium opacity-90">
             {asoAtual ? asoStatus : "Pendente"}
           </p>
         </div>
 
         <div
           className={`rounded-lg border px-4 py-3 text-center ${
-            proximoVencimento
-              ? "border-amber-200 bg-amber-50 text-amber-700"
-              : "border-slate-200 bg-slate-50 text-slate-600"
+            !proximoVencimento
+              ? "border-slate-200 bg-slate-50 text-slate-600"
+              : proximoVencimento.diasRestantes < 0
+                ? "border-rose-200 bg-rose-50 text-rose-700"
+                : proximoVencimento.diasRestantes < 30
+                  ? "border-amber-200 bg-amber-50 text-amber-700"
+                  : "border-emerald-200 bg-emerald-50 text-emerald-700"
           }`}
         >
           <p className="text-xs font-medium mb-1">Próximo vencimento</p>
@@ -312,9 +440,16 @@ function ResumoSST({
               <p className="text-sm font-semibold truncate">
                 {proximoVencimento.label}
               </p>
-              <p className="text-xs mt-0.5 opacity-80 flex items-center justify-center gap-1">
+              <p className="text-xs mt-0.5 flex items-center justify-center gap-1">
                 <CalendarDays className="h-3 w-3" />
                 {formatDate(proximoVencimento.data.toISOString(), "—")}
+              </p>
+              <p className="text-xs mt-1 font-medium">
+                {proximoVencimento.diasRestantes === 0
+                  ? "vence hoje"
+                  : proximoVencimento.diasRestantes < 0
+                    ? `há ${Math.abs(proximoVencimento.diasRestantes)} dia${Math.abs(proximoVencimento.diasRestantes) !== 1 ? "s" : ""}`
+                    : `em ${proximoVencimento.diasRestantes} dia${proximoVencimento.diasRestantes !== 1 ? "s" : ""}`}
               </p>
             </>
           ) : (
@@ -372,7 +507,7 @@ export default function MeuPerfilView({
   const isLoading = loadingTre || loadingAso;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* ── cabeçalho com dados do colaborador ── */}
       <header className="rounded-xl border border-slate-200 bg-white shadow-sm px-6 py-5">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">

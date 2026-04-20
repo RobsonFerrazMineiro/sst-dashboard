@@ -108,7 +108,7 @@ export default function RiskIndicator({
             Risco Geral: {config.label}
           </h2>
           <p className={`mt-1 text-sm ${config.textColor}`}>
-            {riskData.vencidosCount} vencidos • {riskData.vendoCount} vencendo •{" "}
+            {riskData.vencidosCount} vencidos | {riskData.vendoCount} a vencer |{" "}
             {riskData.colaboradoresComRisco} colaboradores críticos
           </p>
         </div>
