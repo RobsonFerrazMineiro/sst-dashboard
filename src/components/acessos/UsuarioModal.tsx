@@ -25,6 +25,9 @@ import { api } from "@/lib/api";
 import type { AccessRoleOption, EmpresaUser } from "@/types/access";
 import { toast } from "sonner";
 
+/** Papéis disponíveis no fluxo manual — COLABORADOR é excluído aqui */
+const CODIGO_COLABORADOR = "COLABORADOR";
+
 export default function UsuarioModal({
   open,
   onOpenChange,
@@ -40,37 +43,47 @@ export default function UsuarioModal({
   const isEdit = !!initial;
   const isOwner = initial?.isAccountOwner ?? false;
 
+  // Filtra COLABORADOR da lista de papéis manuais
+  const papeisManual = papeis.filter((p) => p.codigo !== CODIGO_COLABORADOR);
+
   const [nome, setNome] = useState("");
+  const [login, setLogin] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
-  const [papelCodigo, setPapelCodigo] = useState("LEITOR");
+  const [papelCodigo, setPapelCodigo] = useState("TECNICO_SST");
   const [status, setStatus] = useState<"ATIVO" | "INATIVO">("ATIVO");
 
   useEffect(() => {
     if (!open) return;
 
     setNome(initial?.nome ?? "");
+    setLogin(initial?.login ?? "");
     setEmail(initial?.email ?? "");
     setSenha("");
-    setPapelCodigo(initial?.papel?.codigo ?? "LEITOR");
+    // No edit: mantém o papel atual; se for COLABORADOR, não deixa editar aqui
+    const codigoAtual = initial?.papel?.codigo ?? "TECNICO_SST";
+    setPapelCodigo(
+      codigoAtual === CODIGO_COLABORADOR ? "TECNICO_SST" : codigoAtual,
+    );
     setStatus(initial?.status === "INATIVO" ? "INATIVO" : "ATIVO");
   }, [open, initial]);
 
   const payload = useMemo(
     () => ({
       nome: nome.trim(),
-      email: email.trim().toLowerCase(),
+      login: login.trim().toLowerCase(),
+      email: email.trim().toLowerCase() || undefined,
       senha,
       papelCodigo,
       status,
     }),
-    [email, nome, papelCodigo, senha, status],
+    [email, login, nome, papelCodigo, senha, status],
   );
 
   const mutation = useMutation({
     mutationFn: async () => {
-      if (!payload.nome || !payload.email) {
-        throw new Error("Nome e email sao obrigatorios");
+      if (!payload.nome || !payload.login) {
+        throw new Error("Nome e login são obrigatórios");
       }
 
       if (!isEdit && payload.senha.trim().length < 8) {
@@ -80,6 +93,7 @@ export default function UsuarioModal({
       if (isEdit && initial) {
         return api.usuarios.update(initial.id, {
           nome: payload.nome,
+          login: isOwner ? undefined : payload.login,
           email: payload.email,
           papelCodigo: isOwner ? undefined : payload.papelCodigo,
           status: isOwner ? undefined : payload.status,
@@ -88,19 +102,20 @@ export default function UsuarioModal({
 
       return api.usuarios.create({
         nome: payload.nome,
+        login: payload.login,
         email: payload.email,
         senha: payload.senha,
         papelCodigo: payload.papelCodigo,
       });
     },
     onSuccess: async () => {
-      toast.success(isEdit ? "Usuario atualizado!" : "Usuario criado!");
+      toast.success(isEdit ? "Usuário atualizado!" : "Usuário criado!");
       await qc.invalidateQueries({ queryKey: ["usuarios"] });
       onOpenChange(false);
     },
     onError: (error: unknown) => {
       toast.error(
-        error instanceof Error ? error.message : "Erro ao salvar usuario",
+        error instanceof Error ? error.message : "Erro ao salvar usuário",
       );
     },
   });
@@ -110,12 +125,12 @@ export default function UsuarioModal({
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>
-            {isEdit ? "Editar usuario" : "Novo usuario"}
+            {isEdit ? "Editar usuário" : "Novo usuário"}
           </DialogTitle>
           <DialogDescription>
             {isEdit
-              ? "Atualize os dados, perfil e status do usuario da empresa."
-              : "Crie um novo usuario para a empresa autenticada."}
+              ? "Atualize os dados, perfil e status do usuário da empresa."
+              : 'Crie um acesso administrativo/técnico para a empresa. Para colaboradores, use o botão "Ativar primeiro acesso" na linha correspondente.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -132,7 +147,30 @@ export default function UsuarioModal({
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="usuario-email">Email</Label>
+            <Label htmlFor="usuario-login">
+              Login{" "}
+              <span className="text-slate-400 text-xs font-normal">
+                (e-mail ou matrícula)
+              </span>
+            </Label>
+            <Input
+              id="usuario-login"
+              name="loginUsuarioEmpresa"
+              autoComplete="username"
+              value={login}
+              onChange={(e) => setLogin(e.target.value)}
+              placeholder="maria@empresa.com ou MAT-1001"
+              disabled={isOwner}
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="usuario-email">
+              E-mail de contato{" "}
+              <span className="text-slate-400 text-xs font-normal">
+                (opcional)
+              </span>
+            </Label>
             <Input
               id="usuario-email"
               name="emailUsuarioEmpresa"
@@ -152,7 +190,7 @@ export default function UsuarioModal({
                 type="password"
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
-                placeholder="Minimo de 8 caracteres"
+                placeholder="Mínimo de 8 caracteres"
               />
             </div>
           ) : null}
@@ -166,13 +204,13 @@ export default function UsuarioModal({
             >
               <SelectTrigger
                 id="usuario-papel"
-                aria-label="Selecionar perfil do usuario"
+                aria-label="Selecionar perfil do usuário"
                 className="w-full"
               >
                 <SelectValue placeholder="Selecione o perfil" />
               </SelectTrigger>
               <SelectContent>
-                {papeis.map((papel) => (
+                {papeisManual.map((papel) => (
                   <SelectItem key={papel.id} value={papel.codigo}>
                     {papel.nome}
                   </SelectItem>
@@ -186,12 +224,14 @@ export default function UsuarioModal({
               <Label htmlFor="usuario-status">Status</Label>
               <Select
                 value={status}
-                onValueChange={(value) => setStatus(value as "ATIVO" | "INATIVO")}
+                onValueChange={(value) =>
+                  setStatus(value as "ATIVO" | "INATIVO")
+                }
                 disabled={isOwner}
               >
                 <SelectTrigger
                   id="usuario-status"
-                  aria-label="Selecionar status do usuario"
+                  aria-label="Selecionar status do usuário"
                   className="w-full"
                 >
                   <SelectValue placeholder="Selecione o status" />
@@ -203,21 +243,25 @@ export default function UsuarioModal({
               </Select>
             </div>
           ) : null}
-
-          {isOwner ? (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-              O proprietario da conta permanece protegido nesta fase. Perfil e
-              status nao podem ser alterados.
-            </div>
-          ) : null}
         </div>
 
-        <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={mutation.isPending}
+          >
             Cancelar
           </Button>
-          <Button onClick={() => mutation.mutate()} disabled={mutation.isPending}>
-            {mutation.isPending ? "Salvando..." : "Salvar"}
+          <Button
+            onClick={() => mutation.mutate()}
+            disabled={mutation.isPending}
+          >
+            {mutation.isPending
+              ? "Salvando..."
+              : isEdit
+                ? "Salvar"
+                : "Criar usuário"}
           </Button>
         </DialogFooter>
       </DialogContent>

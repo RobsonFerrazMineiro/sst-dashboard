@@ -7,6 +7,7 @@ import {
   LogOut,
   ShieldCheck,
   Tags,
+  UserCircle,
   Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -17,16 +18,27 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useAuthPermissions } from "@/lib/permissions-client";
 import { cn } from "@/lib/utils";
+import { useQueryClient } from "@tanstack/react-query";
 
 type NavItem = {
   href: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   permission: string;
+  /** Mostra apenas se o usuário TEM este papel */
   role?: string;
+  /** Oculta se o usuário TEM este papel */
+  excludeRole?: string;
 };
 
 const navItems: NavItem[] = [
+  {
+    href: "/meu-perfil",
+    label: "Meu Perfil",
+    icon: UserCircle,
+    permission: "colaborador.visualizar-proprio",
+    excludeRole: "ADMIN",
+  },
   {
     href: "/dashboard",
     label: "Dashboard",
@@ -34,18 +46,21 @@ const navItems: NavItem[] = [
     permission: "dashboard.visualizar",
   },
   {
+    // Colaboradores aparece para GESTOR (visualizar) e TECNICO_SST (gerenciar)
     href: "/colaboradores",
     label: "Colaboradores",
     icon: Users,
-    permission: "colaboradores.gerenciar",
+    permission: "colaboradores.visualizar",
   },
   {
+    // Tipos de Treinamento: somente quem gerencia (ADMIN)
     href: "/tipos-treinamento",
     label: "Tipos de Treinamento",
     icon: ClipboardList,
     permission: "tipos-treinamento.gerenciar",
   },
   {
+    // Tipos de ASO: somente quem gerencia (ADMIN)
     href: "/tipos-aso",
     label: "Tipos de ASO",
     icon: Tags,
@@ -69,11 +84,13 @@ export default function Sidebar({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [loggingOut, setLoggingOut] = useState(false);
   const { hasPermission, hasRole } = useAuthPermissions();
 
   const visibleNavItems = navItems.filter((item) => {
     if (item.role && !hasRole(item.role)) return false;
+    if (item.excludeRole && hasRole(item.excludeRole)) return false;
     return hasPermission(item.permission);
   });
 
@@ -90,9 +107,12 @@ export default function Sidebar({
         throw new Error("Falha ao sair do sistema");
       }
 
+      // Limpa TODO o cache do TanStack Query para que o próximo usuário
+      // não herde dados/permissões da sessão anterior.
+      queryClient.clear();
+
       onNavigate?.();
       router.replace("/login");
-      router.refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Falha ao sair");
     } finally {

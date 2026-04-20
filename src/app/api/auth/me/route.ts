@@ -1,5 +1,5 @@
 import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth";
-import { getUserAccess } from "@/lib/permissions";
+import { getAccessFromUser } from "@/lib/permissions";
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
@@ -9,7 +9,9 @@ export async function GET(req: Request) {
     return unauthorizedResponse();
   }
 
-  const access = await getUserAccess(auth.session);
+  // getAuthenticatedUser já carregou o usuário com papeis e permissoes do banco.
+  // Usamos getAccessFromUser (síncrono) para evitar uma segunda query idêntica.
+  const access = getAccessFromUser(auth.user);
 
   return NextResponse.json({
     user: {

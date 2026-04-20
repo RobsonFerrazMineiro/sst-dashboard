@@ -1,10 +1,5 @@
 import { PrismaPg } from "@prisma/adapter-pg";
-import {
-  NR,
-  PlanoEmpresa,
-  PrismaClient,
-  StatusEmpresa,
-} from "@prisma/client";
+import { NR, PlanoEmpresa, PrismaClient, StatusEmpresa } from "@prisma/client";
 import "dotenv/config";
 import { Pool } from "pg";
 import { hashPassword } from "../src/lib/auth";
@@ -74,6 +69,11 @@ async function main() {
       modulo: "dashboard",
     },
     {
+      codigo: "colaboradores.visualizar",
+      nome: "Visualizar colaboradores",
+      modulo: "colaboradores",
+    },
+    {
       codigo: "colaboradores.gerenciar",
       nome: "Gerenciar colaboradores",
       modulo: "colaboradores",
@@ -98,6 +98,11 @@ async function main() {
       nome: "Gerenciar treinamentos",
       modulo: "treinamentos",
     },
+    {
+      codigo: "colaborador.visualizar-proprio",
+      nome: "Visualizar próprio perfil",
+      modulo: "perfil",
+    },
   ];
 
   const papeisBase = [
@@ -110,24 +115,31 @@ async function main() {
     {
       codigo: "GESTOR",
       nome: "Gestor",
-      descricao: "Gestao operacional ampla no SST Lite",
-      permissoes: permissoes.map((item) => item.codigo),
-    },
-    {
-      codigo: "OPERADOR",
-      nome: "Operador",
-      descricao: "Operacao do dia a dia com foco em ASOs e treinamentos",
+      descricao: "Consulta colaboradores e dashboard. Sem CRUD operacional.",
       permissoes: [
         "dashboard.visualizar",
-        "asos.gerenciar",
-        "treinamentos.gerenciar",
+        "colaboradores.visualizar",
+        "colaborador.visualizar-proprio",
       ],
     },
     {
-      codigo: "LEITOR",
-      nome: "Leitor",
-      descricao: "Acompanhamento basico do dashboard",
-      permissoes: ["dashboard.visualizar"],
+      codigo: "TECNICO_SST",
+      nome: "Técnico SST",
+      descricao: "Gerencia colaboradores, ASOs e treinamentos",
+      permissoes: [
+        "dashboard.visualizar",
+        "colaboradores.visualizar",
+        "colaboradores.gerenciar",
+        "asos.gerenciar",
+        "treinamentos.gerenciar",
+        "colaborador.visualizar-proprio",
+      ],
+    },
+    {
+      codigo: "COLABORADOR",
+      nome: "Colaborador",
+      descricao: "Acesso restrito ao proprio perfil",
+      permissoes: ["colaborador.visualizar-proprio"],
     },
   ] as const;
 
@@ -175,6 +187,7 @@ async function main() {
     data: {
       empresaId: empresa.id,
       nome: "Administrador SST Lite",
+      login: adminEmail,
       email: adminEmail,
       senhaHash: await hashPassword(adminPassword),
       isAccountOwner: true,
@@ -342,8 +355,7 @@ async function main() {
   const tipoPeriodico =
     tiposASOList.find((tipo) => tipo.nome === "Periodico") ?? tiposASOList[0];
   const tipoAdmissional =
-    tiposASOList.find((tipo) => tipo.nome === "Admissional") ??
-    tiposASOList[0];
+    tiposASOList.find((tipo) => tipo.nome === "Admissional") ?? tiposASOList[0];
 
   const asoData = [
     {

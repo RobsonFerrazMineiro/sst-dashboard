@@ -24,6 +24,11 @@ const permissoesBase = [
     modulo: "dashboard",
   },
   {
+    codigo: "colaboradores.visualizar",
+    nome: "Visualizar colaboradores",
+    modulo: "colaboradores",
+  },
+  {
     codigo: "colaboradores.gerenciar",
     nome: "Gerenciar colaboradores",
     modulo: "colaboradores",
@@ -48,6 +53,11 @@ const permissoesBase = [
     nome: "Gerenciar treinamentos",
     modulo: "treinamentos",
   },
+  {
+    codigo: "colaborador.visualizar-proprio",
+    nome: "Visualizar próprio perfil",
+    modulo: "perfil",
+  },
 ];
 
 const papeisBase = [
@@ -60,24 +70,31 @@ const papeisBase = [
   {
     codigo: "GESTOR",
     nome: "Gestor",
-    descricao: "Gestao operacional ampla no SST Lite",
-    permissoes: permissoesBase.map((item) => item.codigo),
-  },
-  {
-    codigo: "OPERADOR",
-    nome: "Operador",
-    descricao: "Operacao do dia a dia com foco em ASOs e treinamentos",
+    descricao: "Consulta colaboradores e dashboard. Sem CRUD operacional.",
     permissoes: [
       "dashboard.visualizar",
-      "asos.gerenciar",
-      "treinamentos.gerenciar",
+      "colaboradores.visualizar",
+      "colaborador.visualizar-proprio",
     ],
   },
   {
-    codigo: "LEITOR",
-    nome: "Leitor",
-    descricao: "Acompanhamento basico do dashboard",
-    permissoes: ["dashboard.visualizar"],
+    codigo: "TECNICO_SST",
+    nome: "Técnico SST",
+    descricao: "Gerencia colaboradores, ASOs e treinamentos",
+    permissoes: [
+      "dashboard.visualizar",
+      "colaboradores.visualizar",
+      "colaboradores.gerenciar",
+      "asos.gerenciar",
+      "treinamentos.gerenciar",
+      "colaborador.visualizar-proprio",
+    ],
+  },
+  {
+    codigo: "COLABORADOR",
+    nome: "Colaborador",
+    descricao: "Acesso restrito ao proprio perfil",
+    permissoes: ["colaborador.visualizar-proprio"],
   },
 ] as const;
 
@@ -177,17 +194,17 @@ async function main() {
           status: StatusUsuario.ATIVO,
         },
       })
-      : await prisma.usuario.create({
+    : await prisma.usuario.create({
         data: {
           empresaId: empresa.id,
           nome: "Administrador SST Lite",
+          login: adminEmail,
           email: adminEmail,
           senhaHash: await hashPassword(adminPassword),
           isAccountOwner: true,
           status: StatusUsuario.ATIVO,
         },
       });
-
   if (!usuario.isAccountOwner) {
     await prisma.usuario.update({
       where: { id: usuario.id },

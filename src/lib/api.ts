@@ -1,3 +1,4 @@
+import type { AccessRoleOption, EmpresaUser } from "@/types/access";
 import type {
   AsoRecord,
   Colaborador,
@@ -5,7 +6,6 @@ import type {
   TipoTreinamento,
   TreinamentoRecord,
 } from "@/types/dashboard";
-import type { AccessRoleOption, EmpresaUser } from "@/types/access";
 
 type JsonInit = Omit<RequestInit, "body"> & { json?: unknown };
 
@@ -128,9 +128,20 @@ export const api = {
 
     listRoles: () => requestJSON<AccessRoleOption[]>("/api/usuarios/papeis"),
 
+    /** Lista papéis disponíveis para criação manual (exclui COLABORADOR). */
+    listManualRoles: () =>
+      requestJSON<AccessRoleOption[]>("/api/usuarios/papeis?manual=true"),
+
+    /** Colaboradores sem usuário vinculado — aparecem como "Pendente" na tela de Acessos. */
+    pendentes: () =>
+      requestJSON<import("@/types/access").PendingColaborador[]>(
+        "/api/colaboradores/pendentes",
+      ),
+
     create: (json: {
       nome: string;
-      email: string;
+      login: string;
+      email?: string;
       senha: string;
       papelCodigo: string;
     }) =>
@@ -139,10 +150,24 @@ export const api = {
         json,
       }),
 
+    /** Cria usuário vinculado a um Colaborador existente (fluxo "Ativar primeiro acesso"). */
+    ativarColaborador: (json: {
+      colaboradorId: string;
+      nome: string;
+      login: string;
+      email?: string;
+      senha: string;
+    }) =>
+      requestJSON<EmpresaUser>("/api/usuarios", {
+        method: "POST",
+        json: { ...json, papelCodigo: "COLABORADOR" },
+      }),
+
     update: (
       id: string,
       json: {
         nome?: string;
+        login?: string;
         email?: string;
         status?: "ATIVO" | "INATIVO";
         papelCodigo?: string;

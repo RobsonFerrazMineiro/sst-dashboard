@@ -18,12 +18,13 @@ type UsuarioAdminPayload = Prisma.UsuarioGetPayload<{
         papel: true;
       };
     };
+    colaborador: {
+      select: { cargo: true; setor: true; matricula: true };
+    };
   };
 }>;
 
-function serializeUsuario(
-  user: UsuarioAdminPayload,
-) {
+function serializeUsuario(user: UsuarioAdminPayload) {
   const papelPrincipal = getPrimaryRole(
     user.usuarioPapeis.map((item) => item.papel),
   );
@@ -31,6 +32,7 @@ function serializeUsuario(
   return {
     id: user.id,
     nome: user.nome,
+    login: user.login,
     email: user.email,
     status: user.status,
     isAccountOwner: user.isAccountOwner,
@@ -40,6 +42,13 @@ function serializeUsuario(
           id: papelPrincipal.id,
           codigo: papelPrincipal.codigo,
           nome: papelPrincipal.nome,
+        }
+      : null,
+    colaborador: user.colaborador
+      ? {
+          cargo: user.colaborador.cargo,
+          setor: user.colaborador.setor,
+          matricula: user.colaborador.matricula,
         }
       : null,
   };
@@ -68,16 +77,23 @@ export async function PATCH(req: Request, { params }: Ctx) {
           papel: true,
         },
       },
+      colaborador: {
+        select: { cargo: true, setor: true, matricula: true },
+      },
     },
   });
 
   if (!target) {
-    return NextResponse.json({ error: "Usuario nao encontrado" }, { status: 404 });
+    return NextResponse.json(
+      { error: "Usuario nao encontrado" },
+      { status: 404 },
+    );
   }
 
   const data: {
     nome?: string;
-    email?: string;
+    login?: string;
+    email?: string | null;
     status?: StatusUsuario;
   } = {};
 
@@ -89,28 +105,51 @@ export async function PATCH(req: Request, { params }: Ctx) {
     data.nome = nome;
   }
 
-  if (body.email !== undefined) {
-    const email = String(body.email).trim().toLowerCase();
-    if (!email) {
-      return NextResponse.json({ error: "email invalido" }, { status: 400 });
+  if (body.login !== undefined) {
+    const login = String(body.login).trim().toLowerCase();
+    if (!login) {
+      return NextResponse.json({ error: "login invalido" }, { status: 400 });
     }
-
-    const emailExistente = await prisma.usuario.findFirst({
+    const loginExistente = await prisma.usuario.findFirst({
       where: {
         empresaId: auth.session.empresaId,
-        email,
+        login,
         id: { not: target.id },
       },
     });
-
-    if (emailExistente) {
+    if (loginExistente) {
       return NextResponse.json(
-        { error: "Ja existe usuario com este email na empresa" },
+        { error: "Ja existe usuario com este login na empresa" },
         { status: 409 },
       );
     }
+    data.login = login;
+  }
 
-    data.email = email;
+  if (body.email !== undefined) {
+    // email pode ser limpo (null) ou atualizado
+    const emailValue =
+      body.email === null
+        ? null
+        : String(body.email).trim().toLowerCase() || null;
+
+    if (emailValue) {
+      const emailExistente = await prisma.usuario.findFirst({
+        where: {
+          empresaId: auth.session.empresaId,
+          email: emailValue,
+          id: { not: target.id },
+        },
+      });
+      if (emailExistente) {
+        return NextResponse.json(
+          { error: "Ja existe usuario com este email na empresa" },
+          { status: 409 },
+        );
+      }
+    }
+
+    data.email = emailValue;
   }
 
   let nextStatus: StatusUsuario | undefined;
@@ -131,16 +170,25 @@ export async function PATCH(req: Request, { params }: Ctx) {
     data.status = nextStatus;
   }
 
-  let nextPapel = getPrimaryRole(target.usuarioPapeis.map((item) => item.papel));
+  let nextPapel = getPrimaryRole(
+    target.usuarioPapeis.map((item) => item.papel),
+  );
   if (body.papelCodigo !== undefined) {
     const papelCodigo = String(body.papelCodigo).trim().toUpperCase();
-    if (!USER_ROLE_ORDER.includes(papelCodigo as (typeof USER_ROLE_ORDER)[number])) {
-      return NextResponse.json({ error: "papelCodigo invalido" }, { status: 400 });
+    if (
+      !USER_ROLE_ORDER.includes(papelCodigo as (typeof USER_ROLE_ORDER)[number])
+    ) {
+      return NextResponse.json(
+        { error: "papelCodigo invalido" },
+        { status: 400 },
+      );
     }
 
     if (target.isAccountOwner && papelCodigo !== "ADMIN") {
       return NextResponse.json(
-        { error: "Nao e permitido remover privilegios do proprietario da conta" },
+        {
+          error: "Nao e permitido remover privilegios do proprietario da conta",
+        },
         { status: 403 },
       );
     }
@@ -153,7 +201,10 @@ export async function PATCH(req: Request, { params }: Ctx) {
     });
 
     if (!papel) {
-      return NextResponse.json({ error: "Papel nao encontrado" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Papel nao encontrado" },
+        { status: 404 },
+      );
     }
 
     nextPapel = papel;
@@ -187,6 +238,9 @@ export async function PATCH(req: Request, { params }: Ctx) {
           include: {
             papel: true,
           },
+        },
+        colaborador: {
+          select: { cargo: true, setor: true, matricula: true },
         },
       },
     });

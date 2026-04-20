@@ -1,7 +1,11 @@
-import { getAuthenticatedUser, forbiddenResponse, unauthorizedResponse } from "@/lib/auth";
+import {
+  forbiddenResponse,
+  getAuthenticatedUser,
+  unauthorizedResponse,
+} from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getAccessFromUser, hasRole } from "@/lib/permissions";
-import { USER_ROLE_ORDER } from "@/lib/user-management";
+import { MANUAL_USER_ROLES, USER_ROLE_ORDER } from "@/lib/user-management";
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
@@ -13,17 +17,25 @@ export async function GET(req: Request) {
     return forbiddenResponse();
   }
 
+  // ?manual=true → apenas papéis para criação manual (exclui COLABORADOR)
+  const url = new URL(req.url);
+  const manualOnly = url.searchParams.get("manual") === "true";
+  const allowedCodes = manualOnly
+    ? [...MANUAL_USER_ROLES]
+    : [...USER_ROLE_ORDER];
+
   const papeis = await prisma.papel.findMany({
     where: {
       empresaId: auth.session.empresaId,
-      codigo: { in: [...USER_ROLE_ORDER] },
+      codigo: { in: allowedCodes },
     },
     orderBy: { nome: "asc" },
   });
 
   const ordered = [...papeis].sort((a, b) => {
-    const aIndex = USER_ROLE_ORDER.indexOf(a.codigo as (typeof USER_ROLE_ORDER)[number]);
-    const bIndex = USER_ROLE_ORDER.indexOf(b.codigo as (typeof USER_ROLE_ORDER)[number]);
+    const order = manualOnly ? MANUAL_USER_ROLES : USER_ROLE_ORDER;
+    const aIndex = (order as readonly string[]).indexOf(a.codigo);
+    const bIndex = (order as readonly string[]).indexOf(b.codigo);
     return aIndex - bIndex;
   });
 
