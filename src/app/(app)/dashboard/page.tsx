@@ -110,12 +110,15 @@ export default function DashboardPage() {
         isLoading={loadingASOs || loadingTreinamentos}
       />
 
-      {/* Seção: Pendências Gerais */}
-      <GeneralPendencies
-        asos={asos}
-        treinamentos={treinamentos}
-        isLoading={loadingASOs || loadingTreinamentos}
-      />
+      {/* Espaço de respiro entre risco geral e pendências */}
+      <div className="mt-8">
+        {/* Seção: Pendências Gerais */}
+        <GeneralPendencies
+          asos={asos}
+          treinamentos={treinamentos}
+          isLoading={loadingASOs || loadingTreinamentos}
+        />
+      </div>
 
       {/* Tab Navigation */}
       <div className="mb-6">
@@ -125,15 +128,27 @@ export default function DashboardPage() {
       {/* Content Panels */}
       <div className="transition-all duration-300">
         {activeTab === "asos" && (
-          <ASOPanel data={asos} isLoading={loadingASOs} />
+          <div
+            id="dashboard-panel-asos"
+            role="tabpanel"
+            aria-labelledby="dashboard-tab-asos"
+          >
+            <ASOPanel data={asos} isLoading={loadingASOs} />
+          </div>
         )}
 
         {activeTab === "treinamentos" && (
-          <TreinamentoPanel
-            data={treinamentos}
-            isLoading={loadingTreinamentos}
-            tiposTreinamento={tiposTreinamento}
-          />
+          <div
+            id="dashboard-panel-treinamentos"
+            role="tabpanel"
+            aria-labelledby="dashboard-tab-treinamentos"
+          >
+            <TreinamentoPanel
+              data={treinamentos}
+              isLoading={loadingTreinamentos}
+              tiposTreinamento={tiposTreinamento}
+            />
+          </div>
         )}
       </div>
     </div>

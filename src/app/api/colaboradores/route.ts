@@ -1,22 +1,51 @@
+import {
+  forbiddenResponse,
+  getAuthenticatedUser,
+  unauthorizedResponse,
+} from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getAccessFromUser, hasPermission } from "@/lib/permissions";
 import { NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const auth = await getAuthenticatedUser(req);
+    if (!auth) return unauthorizedResponse();
+
+    const access = getAccessFromUser(auth.user);
+    // Qualquer um que possa visualizar ou gerenciar colaboradores pode listar
+    if (
+      !hasPermission(access, "colaboradores.visualizar") &&
+      !hasPermission(access, "colaboradores.gerenciar")
+    ) {
+      return forbiddenResponse();
+    }
+
     const items = await prisma.colaborador.findMany({
+      where: { empresaId: auth.session.empresaId },
       orderBy: { createdAt: "desc" },
     });
+
     return NextResponse.json(items);
-  } catch (err: any) {
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
     console.error("GET /api/colaboradores ->", err);
     return NextResponse.json(
-      { error: "Erro interno", detail: err?.message ?? String(err) },
+      { error: "Erro interno", detail },
       { status: 500 },
     );
   }
 }
 
 export async function POST(req: Request) {
+  const auth = await getAuthenticatedUser(req);
+  if (!auth) return unauthorizedResponse();
+
+  const access = getAccessFromUser(auth.user);
+  if (!hasPermission(access, "colaboradores.gerenciar")) {
+    return forbiddenResponse();
+  }
+
   const body = await req.json();
 
   const nome = String(body.nome ?? "").trim();
@@ -27,13 +56,19 @@ export async function POST(req: Request) {
 
   if (!nome || !setor || !cargo) {
     return NextResponse.json(
-      { error: "Campos obrigatórios: nome, setor, cargo" },
+      { error: "Campos obrigatorios: nome, setor, cargo" },
       { status: 400 },
     );
   }
 
   const created = await prisma.colaborador.create({
-    data: { nome, setor, cargo, matricula },
+    data: {
+      empresaId: auth.session.empresaId,
+      nome,
+      setor,
+      cargo,
+      matricula,
+    },
   });
 
   return NextResponse.json(created, { status: 201 });

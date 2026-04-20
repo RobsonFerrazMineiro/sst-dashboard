@@ -35,6 +35,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StatusBadgeWithTemporal } from "@/components/ui/status-badge-with-temporal";
 import { api } from "@/lib/api";
+import { useAuthPermissions } from "@/lib/permissions-client";
 import { calculateRiskScore } from "@/lib/risk-score";
 import { createRealPendingsList } from "@/lib/unified-pending";
 import { formatDate, parseLocalDate } from "@/lib/utils";
@@ -208,6 +209,9 @@ type AsoProfileRow = AsoRecord & {
 
 export default function ColaboradorProfile({ id }: { id: string }) {
   const qc = useQueryClient();
+  const { hasPermission } = useAuthPermissions();
+  const canManageTreinamentos = hasPermission("treinamentos.gerenciar");
+  const canManageASOs = hasPermission("asos.gerenciar");
 
   const [openTreinamento, setOpenTreinamento] = useState(false);
   const [openASO, setOpenASO] = useState(false);
@@ -474,7 +478,7 @@ export default function ColaboradorProfile({ id }: { id: string }) {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-7">
       <header className="space-y-3">
         <Link
           href="/colaboradores"
@@ -485,38 +489,47 @@ export default function ColaboradorProfile({ id }: { id: string }) {
         </Link>
       </header>
 
-      <section className="rounded-xl border border-slate-300 bg-white p-6 shadow-sm">
+      <section className="rounded-xl border border-slate-300 bg-white p-4 shadow-sm sm:p-6">
         {/* Header com nome e score */}
-        <div className="flex items-start justify-between gap-4 mb-5">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-emerald-50 rounded-lg">
-              <UserRound className="w-6 h-6 text-slate-700" />
+        <div className="mb-4 flex flex-col gap-4 sm:mb-5 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start gap-3">
+              <div className="rounded-lg bg-emerald-50 p-2 shrink-0">
+                <UserRound className="w-6 h-6 text-slate-700" />
+              </div>
+              <div className="min-w-0">
+                <h1 className="wrap-break-word text-xl font-bold text-slate-900 sm:text-2xl">
+                  {colaborador.nome}
+                </h1>
+                <p className="mt-1 text-sm text-slate-500 sm:hidden">
+                  Perfil do colaborador
+                </p>
+              </div>
             </div>
-            <h1 className="text-2xl font-bold text-slate-900">
-              {colaborador.nome}
-            </h1>
           </div>
           {/* Score de Risco ao lado */}
-          <RiskScoreHoverCard riskScore={riskScore}>
-            <RiskScoreBadge riskScore={riskScore} showLabel />
-          </RiskScoreHoverCard>
+          <div className="self-start sm:self-auto">
+            <RiskScoreHoverCard riskScore={riskScore}>
+              <RiskScoreBadge riskScore={riskScore} showLabel />
+            </RiskScoreHoverCard>
+          </div>
         </div>
 
         {/* Informações básicas */}
-        <div className="flex gap-4 text-sm">
-          <div className="flex items-center gap-2 text-slate-600">
-            <Building2 className="w-4 h-4 text-slate-400" />
-            <span className="font-medium">Setor:</span>{" "}
+        <div className="grid grid-cols-1 gap-2 text-sm sm:flex sm:flex-wrap sm:gap-4">
+          <div className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-slate-600 sm:bg-transparent sm:px-0 sm:py-0">
+            <Building2 className="w-4 h-4 shrink-0 text-slate-400" />
+            <span className="font-medium shrink-0">Setor:</span>{" "}
             {colaborador.setor || "-"}
           </div>
-          <div className="flex items-center gap-2 text-slate-600">
-            <BriefcaseBusiness className="w-4 h-4 text-slate-400" />
-            <span className="font-medium">Cargo:</span>{" "}
+          <div className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-slate-600 sm:bg-transparent sm:px-0 sm:py-0">
+            <BriefcaseBusiness className="w-4 h-4 shrink-0 text-slate-400" />
+            <span className="font-medium shrink-0">Cargo:</span>{" "}
             {colaborador.cargo || "-"}
           </div>
-          <div className="flex items-center gap-2 text-slate-600">
-            <Hash className="w-4 h-4 text-slate-400" />
-            <span className="font-medium">Matrícula:</span>{" "}
+          <div className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-slate-600 sm:bg-transparent sm:px-0 sm:py-0">
+            <Hash className="w-4 h-4 shrink-0 text-slate-400" />
+            <span className="font-medium shrink-0">Matrícula:</span>{" "}
             {colaborador.matricula ?? "-"}
           </div>
         </div>
@@ -524,22 +537,27 @@ export default function ColaboradorProfile({ id }: { id: string }) {
 
       <section className="space-y-4">
         {/* Filtro Global - Posicionado acima do título */}
-        <div className="bg-white rounded-xl border border-slate-300 p-4 space-y-3 shadow-sm">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="bg-white rounded-xl border border-slate-300 p-4 shadow-sm">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {/* Busca Global */}
             <input
               type="text"
+              name="buscarPerfilColaborador"
+              aria-label="Buscar treinamentos por nome ou NR"
+              autoComplete="off"
               placeholder="Buscar por nome ou NR..."
               value={buscaGlobal}
               onChange={(e) => setBuscaGlobal(e.target.value)}
-              className="px-3 py-2 rounded-lg border border-slate-300 bg-slate-50 text-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="min-w-0 px-3 py-2 rounded-lg border border-slate-300 bg-slate-50 text-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
 
             {/* Filtro de Status Global */}
             <select
+              name="statusGlobalPerfil"
+              aria-label="Filtrar perfil por status"
               value={statusGlobalFiltro ?? ""}
               onChange={(e) => setStatusGlobalFiltro(e.target.value || null)}
-              className="px-3 py-2 rounded-lg border border-slate-300 bg-slate-50 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="min-w-0 px-3 py-2 rounded-lg border border-slate-300 bg-slate-50 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
               <option value="">Todos os status</option>
               <option value="Em dia">Em dia</option>
@@ -550,13 +568,15 @@ export default function ColaboradorProfile({ id }: { id: string }) {
 
             {/* Filtro de Visualização Global */}
             <select
+              name="visualizacaoGlobalPerfil"
+              aria-label="Filtrar perfil por visualização"
               value={visualizacaoGlobal}
               onChange={(e) =>
                 setVisualizacaoGlobal(
                   e.target.value as "todos" | "atuais" | "historico",
                 )
               }
-              className="px-3 py-2 rounded-lg border border-slate-300 bg-slate-50 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="min-w-0 px-3 py-2 rounded-lg border border-slate-300 bg-slate-50 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
               <option value="todos">Todos (Atuais + Histórico)</option>
               <option value="atuais">Apenas Atuais</option>
@@ -565,14 +585,19 @@ export default function ColaboradorProfile({ id }: { id: string }) {
           </div>
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-2xl font-semibold text-slate-900">
             Treinamentos
           </h2>
-          <Button onClick={() => setOpenTreinamento(true)} className="gap-2">
-            <Plus className="w-4 h-4" />
-            Adicionar treinamento
-          </Button>
+          {canManageTreinamentos ? (
+            <Button
+              onClick={() => setOpenTreinamento(true)}
+              className="gap-2 self-start sm:self-auto"
+            >
+              <Plus className="w-4 h-4" />
+              Adicionar treinamento
+            </Button>
+          ) : null}
         </div>
 
         {/* Treinamentos Atuais */}
@@ -585,25 +610,25 @@ export default function ColaboradorProfile({ id }: { id: string }) {
             </h3>
             <div className="rounded-xl border border-slate-300 bg-white overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
-                <table className="w-full table-fixed">
+                <table className="w-full min-w-215">
                   <thead className="bg-slate-50 border-b border-slate-300">
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-55">
                         Treinamento / NR
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-30">
                         Data
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-30">
                         Validade
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-27.5">
                         Carga (h)
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-45">
                         Status
                       </th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700 min-w-27">
                         Acoes
                       </th>
                     </tr>
@@ -681,52 +706,64 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                             />
                           </td>
                           <td className="px-4 py-3">
-                            <div className="flex justify-end gap-2">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                title="Editar"
-                                onClick={() => {
-                                  setEditingTreinamento(t);
-                                  setOpenTreinamento(true);
-                                }}
-                                className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-                              >
-                                <Pencil className="w-4 h-4" />
-                              </Button>
-
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
+                            <div className="flex justify-end gap-1.5 sm:gap-2">
+                              {canManageTreinamentos ? (
+                                <>
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                                    aria-label={`Editar treinamento ${t.tipoTreinamento_nome ?? t.nr ?? ""}`}
+                                    title="Editar"
+                                    onClick={() => {
+                                      setEditingTreinamento(t);
+                                      setOpenTreinamento(true);
+                                    }}
+                                    className="h-9 w-9 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                                   >
-                                    <Trash2 className="w-4 h-4" />
+                                    <Pencil
+                                      aria-hidden="true"
+                                      className="w-4 h-4"
+                                    />
                                   </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>
-                                      Excluir treinamento?
-                                    </AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Essa acao e permanente.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>
-                                      Cancelar
-                                    </AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={() => delTre.mutate(t.id)}
-                                      className="bg-rose-600 hover:bg-rose-700"
-                                    >
-                                      Excluir
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
+
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        aria-label={`Excluir treinamento ${t.tipoTreinamento_nome ?? t.nr ?? ""}`}
+                                        className="h-9 w-9 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                                      >
+                                        <Trash2
+                                          aria-hidden="true"
+                                          className="w-4 h-4"
+                                        />
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>
+                                          Excluir treinamento?
+                                        </AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          Essa acao e permanente.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>
+                                          Cancelar
+                                        </AlertDialogCancel>
+                                        <AlertDialogAction
+                                          onClick={() => delTre.mutate(t.id)}
+                                          className="bg-rose-600 hover:bg-rose-700"
+                                        >
+                                          Excluir
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </>
+                              ) : null}
                             </div>
                           </td>
                         </tr>
@@ -749,25 +786,25 @@ export default function ColaboradorProfile({ id }: { id: string }) {
             </h3>
             <div className="rounded-xl border border-slate-300 bg-white overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
-                <table className="w-full table-fixed">
+                <table className="w-full min-w-215">
                   <thead className="bg-slate-50 border-b border-slate-300">
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-55">
                         Treinamento / NR
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-30">
                         Data
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-30">
                         Validade
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-27.5">
                         Carga (h)
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-45">
                         Status
                       </th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700 min-w-27">
                         Acoes
                       </th>
                     </tr>
@@ -837,52 +874,64 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                               />
                             </td>
                             <td className="px-4 py-3">
-                              <div className="flex justify-end gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  title="Editar"
-                                  onClick={() => {
-                                    setEditingTreinamento(t);
-                                    setOpenTreinamento(true);
-                                  }}
-                                  className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-                                >
-                                  <Pencil className="w-4 h-4" />
-                                </Button>
-
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
+                              <div className="flex justify-end gap-1.5 sm:gap-2">
+                                {canManageTreinamentos ? (
+                                  <>
                                     <Button
                                       variant="ghost"
                                       size="icon"
-                                      className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                                      aria-label={`Editar treinamento ${t.tipoTreinamento_nome ?? t.nr ?? ""}`}
+                                      title="Editar"
+                                      onClick={() => {
+                                        setEditingTreinamento(t);
+                                        setOpenTreinamento(true);
+                                      }}
+                                      className="h-9 w-9 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                                     >
-                                      <Trash2 className="w-4 h-4" />
+                                      <Pencil
+                                        aria-hidden="true"
+                                        className="w-4 h-4"
+                                      />
                                     </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>
-                                        Excluir treinamento?
-                                      </AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        Essa acao e permanente.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>
-                                        Cancelar
-                                      </AlertDialogCancel>
-                                      <AlertDialogAction
-                                        onClick={() => delTre.mutate(t.id)}
-                                        className="bg-rose-600 hover:bg-rose-700"
-                                      >
-                                        Excluir
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
+
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          aria-label={`Excluir treinamento ${t.tipoTreinamento_nome ?? t.nr ?? ""}`}
+                                          className="h-9 w-9 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                                        >
+                                          <Trash2
+                                            aria-hidden="true"
+                                            className="w-4 h-4"
+                                          />
+                                        </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>
+                                            Excluir treinamento?
+                                          </AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            Essa acao e permanente.
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>
+                                            Cancelar
+                                          </AlertDialogCancel>
+                                          <AlertDialogAction
+                                            onClick={() => delTre.mutate(t.id)}
+                                            className="bg-rose-600 hover:bg-rose-700"
+                                          >
+                                            Excluir
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
+                                  </>
+                                ) : null}
                               </div>
                             </td>
                           </tr>
@@ -900,10 +949,15 @@ export default function ColaboradorProfile({ id }: { id: string }) {
       <section className="space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-2xl font-semibold text-slate-900">ASOs</h2>
-          <Button onClick={() => setOpenASO(true)} className="gap-2">
-            <Plus className="w-4 h-4" />
-            Adicionar ASO
-          </Button>
+          {canManageASOs ? (
+            <Button
+              onClick={() => setOpenASO(true)}
+              className="gap-2 self-start sm:self-auto"
+            >
+              <Plus className="w-4 h-4" />
+              Adicionar ASO
+            </Button>
+          ) : null}
         </div>
 
         {/* ASOs Atuais */}
@@ -916,25 +970,25 @@ export default function ColaboradorProfile({ id }: { id: string }) {
             </h3>
             <div className="rounded-xl border border-slate-300 bg-white overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
-                <table className="w-full table-fixed">
+                <table className="w-full min-w-225">
                   <thead className="bg-slate-50 border-b border-slate-300">
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-50">
                         Tipo de ASO
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-30">
                         Data
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-30">
                         Validade
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-37.5">
                         Clinica
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-45">
                         Status
                       </th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700 min-w-27">
                         Acoes
                       </th>
                     </tr>
@@ -1007,52 +1061,64 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                             />
                           </td>
                           <td className="px-4 py-3">
-                            <div className="flex justify-end gap-2">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                title="Editar"
-                                onClick={() => {
-                                  setEditingASO(a);
-                                  setOpenASO(true);
-                                }}
-                                className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-                              >
-                                <Pencil className="w-4 h-4" />
-                              </Button>
-
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
+                            <div className="flex justify-end gap-1.5 sm:gap-2">
+                              {canManageASOs ? (
+                                <>
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                                    aria-label={`Editar ASO ${a.tipoASO_nome ?? ""}`}
+                                    title="Editar"
+                                    onClick={() => {
+                                      setEditingASO(a);
+                                      setOpenASO(true);
+                                    }}
+                                    className="h-9 w-9 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                                   >
-                                    <Trash2 className="w-4 h-4" />
+                                    <Pencil
+                                      aria-hidden="true"
+                                      className="w-4 h-4"
+                                    />
                                   </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>
-                                      Excluir ASO?
-                                    </AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Essa acao e permanente.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>
-                                      Cancelar
-                                    </AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={() => delAso.mutate(a.id)}
-                                      className="bg-rose-600 hover:bg-rose-700"
-                                    >
-                                      Excluir
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
+
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        aria-label={`Excluir ASO ${a.tipoASO_nome ?? ""}`}
+                                        className="h-9 w-9 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                                      >
+                                        <Trash2
+                                          aria-hidden="true"
+                                          className="w-4 h-4"
+                                        />
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>
+                                          Excluir ASO?
+                                        </AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          Essa acao e permanente.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>
+                                          Cancelar
+                                        </AlertDialogCancel>
+                                        <AlertDialogAction
+                                          onClick={() => delAso.mutate(a.id)}
+                                          className="bg-rose-600 hover:bg-rose-700"
+                                        >
+                                          Excluir
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </>
+                              ) : null}
                             </div>
                           </td>
                         </tr>
@@ -1075,25 +1141,25 @@ export default function ColaboradorProfile({ id }: { id: string }) {
             </h3>
             <div className="rounded-xl border border-slate-300 bg-white overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
-                <table className="w-full table-fixed">
+                <table className="w-full min-w-225">
                   <thead className="bg-slate-50 border-b border-slate-300">
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-50">
                         Tipo de ASO
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-30">
                         Data
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-30">
                         Validade
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-37.5">
                         Clinica
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 min-w-45">
                         Status
                       </th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700 w-1/6">
+                      <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700 min-w-27">
                         Acoes
                       </th>
                     </tr>
@@ -1157,52 +1223,64 @@ export default function ColaboradorProfile({ id }: { id: string }) {
                             />
                           </td>
                           <td className="px-4 py-3">
-                            <div className="flex justify-end gap-2">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                title="Editar"
-                                onClick={() => {
-                                  setEditingASO(a);
-                                  setOpenASO(true);
-                                }}
-                                className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-                              >
-                                <Pencil className="w-4 h-4" />
-                              </Button>
-
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
+                            <div className="flex justify-end gap-1.5 sm:gap-2">
+                              {canManageASOs ? (
+                                <>
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                                    aria-label={`Editar ASO ${a.tipoASO_nome ?? ""}`}
+                                    title="Editar"
+                                    onClick={() => {
+                                      setEditingASO(a);
+                                      setOpenASO(true);
+                                    }}
+                                    className="h-9 w-9 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                                   >
-                                    <Trash2 className="w-4 h-4" />
+                                    <Pencil
+                                      aria-hidden="true"
+                                      className="w-4 h-4"
+                                    />
                                   </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>
-                                      Excluir ASO?
-                                    </AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Essa acao e permanente.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>
-                                      Cancelar
-                                    </AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={() => delAso.mutate(a.id)}
-                                      className="bg-rose-600 hover:bg-rose-700"
-                                    >
-                                      Excluir
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
+
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        aria-label={`Excluir ASO ${a.tipoASO_nome ?? ""}`}
+                                        className="h-9 w-9 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                                      >
+                                        <Trash2
+                                          aria-hidden="true"
+                                          className="w-4 h-4"
+                                        />
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>
+                                          Excluir ASO?
+                                        </AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          Essa acao e permanente.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>
+                                          Cancelar
+                                        </AlertDialogCancel>
+                                        <AlertDialogAction
+                                          onClick={() => delAso.mutate(a.id)}
+                                          className="bg-rose-600 hover:bg-rose-700"
+                                        >
+                                          Excluir
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </>
+                              ) : null}
                             </div>
                           </td>
                         </tr>
@@ -1216,43 +1294,47 @@ export default function ColaboradorProfile({ id }: { id: string }) {
         )}
       </section>
 
-      <AddTreinamentoModal
-        open={openTreinamento}
-        onOpenChange={(v) => {
-          setOpenTreinamento(v);
-          if (!v) setEditingTreinamento(null);
-        }}
-        colaborador={{
-          id,
-          nome: colaborador.nome,
-          setor: colaborador.setor,
-          cargo: colaborador.cargo,
-        }}
-        tiposTreinamento={tiposTreinamento}
-        initial={editingTreinamento}
-        onSaved={async () => {
-          await qc.invalidateQueries({ queryKey: ["treinamentos"] });
-        }}
-      />
+      {canManageTreinamentos ? (
+        <AddTreinamentoModal
+          open={openTreinamento}
+          onOpenChange={(v) => {
+            setOpenTreinamento(v);
+            if (!v) setEditingTreinamento(null);
+          }}
+          colaborador={{
+            id,
+            nome: colaborador.nome,
+            setor: colaborador.setor,
+            cargo: colaborador.cargo,
+          }}
+          tiposTreinamento={tiposTreinamento}
+          initial={editingTreinamento}
+          onSaved={async () => {
+            await qc.invalidateQueries({ queryKey: ["treinamentos"] });
+          }}
+        />
+      ) : null}
 
-      <AddASOModal
-        open={openASO}
-        onOpenChange={(v) => {
-          setOpenASO(v);
-          if (!v) setEditingASO(null);
-        }}
-        colaborador={{
-          id,
-          nome: colaborador.nome,
-          setor: colaborador.setor,
-          cargo: colaborador.cargo,
-        }}
-        tiposASO={tiposASO}
-        aso={editingASO}
-        onSaved={async () => {
-          await qc.invalidateQueries({ queryKey: ["asos"] });
-        }}
-      />
+      {canManageASOs ? (
+        <AddASOModal
+          open={openASO}
+          onOpenChange={(v) => {
+            setOpenASO(v);
+            if (!v) setEditingASO(null);
+          }}
+          colaborador={{
+            id,
+            nome: colaborador.nome,
+            setor: colaborador.setor,
+            cargo: colaborador.cargo,
+          }}
+          tiposASO={tiposASO}
+          aso={editingASO}
+          onSaved={async () => {
+            await qc.invalidateQueries({ queryKey: ["asos"] });
+          }}
+        />
+      ) : null}
     </div>
   );
 }

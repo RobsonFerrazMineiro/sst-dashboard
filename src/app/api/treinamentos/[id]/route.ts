@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/db";
-import { NR, Prisma } from "@prisma/client";
+import { formatNR } from "@/lib/nr";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth";
+import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -10,30 +12,44 @@ function parseDateOrNull(value: unknown): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-function parseNR(value: unknown): NR | null {
-  if (!value) return null;
-  const s = String(value).trim(); // "NR-35"
-  const key = s.replace("-", "_") as keyof typeof NR; // "NR_35"
-  return NR[key] ?? null;
+function serializeTreinamento(
+  item: Awaited<ReturnType<typeof prisma.treinamento.findFirstOrThrow>>,
+) {
+  return {
+    ...item,
+    colaborador_id: item.colaboradorId,
+    tipoTreinamento: item.tipoTreinamentoId,
+    nr: formatNR(item.nr),
+  };
 }
 
-// PATCH
 export async function PATCH(req: Request, { params }: Ctx) {
   try {
     const { id } = await params;
     if (!id) return NextResponse.json({ error: "id ausente" }, { status: 400 });
 
     const body = await req.json();
+    const auth = await getAuthenticatedUser(req);
+    if (!auth) return unauthorizedResponse();
+
+    const current = await prisma.treinamento.findFirst({
+      where: { id, empresaId: auth.session.empresaId },
+    });
+
+    if (!current) {
+      return NextResponse.json({ error: "Nao encontrado" }, { status: 404 });
+    }
 
     const data: Prisma.TreinamentoUncheckedUpdateInput = {};
 
     if (body.data_treinamento !== undefined) {
       const d = parseDateOrNull(body.data_treinamento);
-      if (!d)
+      if (!d) {
         return NextResponse.json(
-          { error: "data_treinamento inválida" },
+          { error: "data_treinamento invalida" },
           { status: 400 },
         );
+      }
       data.data_treinamento = d;
     }
 
@@ -49,48 +65,47 @@ export async function PATCH(req: Request, { params }: Ctx) {
 
       if (data.carga_horaria !== null && Number.isNaN(data.carga_horaria)) {
         return NextResponse.json(
-          { error: "carga_horaria inválida" },
+          { error: "carga_horaria invalida" },
           { status: 400 },
         );
       }
     }
 
-    // ✅ agora atualiza tipoTreinamento
-    if (body.tipoTreinamento !== undefined) {
-      const tipoTreinamento = body.tipoTreinamento
-        ? String(body.tipoTreinamento)
+    const tipoTreinamentoBodyValue =
+      body.tipoTreinamentoId !== undefined
+        ? body.tipoTreinamentoId
+        : body.tipoTreinamento;
+
+    if (tipoTreinamentoBodyValue !== undefined) {
+      const tipoTreinamentoId = tipoTreinamentoBodyValue
+        ? String(tipoTreinamentoBodyValue)
         : null;
 
-      data.tipoTreinamento = tipoTreinamento;
+      data.tipoTreinamentoId = tipoTreinamentoId;
 
-      if (tipoTreinamento) {
-        const tipo = await prisma.tipoTreinamento.findUnique({
-          where: { id: tipoTreinamento },
+      if (tipoTreinamentoId) {
+        const tipo = await prisma.tipoTreinamento.findFirst({
+          where: { id: tipoTreinamentoId, empresaId: auth.session.empresaId },
         });
 
         if (!tipo) {
           return NextResponse.json(
-            { error: "tipoTreinamento inválido" },
+            { error: "tipoTreinamento invalido" },
             { status: 400 },
           );
         }
 
-        // ✅ recalcula NR baseado no tipo.nr (ex: "NR-35")
-        data.nr = parseNR(tipo.nr);
+        data.nr = tipo.nr;
 
-        // ✅ se não veio validade no PATCH e o tipo tiver validadeMeses,
-        //    calcula a validade com base na data_treinamento (nova ou atual)
-        const current = await prisma.treinamento.findUnique({ where: { id } });
         const baseDateValue =
           (typeof data.data_treinamento === "object" &&
           data.data_treinamento instanceof Date
             ? data.data_treinamento
             : null) ??
-          current?.data_treinamento ??
-          null;
+          current.data_treinamento;
 
         if (
-          body.validade === undefined && // só calcula se usuário não mandou validade
+          body.validade === undefined &&
           !data.validade &&
           baseDateValue &&
           tipo.validadeMeses &&
@@ -117,7 +132,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
       data,
     });
 
-    return NextResponse.json(updated);
+    return NextResponse.json(serializeTreinamento(updated));
   } catch (err: unknown) {
     console.error("PATCH /api/treinamentos/[id] ->", err);
     return NextResponse.json(
@@ -130,14 +145,22 @@ export async function PATCH(req: Request, { params }: Ctx) {
   }
 }
 
-// DELETE
 export async function DELETE(_req: Request, { params }: Ctx) {
   try {
     const { id } = await params;
     if (!id) return NextResponse.json({ error: "id ausente" }, { status: 400 });
 
-    await prisma.treinamento.delete({ where: { id } });
+    const auth = await getAuthenticatedUser(_req);
+    if (!auth) return unauthorizedResponse();
+    const exists = await prisma.treinamento.findFirst({
+      where: { id, empresaId: auth.session.empresaId },
+    });
 
+    if (!exists) {
+      return NextResponse.json({ error: "Nao encontrado" }, { status: 404 });
+    }
+
+    await prisma.treinamento.delete({ where: { id } });
     return NextResponse.json({ ok: true });
   } catch (err: unknown) {
     console.error("DELETE /api/treinamentos/[id] ->", err);

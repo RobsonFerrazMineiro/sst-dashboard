@@ -27,7 +27,8 @@ export type PendingFilterType =
   | "todos"
   | "vencidos"
   | "vencendo"
-  | "pendencias";
+  | "pendencias"
+  | "hoje";
 
 /**
  * Indicadores gerais do dashboard
@@ -37,6 +38,10 @@ export type DashboardIndicators = {
   treinamentosVencidos: number;
   vencendoProximos30Dias: number;
   colaboradoresComPendencias: number;
+  /** Itens (ASOs + Treinamentos) cujo vencimento é hoje */
+  vencendoHoje: number;
+  /** Total de itens vencidos (ASOs + Treinamentos) */
+  totalVencidos: number;
 };
 
 /**
@@ -130,6 +135,11 @@ export function filterPendingItems(
     case "vencendo":
       return items.filter((item) => item.status === "Prestes a vencer");
 
+    case "hoje": {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      return items.filter((item) => item.validade?.slice(0, 10) === todayStr);
+    }
+
     case "pendencias":
       return items.filter((item) => item.status === "Pendente");
 
@@ -166,6 +176,13 @@ export function calculateIndicators(
       (tre) => getTrainingStatus(tre.validade) === "Prestes a vencer",
     ).length;
 
+  // Itens que vencem exatamente hoje
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const vencendoHoje =
+    asos.filter((aso) => aso.validade_aso?.slice(0, 10) === todayStr).length +
+    treinamentos.filter((tre) => tre.validade?.slice(0, 10) === todayStr)
+      .length;
+
   // Colaboradores com pendências (ASOs ou Treinamentos com status "Pendente")
   const colaboradoresComPendencias = new Set<string>();
 
@@ -188,6 +205,8 @@ export function calculateIndicators(
     treinamentosVencidos,
     vencendoProximos30Dias,
     colaboradoresComPendencias: colaboradoresComPendencias.size,
+    vencendoHoje,
+    totalVencidos: asoVencidos + treinamentosVencidos,
   };
 }
 

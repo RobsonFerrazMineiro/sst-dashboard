@@ -267,6 +267,8 @@ export default function ASOPanel({
     {
       value: statusFilter,
       onChange: handleStatusFilterChange,
+      label: "Filtrar ASOs por status",
+      name: "aso-status-filter",
       placeholder: "Status",
       options: [
         { value: "todos", label: "Todos os status" },
@@ -279,6 +281,8 @@ export default function ASOPanel({
     {
       value: setorFilter,
       onChange: handleSetorFilterChange,
+      label: "Filtrar ASOs por setor",
+      name: "aso-setor-filter",
       placeholder: "Setor",
       options: setores,
     },

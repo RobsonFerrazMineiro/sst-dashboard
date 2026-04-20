@@ -28,6 +28,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
+import { useAuthPermissions } from "@/lib/permissions-client";
 import { toast } from "sonner";
 
 type TipoASO = {
@@ -41,6 +42,8 @@ type TipoASO = {
 
 export default function TiposASOPage() {
   const qc = useQueryClient();
+  const { hasPermission } = useAuthPermissions();
+  const canManageTiposASO = hasPermission("tipos-aso.gerenciar");
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<TipoASO | null>(null);
@@ -111,17 +114,22 @@ export default function TiposASOPage() {
             <RefreshCw className="w-4 h-4" />
             Atualizar
           </Button>
-          <Button onClick={onNew} className="gap-2">
-            <Plus className="w-4 h-4" />
-            Novo tipo
-          </Button>
+          {canManageTiposASO ? (
+            <Button onClick={onNew} className="gap-2">
+              <Plus className="w-4 h-4" />
+              Novo tipo
+            </Button>
+          ) : null}
         </div>
       </header>
 
       <div className="bg-white rounded-xl border border-slate-300 p-4 shadow-sm">
         <div className="flex items-center gap-3">
-          <Search className="w-4 h-4 text-slate-400" />
+          <Search aria-hidden="true" className="w-4 h-4 text-slate-400" />
           <Input
+            name="buscarTiposASO"
+            aria-label="Buscar tipos de ASO por nome"
+            autoComplete="off"
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Buscar por nome..."
@@ -194,46 +202,54 @@ export default function TiposASOPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => onEdit(row)}
-                          className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
+                        {canManageTiposASO ? (
+                          <>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                              aria-label={`Editar tipo de ASO ${row.nome}`}
+                              onClick={() => onEdit(row)}
+                              className="text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Pencil aria-hidden="true" className="w-4 h-4" />
                             </Button>
-                          </AlertDialogTrigger>
 
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Excluir tipo?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Isso remove o tipo do sistema. Se houver ASOs
-                                usando esse tipo, o banco pode bloquear a
-                                exclusão.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => deleteMutation.mutate(row.id)}
-                                className="bg-rose-600 hover:bg-rose-700"
-                              >
-                                Excluir
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  aria-label={`Excluir tipo de ASO ${row.nome}`}
+                                  className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                                >
+                                  <Trash2 aria-hidden="true" className="w-4 h-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    Excluir tipo?
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Isso remove o tipo do sistema. Se houver
+                                    ASOs usando esse tipo, o banco pode bloquear
+                                    a exclusão.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => deleteMutation.mutate(row.id)}
+                                    className="bg-rose-600 hover:bg-rose-700"
+                                  >
+                                    Excluir
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </>
+                        ) : null}
                       </div>
                     </td>
                   </tr>
@@ -244,14 +260,16 @@ export default function TiposASOPage() {
         </div>
       </div>
 
-      <TipoASOModal
-        open={open}
-        onOpenChange={setOpen}
-        initial={editing}
-        onSaved={async () => {
-          await qc.invalidateQueries({ queryKey: ["tiposASO"] });
-        }}
-      />
+      {canManageTiposASO ? (
+        <TipoASOModal
+          open={open}
+          onOpenChange={setOpen}
+          initial={editing}
+          onSaved={async () => {
+            await qc.invalidateQueries({ queryKey: ["tiposASO"] });
+          }}
+        />
+      ) : null}
     </div>
   );
 }

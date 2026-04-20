@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -145,11 +146,15 @@ export default function AlertsHub({
         size="icon"
         onClick={() => setIsOpen(true)}
         className="relative mr-2"
+        aria-label={`Abrir alertas e notificações${alerts.length > 0 ? `, ${alerts.length} pendência${alerts.length > 1 ? "s" : ""}` : ""}`}
         title="Ver alertas"
       >
-        <Bell className="h-5 w-5" />
+        <Bell aria-hidden="true" className="h-5 w-5" />
         {alerts.length > 0 && (
-          <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-rose-600 rounded-full">
+          <span
+            aria-hidden="true"
+            className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-rose-600 rounded-full"
+          >
             {alerts.length}
           </span>
         )}
@@ -159,9 +164,13 @@ export default function AlertsHub({
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Bell className="h-5 w-5" />
+              <Bell aria-hidden="true" className="h-5 w-5" />
               Alertas ({alerts.length})
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              Lista de alertas e pendências críticas ou próximas do vencimento
+              para ASOs e treinamentos.
+            </DialogDescription>
           </DialogHeader>
 
           <AlertsModalContent alerts={alerts} />

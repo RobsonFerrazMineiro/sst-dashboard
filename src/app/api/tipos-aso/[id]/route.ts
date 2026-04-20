@@ -1,16 +1,21 @@
 import { prisma } from "@/lib/db";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
 type Ctx = { params: Promise<{ id: string }> };
 
-export async function GET(_req: Request, { params }: Ctx) {
+export async function GET(req: Request, { params }: Ctx) {
   try {
     const { id } = await params;
+    const auth = await getAuthenticatedUser(req);
+    if (!auth) return unauthorizedResponse();
 
-    const item = await prisma.tipoASO.findUnique({ where: { id } });
+    const item = await prisma.tipoASO.findFirst({
+      where: { id, empresaId: auth.session.empresaId },
+    });
 
     if (!item) {
-      return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
+      return NextResponse.json({ error: "Nao encontrado" }, { status: 404 });
     }
 
     return NextResponse.json(item);
@@ -26,6 +31,8 @@ export async function GET(_req: Request, { params }: Ctx) {
 export async function PATCH(req: Request, { params }: Ctx) {
   try {
     const { id } = await params;
+    const auth = await getAuthenticatedUser(req);
+    if (!auth) return unauthorizedResponse();
     const body = await req.json();
 
     const data: {
@@ -37,7 +44,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
     if (body.nome !== undefined) {
       const nome = String(body.nome).trim();
       if (!nome) {
-        return NextResponse.json({ error: "nome inválido" }, { status: 400 });
+        return NextResponse.json({ error: "nome invalido" }, { status: 400 });
       }
       data.nome = nome;
     }
@@ -49,7 +56,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
         const n = Number(body.validadeMeses);
         if (!Number.isFinite(n) || n < 0) {
           return NextResponse.json(
-            { error: "validadeMeses inválido" },
+            { error: "validadeMeses invalido" },
             { status: 400 },
           );
         }
@@ -69,9 +76,11 @@ export async function PATCH(req: Request, { params }: Ctx) {
       );
     }
 
-    const exists = await prisma.tipoASO.findUnique({ where: { id } });
+    const exists = await prisma.tipoASO.findFirst({
+      where: { id, empresaId: auth.session.empresaId },
+    });
     if (!exists) {
-      return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
+      return NextResponse.json({ error: "Nao encontrado" }, { status: 404 });
     }
 
     const updated = await prisma.tipoASO.update({
@@ -89,13 +98,17 @@ export async function PATCH(req: Request, { params }: Ctx) {
   }
 }
 
-export async function DELETE(_req: Request, { params }: Ctx) {
+export async function DELETE(req: Request, { params }: Ctx) {
   try {
     const { id } = await params;
+    const auth = await getAuthenticatedUser(req);
+    if (!auth) return unauthorizedResponse();
 
-    const exists = await prisma.tipoASO.findUnique({ where: { id } });
+    const exists = await prisma.tipoASO.findFirst({
+      where: { id, empresaId: auth.session.empresaId },
+    });
     if (!exists) {
-      return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
+      return NextResponse.json({ error: "Nao encontrado" }, { status: 404 });
     }
 
     await prisma.tipoASO.delete({ where: { id } });

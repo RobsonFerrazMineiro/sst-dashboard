@@ -126,11 +126,19 @@ export default function AddTreinamentoModal({
 
         <div className="space-y-4">
           <div className="grid gap-2">
-            <label className="text-sm font-medium text-slate-700">
+            <label
+              htmlFor="treinamento-tipo"
+              className="text-sm font-medium text-slate-700"
+            >
               Tipo de Treinamento *
             </label>
             <Select value={tipoId} onValueChange={setTipoId}>
-              <SelectTrigger className="bg-slate-50 border-slate-200">
+              <SelectTrigger
+                id="treinamento-tipo"
+                name="tipoTreinamento"
+                aria-label="Tipo de treinamento"
+                className="bg-slate-50 border-slate-200"
+              >
                 <SelectValue placeholder="Selecione o tipo..." />
               </SelectTrigger>
               <SelectContent>
@@ -145,20 +153,30 @@ export default function AddTreinamentoModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="grid gap-2">
-              <label className="text-sm font-medium text-slate-700">
+              <label
+                htmlFor="treinamento-data"
+                className="text-sm font-medium text-slate-700"
+              >
                 Data do Treinamento *
               </label>
               <Input
+                id="treinamento-data"
+                name="dataTreinamento"
                 type="date"
                 value={dataTreinamento}
                 onChange={(e) => setDataTreinamento(e.target.value)}
               />
             </div>
             <div className="grid gap-2">
-              <label className="text-sm font-medium text-slate-700">
+              <label
+                htmlFor="treinamento-validade"
+                className="text-sm font-medium text-slate-700"
+              >
                 Validade
               </label>
               <Input
+                id="treinamento-validade"
+                name="validadeTreinamento"
                 type="date"
                 value={validade}
                 onChange={(e) => setValidade(e.target.value)}
@@ -172,6 +190,8 @@ export default function AddTreinamentoModal({
                 Carga horária (h)
               </label>
               <Input
+                id="treinamento-carga"
+                name="cargaHoraria"
                 inputMode="numeric"
                 value={carga}
                 onChange={(e) => setCarga(e.target.value)}
@@ -183,6 +203,8 @@ export default function AddTreinamentoModal({
                 Info do tipo
               </label>
               <Input
+                id="treinamento-info"
+                name="infoTipoTreinamento"
                 value={
                   tipoSelecionado
                     ? `Validade: ${tipoSelecionado.validadeMeses ?? "—"} mês(es)`

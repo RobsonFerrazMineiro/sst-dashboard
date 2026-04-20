@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
@@ -26,8 +27,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {/* Mobile layout */}
       <div className="md:hidden">
         <header className="h-14 px-4 flex items-center justify-between border-b border-slate-200 bg-white">
-          <Button variant="outline" size="icon" onClick={() => setOpen(true)}>
-            <Menu className="w-5 h-5" />
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setOpen(true)}
+            aria-label="Abrir menu de navegação"
+          >
+            <Menu aria-hidden="true" className="w-5 h-5" />
           </Button>
           <span className="text-sm font-semibold text-slate-900">
             Gestão SST
@@ -39,6 +45,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <SheetContent side="left" className="p-0 w-80">
             <SheetHeader className="px-4 py-3 border-b border-slate-200">
               <SheetTitle>Menu</SheetTitle>
+              <SheetDescription className="sr-only">
+                Navegue pelas áreas permitidas do sistema e acesse a ação de
+                logout.
+              </SheetDescription>
             </SheetHeader>
             <Sidebar onNavigate={() => setOpen(false)} className="border-r-0" />
           </SheetContent>

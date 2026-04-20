@@ -326,9 +326,11 @@ export function groupPendingsByColaborador(
  */
 export function filterGroupsByStatus(
   groups: PendingsByColaborador[],
-  filterType: "todos" | "vencidos" | "vencendo" | "pendencias",
+  filterType: "todos" | "vencidos" | "vencendo" | "pendencias" | "hoje",
 ): PendingsByColaborador[] {
   if (filterType === "todos") return groups;
+
+  const todayStr = new Date().toISOString().slice(0, 10);
 
   return groups
     .map((group) => {
@@ -348,6 +350,11 @@ export function filterGroupsByStatus(
         case "pendencias":
           filteredItems = group.items.filter(
             (item) => item.status === "Pendente",
+          );
+          break;
+        case "hoje":
+          filteredItems = group.items.filter(
+            (item) => item.validade?.slice(0, 10) === todayStr,
           );
           break;
       }

@@ -274,12 +274,16 @@ export default function TreinamentoPanel({
     {
       value: nrFilter,
       onChange: handleNrFilterChange,
+      label: "Filtrar treinamentos por NR",
+      name: "treinamento-nr-filter",
       placeholder: "NR",
       options: nrs,
     },
     {
       value: statusFilter,
       onChange: handleStatusFilterChange,
+      label: "Filtrar treinamentos por status",
+      name: "treinamento-status-filter",
       placeholder: "Status",
       options: [
         { value: "todos", label: "Todos os status" },

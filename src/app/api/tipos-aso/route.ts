@@ -1,19 +1,27 @@
 import { prisma } from "@/lib/db";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(req: Request) {
+  const auth = await getAuthenticatedUser(req);
+  if (!auth) return unauthorizedResponse();
+
   const items = await prisma.tipoASO.findMany({
+    where: { empresaId: auth.session.empresaId },
     orderBy: [{ nome: "asc" }],
   });
+
   return NextResponse.json(items);
 }
 
 export async function POST(req: Request) {
   const body = await req.json();
+  const auth = await getAuthenticatedUser(req);
+  if (!auth) return unauthorizedResponse();
 
   const nome = String(body.nome ?? "").trim();
   if (!nome) {
-    return NextResponse.json({ error: "nome inválido" }, { status: 400 });
+    return NextResponse.json({ error: "nome invalido" }, { status: 400 });
   }
 
   let validadeMeses: number | null = null;
@@ -25,7 +33,7 @@ export async function POST(req: Request) {
     const n = Number(body.validadeMeses);
     if (!Number.isFinite(n) || n < 0) {
       return NextResponse.json(
-        { error: "validadeMeses inválido" },
+        { error: "validadeMeses invalido" },
         { status: 400 },
       );
     }
@@ -37,7 +45,12 @@ export async function POST(req: Request) {
   const descricao = descricaoRaw ? descricaoRaw : null;
 
   const created = await prisma.tipoASO.create({
-    data: { nome, validadeMeses, descricao },
+    data: {
+      empresaId: auth.session.empresaId,
+      nome,
+      validadeMeses,
+      descricao,
+    },
   });
 
   return NextResponse.json(created, { status: 201 });
