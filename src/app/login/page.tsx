@@ -1,4 +1,5 @@
 import LoginForm from "@/components/auth/LoginForm";
+import { AppLogo } from "@/components/ui/AppLogo";
 import { getServerAuthSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
@@ -11,7 +12,8 @@ export default async function LoginPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-100 px-4">
-      <div className="w-full max-w-md space-y-4">
+      <div className="w-full max-w-md space-y-6">
+        <AppLogo size="md" />
         <LoginForm />
         <p className="text-center text-sm text-slate-500">
           Não tem uma conta?{" "}

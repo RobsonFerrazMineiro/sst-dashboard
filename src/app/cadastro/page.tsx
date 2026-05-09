@@ -1,10 +1,11 @@
 "use client";
 
+import { AppLogo } from "@/components/ui/AppLogo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Building2, Loader2, ShieldCheck, User } from "lucide-react";
+import { Building2, Loader2, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -97,15 +98,8 @@ export default function CadastroPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-10">
-      <div className="w-full max-w-md space-y-4">
-        {/* Logo */}
-        <div className="flex flex-col items-center gap-2 text-center">
-          <div className="rounded-xl bg-emerald-50 p-3">
-            <ShieldCheck className="h-8 w-8 text-emerald-600" />
-          </div>
-          <h1 className="text-xl font-semibold text-slate-900">Gestão SST</h1>
-          <p className="text-sm text-slate-500">Crie sua conta gratuitamente</p>
-        </div>
+      <div className="w-full max-w-md space-y-6">
+        <AppLogo size="md" />
 
         <Card className="border-slate-200 shadow-lg">
           <CardContent className="p-8">
