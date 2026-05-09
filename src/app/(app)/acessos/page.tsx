@@ -13,6 +13,7 @@ import {
 import { useMemo, useState } from "react";
 
 import AtivarColaboradorModal from "@/components/acessos/AtivarColaboradorModal";
+import GerarConviteModal from "@/components/acessos/GerarConviteModal";
 import UsuarioModal from "@/components/acessos/UsuarioModal";
 import AccessDeniedState from "@/components/auth/AccessDeniedState";
 import {
@@ -80,6 +81,7 @@ export default function AcessosPage() {
   const [openNovoUsuario, setOpenNovoUsuario] = useState(false);
   const [editing, setEditing] = useState<EmpresaUser | null>(null);
   const [openAtivar, setOpenAtivar] = useState(false);
+  const [openConvite, setOpenConvite] = useState(false);
   const [pendenteSelecionado, setPendenteSelecionado] =
     useState<PendingColaborador | null>(null);
 
@@ -268,6 +270,10 @@ export default function AcessosPage() {
                         setPendenteSelecionado(pendente);
                         setOpenAtivar(true);
                       }}
+                      onConvidar={() => {
+                        setPendenteSelecionado(pendente);
+                        setOpenConvite(true);
+                      }}
                     />
                   ))}
 
@@ -315,6 +321,15 @@ export default function AcessosPage() {
         open={openAtivar}
         onOpenChange={(v) => {
           setOpenAtivar(v);
+          if (!v) setPendenteSelecionado(null);
+        }}
+        colaborador={pendenteSelecionado}
+      />
+
+      <GerarConviteModal
+        open={openConvite}
+        onOpenChange={(v) => {
+          setOpenConvite(v);
           if (!v) setPendenteSelecionado(null);
         }}
         colaborador={pendenteSelecionado}
@@ -456,9 +471,11 @@ function UsuarioRow({
 function PendenteRow({
   pendente,
   onAtivar,
+  onConvidar,
 }: {
   pendente: PendingColaborador;
   onAtivar: () => void;
+  onConvidar: () => void;
 }) {
   return (
     <tr className="border-t border-slate-200 bg-amber-50/40 hover:bg-amber-50">
@@ -492,7 +509,17 @@ function PendenteRow({
       </td>
       <td className="px-4 py-3 text-sm text-slate-400">—</td>
       <td className="px-4 py-3">
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-2">
+          <Button
+            onClick={onConvidar}
+            size="sm"
+            variant="outline"
+            className="gap-2 text-sky-700 border-sky-200 hover:bg-sky-50"
+            aria-label={`Gerar convite para ${pendente.nome}`}
+          >
+            <UserRoundPlus aria-hidden="true" className="h-4 w-4" />
+            Convidar
+          </Button>
           <Button
             onClick={onAtivar}
             size="sm"
@@ -500,7 +527,7 @@ function PendenteRow({
             aria-label={`Ativar primeiro acesso de ${pendente.nome}`}
           >
             <UserRoundPlus aria-hidden="true" className="h-4 w-4" />
-            Ativar primeiro acesso
+            Ativar acesso
           </Button>
         </div>
       </td>

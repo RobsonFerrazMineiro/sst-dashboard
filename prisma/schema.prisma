@@ -269,6 +269,23 @@ model TipoTreinamento {
   @@index([nr])
 }
 
+model ConviteAcesso {
+  id            String    @id @default(cuid())
+  empresaId     String    @map("empresa_id")
+  colaboradorId String    @map("colaborador_id")
+  criadoPorId   String    @map("criado_por_id")
+  /// Login sugerido pelo admin (ex: matrícula). O usuário pode ajustar ao aceitar.
+  loginSugerido String?   @map("login_sugerido")
+  tokenHash     String    @unique @map("token_hash")
+  expiresAt     DateTime  @map("expires_at")
+  usadoEm       DateTime? @map("usado_em")
+  createdAt     DateTime  @default(now())
+
+  @@index([empresaId])
+  @@index([colaboradorId])
+  @@index([expiresAt])
+}
+
 model AuditLog {
   id          String   @id @default(cuid())
   empresaId   String?  @map("empresa_id")
