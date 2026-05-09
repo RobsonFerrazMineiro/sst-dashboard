@@ -1,3 +1,5 @@
+import { AUDIT_ACTIONS } from "@/constants/audit-actions";
+import { createAuditLog, extractRequestMeta } from "@/lib/audit";
 import {
   forbiddenResponse,
   getAuthenticatedUser,
@@ -80,6 +82,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const { ip, userAgent } = extractRequestMeta(req);
   const auth = await getAuthenticatedUser(req);
   if (!auth) return unauthorizedResponse();
 
@@ -226,6 +229,23 @@ export async function POST(req: Request) {
         },
       },
     });
+  });
+
+  // Ativação de primeiro acesso (colaborador vinculado) vs criação administrativa
+  const isAtivacao = !!colaboradorId;
+  void createAuditLog({
+    empresaId: auth.session.empresaId,
+    usuarioId: auth.session.userId,
+    acao: isAtivacao
+      ? AUDIT_ACTIONS.ACCESS_ACTIVATED
+      : AUDIT_ACTIONS.USER_CREATED,
+    entidade: "usuario",
+    entidadeId: created.id,
+    descricao: isAtivacao
+      ? `Primeiro acesso ativado para colaborador: ${nome} (login: ${loginRaw})`
+      : `Usuário criado: ${nome} (login: ${loginRaw}, papel: ${papelCodigo})`,
+    ip,
+    userAgent,
   });
 
   return NextResponse.json(serializeUsuario(created), { status: 201 });

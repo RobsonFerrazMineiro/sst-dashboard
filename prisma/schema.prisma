@@ -269,6 +269,25 @@ model TipoTreinamento {
   @@index([nr])
 }
 
+model AuditLog {
+  id          String   @id @default(cuid())
+  empresaId   String?  @map("empresa_id")
+  usuarioId   String?  @map("usuario_id")
+  acao        String
+  entidade    String
+  entidadeId  String?  @map("entidade_id")
+  descricao   String?
+  ip          String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  @@index([empresaId])
+  @@index([empresaId, acao])
+  @@index([empresaId, entidade])
+  @@index([usuarioId])
+  @@index([createdAt])
+}
+
 model Treinamento {
   id String @id @default(cuid())
 

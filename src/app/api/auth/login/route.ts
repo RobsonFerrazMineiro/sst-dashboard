@@ -1,8 +1,12 @@
+import { AUDIT_ACTIONS } from "@/constants/audit-actions";
+import { createAuditLog, extractRequestMeta } from "@/lib/audit";
 import { setAuthCookie, signAuthToken, verifyPassword } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
+  const { ip, userAgent } = extractRequestMeta(req);
+
   try {
     const body = await req.json();
 
@@ -35,6 +39,13 @@ export async function POST(req: Request) {
     });
 
     if (!user) {
+      void createAuditLog({
+        acao: AUDIT_ACTIONS.LOGIN_FAILED,
+        entidade: "usuario",
+        descricao: `Tentativa de login inválida para o login: ${loginInput}`,
+        ip,
+        userAgent,
+      });
       return NextResponse.json(
         { error: "Credenciais inválidas" },
         { status: 401 },
@@ -43,6 +54,16 @@ export async function POST(req: Request) {
 
     const senhaOk = await verifyPassword(senha, user.senhaHash);
     if (!senhaOk) {
+      void createAuditLog({
+        acao: AUDIT_ACTIONS.LOGIN_FAILED,
+        empresaId: user.empresaId,
+        usuarioId: user.id,
+        entidade: "usuario",
+        entidadeId: user.id,
+        descricao: `Senha incorreta para o login: ${loginInput}`,
+        ip,
+        userAgent,
+      });
       return NextResponse.json(
         { error: "Credenciais inválidas" },
         { status: 401 },
@@ -52,6 +73,17 @@ export async function POST(req: Request) {
     await prisma.usuario.update({
       where: { id: user.id },
       data: { ultimoLoginAt: new Date() },
+    });
+
+    void createAuditLog({
+      empresaId: user.empresaId,
+      usuarioId: user.id,
+      acao: AUDIT_ACTIONS.LOGIN_SUCCESS,
+      entidade: "usuario",
+      entidadeId: user.id,
+      descricao: `Login realizado: ${user.nome}`,
+      ip,
+      userAgent,
     });
 
     const token = await signAuthToken({

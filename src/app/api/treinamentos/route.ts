@@ -1,6 +1,8 @@
+import { AUDIT_ACTIONS } from "@/constants/audit-actions";
+import { createAuditLog, extractRequestMeta } from "@/lib/audit";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { formatNR, parseNRInput } from "@/lib/nr";
-import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth";
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 
@@ -39,6 +41,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const { ip, userAgent } = extractRequestMeta(req);
   const body = await req.json();
   const auth = await getAuthenticatedUser(req);
   if (!auth) return unauthorizedResponse();
@@ -137,5 +140,17 @@ export async function POST(req: Request) {
   };
 
   const created = await prisma.treinamento.create({ data });
+
+  void createAuditLog({
+    empresaId: auth.session.empresaId,
+    usuarioId: auth.session.userId,
+    acao: AUDIT_ACTIONS.TRAINING_CREATED,
+    entidade: "treinamento",
+    entidadeId: created.id,
+    descricao: `Treinamento criado para: ${colaborador_nome} (NR: ${formatNR(nr)})`,
+    ip,
+    userAgent,
+  });
+
   return NextResponse.json(serializeTreinamento(created), { status: 201 });
 }

@@ -1,3 +1,5 @@
+import { AUDIT_ACTIONS } from "@/constants/audit-actions";
+import { createAuditLog, extractRequestMeta } from "@/lib/audit";
 import {
   forbiddenResponse,
   getAuthenticatedUser,
@@ -38,6 +40,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const { ip, userAgent } = extractRequestMeta(req);
   const auth = await getAuthenticatedUser(req);
   if (!auth) return unauthorizedResponse();
 
@@ -69,6 +72,17 @@ export async function POST(req: Request) {
       cargo,
       matricula,
     },
+  });
+
+  void createAuditLog({
+    empresaId: auth.session.empresaId,
+    usuarioId: auth.session.userId,
+    acao: AUDIT_ACTIONS.COLABORADOR_CREATED,
+    entidade: "colaborador",
+    entidadeId: created.id,
+    descricao: `Colaborador criado: ${nome} (${cargo} / ${setor})`,
+    ip,
+    userAgent,
   });
 
   return NextResponse.json(created, { status: 201 });

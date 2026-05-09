@@ -1,5 +1,7 @@
-import { prisma } from "@/lib/db";
+import { AUDIT_ACTIONS } from "@/constants/audit-actions";
+import { createAuditLog, extractRequestMeta } from "@/lib/audit";
 import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 
@@ -9,7 +11,9 @@ function parseDateOrNull(value: unknown): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-function serializeASO(item: Awaited<ReturnType<typeof prisma.aSO.findFirstOrThrow>>) {
+function serializeASO(
+  item: Awaited<ReturnType<typeof prisma.aSO.findFirstOrThrow>>,
+) {
   return {
     ...item,
     colaborador_id: item.colaboradorId,
@@ -45,6 +49,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({}));
+    const { ip, userAgent } = extractRequestMeta(req);
     const auth = await getAuthenticatedUser(req);
     if (!auth) return unauthorizedResponse();
 
@@ -149,6 +154,18 @@ export async function POST(req: Request) {
     };
 
     const created = await prisma.aSO.create({ data });
+
+    void createAuditLog({
+      empresaId: auth.session.empresaId,
+      usuarioId: auth.session.userId,
+      acao: AUDIT_ACTIONS.ASO_CREATED,
+      entidade: "aso",
+      entidadeId: created.id,
+      descricao: `ASO criado para: ${colaborador_nome} (tipo: ${tipoASO_nome ?? "avulso"})`,
+      ip,
+      userAgent,
+    });
+
     return NextResponse.json(serializeASO(created), { status: 201 });
   } catch (err: any) {
     console.error("POST /api/asos ->", err);
