@@ -8,12 +8,7 @@ import {
   isValidCNPJ,
 } from "@/lib/bootstrap-empresa";
 import { prisma } from "@/lib/db";
-import {
-  PlanoEmpresa,
-  StatusEmpresa,
-  StatusUsuario,
-  TipoCadastro,
-} from "@prisma/client";
+import { PlanoEmpresa, StatusEmpresa, StatusUsuario } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
@@ -116,8 +111,7 @@ export async function POST(req: Request) {
         cnpj: cnpjFormatado,
         status: StatusEmpresa.ATIVA,
         plano: PlanoEmpresa.LITE,
-        tipoCadastro:
-          tipo === "PESSOAL" ? TipoCadastro.PESSOAL : TipoCadastro.EMPRESA,
+        tipoCadastro: tipo === "PESSOAL" ? "PESSOAL" : "EMPRESA",
         nomeFantasia: nomeFantasia,
         nomeResponsavel: nomeResponsavel,
       },
