@@ -1,4 +1,3 @@
-import { compare, hash } from "bcryptjs";
 import {
   AUTH_COOKIE_NAME,
   type AuthSession,
@@ -10,6 +9,7 @@ import {
   verifyAuthToken,
 } from "@/lib/auth-token";
 import { prisma } from "@/lib/db";
+import { compare, hash } from "bcryptjs";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -72,6 +72,9 @@ export async function getAuthenticatedUser(request: Request | NextRequest) {
       empresa: { status: "ATIVA" },
     },
     include: {
+      empresa: {
+        select: { id: true, nome: true, nomeFantasia: true },
+      },
       usuarioPapeis: {
         include: {
           papel: {

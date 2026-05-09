@@ -8,6 +8,7 @@ type AuthMeResponse = {
     nome: string;
     email: string;
     empresaId: string;
+    empresaNome: string | null;
     isAccountOwner: boolean;
     ultimoLoginAt?: string | null;
     roles: string[];

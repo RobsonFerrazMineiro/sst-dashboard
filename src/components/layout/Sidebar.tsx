@@ -85,7 +85,8 @@ export default function Sidebar({
   const pathname = usePathname();
   const queryClient = useQueryClient();
   const [loggingOut, setLoggingOut] = useState(false);
-  const { hasPermission, hasRole } = useAuthPermissions();
+  const { hasPermission, hasRole, user, roles, ...query } =
+    useAuthPermissions();
 
   const visibleNavItems = navItems.filter((item) => {
     if (item.role && !hasRole(item.role)) return false;
@@ -173,16 +174,61 @@ export default function Sidebar({
         })}
       </nav>
 
-      <div className="mt-auto border-t border-slate-200 p-3">
+      <div className="mt-auto border-t border-slate-200 p-3 space-y-2">
+        {/* ── Card do usuário logado ──────────────────────────────────── */}
+        {query.isLoading ? (
+          /* Skeleton enquanto carrega */
+          <div className="flex items-center gap-2.5 rounded-xl px-2 py-2 animate-pulse">
+            <div className="h-8 w-8 shrink-0 rounded-full bg-slate-200" />
+            <div className="flex-1 space-y-1.5">
+              <div className="h-2.5 w-3/4 rounded bg-slate-200" />
+              <div className="h-2 w-1/2 rounded bg-slate-200" />
+            </div>
+          </div>
+        ) : user ? (
+          <div className="flex items-center gap-2.5 rounded-xl px-2 py-1.5">
+            {/* Avatar com inicial */}
+            <div
+              aria-hidden="true"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-teal-700 to-emerald-400 text-sm font-bold text-white shadow-sm"
+            >
+              {user.nome.charAt(0).toUpperCase()}
+            </div>
+            {/* Dados textuais */}
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium leading-tight text-slate-800">
+                {user.nome}
+              </p>
+              <p className="truncate text-xs leading-tight text-slate-400">
+                {roles.length > 0
+                  ? roles
+                      .map((r) =>
+                        r === "TECNICO_SST"
+                          ? "Técnico SST"
+                          : r.charAt(0) + r.slice(1).toLowerCase(),
+                      )
+                      .join(" · ")
+                  : "—"}
+              </p>
+              {user.empresaNome && (
+                <p className="truncate text-xs leading-tight text-slate-400">
+                  {user.empresaNome}
+                </p>
+              )}
+            </div>
+          </div>
+        ) : null}
+
+        {/* ── Botão de logout ────────────────────────────────────────── */}
         <Button
           type="button"
           variant="ghost"
           disabled={loggingOut}
           onClick={handleLogout}
           aria-label={loggingOut ? "Saindo do sistema" : "Sair do sistema"}
-          className="mb-3 flex w-full items-center justify-start gap-3 rounded-xl px-3 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+          className="flex w-full items-center justify-start gap-3 rounded-xl px-3 text-sm text-slate-500 hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
         >
-          <LogOut aria-hidden="true" className="h-4 w-4 text-slate-400" />
+          <LogOut aria-hidden="true" className="h-4 w-4" />
           {loggingOut ? "Saindo..." : "Sair"}
         </Button>
 
