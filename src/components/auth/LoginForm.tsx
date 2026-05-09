@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { CheckCircle2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
@@ -58,6 +59,13 @@ export default function LoginForm() {
   return (
     <Card className="w-full max-w-md border-slate-200 shadow-lg">
       <CardContent className="space-y-6 p-8">
+        {/* Banner de conta criada após cadastro */}
+        {searchParams.get("cadastro") === "ok" && (
+          <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+            <CheckCircle2 className="h-4 w-4 shrink-0" />
+            <span>Conta criada com sucesso! Faça login para continuar.</span>
+          </div>
+        )}
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold text-slate-900">Entrar</h1>
           <p className="text-sm text-slate-600">

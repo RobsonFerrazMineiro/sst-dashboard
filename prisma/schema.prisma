@@ -22,6 +22,11 @@ enum PlanoEmpresa {
   LITE
 }
 
+enum TipoCadastro {
+  PESSOAL
+  EMPRESA
+}
+
 enum NR {
   NR_01
   NR_02
@@ -64,12 +69,15 @@ enum NR {
 }
 
 model Empresa {
-  id     String        @id @default(cuid())
-  nome   String
-  slug   String        @unique
-  cnpj   String?       @unique
-  status StatusEmpresa @default(ATIVA)
-  plano  PlanoEmpresa  @default(LITE)
+  id              String        @id @default(cuid())
+  nome            String
+  slug            String        @unique
+  cnpj            String?       @unique
+  status          StatusEmpresa @default(ATIVA)
+  plano           PlanoEmpresa  @default(LITE)
+  tipoCadastro    TipoCadastro  @default(EMPRESA) @map("tipo_cadastro")
+  nomeFantasia    String?       @map("nome_fantasia")
+  nomeResponsavel String?       @map("nome_responsavel")
 
   usuarios         Usuario[]
   papeis           Papel[]

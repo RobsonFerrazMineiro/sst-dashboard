@@ -27,6 +27,10 @@ export const AUDIT_ACTIONS = {
   INVITE_USED:    "INVITE_USED",
   INVITE_EXPIRED: "INVITE_EXPIRED",
   INVITE_INVALID: "INVITE_INVALID",
+
+  // Cadastro SaaS
+  EMPRESA_CRIADA:      "EMPRESA_CRIADA",
+  CADASTRO_INVALIDO:   "CADASTRO_INVALIDO",
 } as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS];
