@@ -11,7 +11,7 @@ import {
   Users,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -83,7 +83,6 @@ export default function Sidebar({
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
-  const router = useRouter();
   const queryClient = useQueryClient();
   const [loggingOut, setLoggingOut] = useState(false);
   const { hasPermission, hasRole } = useAuthPermissions();
@@ -112,7 +111,10 @@ export default function Sidebar({
       queryClient.clear();
 
       onNavigate?.();
-      router.replace("/login");
+      // Usa reload completo em vez de navegação client-side para desmontar
+      // todos os componentes imediatamente e evitar refetch de /api/auth/me
+      // com cookie já removido (que geraria 401 no console).
+      window.location.href = "/login";
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Falha ao sair");
     } finally {
