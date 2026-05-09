@@ -19,15 +19,15 @@ export default function CadastroPage() {
   const [loading, setLoading] = useState(false);
 
   // Campos comuns
-  const [nome, setNome]       = useState("");
-  const [email, setEmail]     = useState("");
-  const [senha, setSenha]     = useState("");
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
   const [confirmar, setConfirmar] = useState("");
 
   // Campos empresa
-  const [razaoSocial, setRazaoSocial]       = useState("");
-  const [nomeFantasia, setNomeFantasia]     = useState("");
-  const [cnpj, setCnpj]                     = useState("");
+  const [razaoSocial, setRazaoSocial] = useState("");
+  const [nomeFantasia, setNomeFantasia] = useState("");
+  const [cnpj, setCnpj] = useState("");
   const [nomeResponsavel, setNomeResponsavel] = useState("");
 
   function handleEscolhaTipo(t: Tipo) {
@@ -39,10 +39,14 @@ export default function CadastroPage() {
     // Formata enquanto digita: XX.XXX.XXX/XXXX-XX
     const digits = v.replace(/\D/g, "").slice(0, 14);
     let formatted = digits;
-    if (digits.length > 2)  formatted = digits.slice(0, 2) + "." + digits.slice(2);
-    if (digits.length > 5)  formatted = formatted.slice(0, 6) + "." + digits.slice(5);
-    if (digits.length > 8)  formatted = formatted.slice(0, 10) + "/" + digits.slice(8);
-    if (digits.length > 12) formatted = formatted.slice(0, 15) + "-" + digits.slice(12);
+    if (digits.length > 2)
+      formatted = digits.slice(0, 2) + "." + digits.slice(2);
+    if (digits.length > 5)
+      formatted = formatted.slice(0, 6) + "." + digits.slice(5);
+    if (digits.length > 8)
+      formatted = formatted.slice(0, 10) + "/" + digits.slice(8);
+    if (digits.length > 12)
+      formatted = formatted.slice(0, 15) + "-" + digits.slice(12);
     setCnpj(formatted);
   }
 
@@ -61,7 +65,16 @@ export default function CadastroPage() {
     try {
       const body =
         tipo === "EMPRESA"
-          ? { tipo, nome, email, senha, razaoSocial, nomeFantasia: nomeFantasia || undefined, cnpj, nomeResponsavel: nomeResponsavel || undefined }
+          ? {
+              tipo,
+              nome,
+              email,
+              senha,
+              razaoSocial,
+              nomeFantasia: nomeFantasia || undefined,
+              cnpj,
+              nomeResponsavel: nomeResponsavel || undefined,
+            }
           : { tipo, nome, email, senha };
 
       const res = await fetch("/api/cadastro", {
@@ -96,13 +109,16 @@ export default function CadastroPage() {
 
         <Card className="border-slate-200 shadow-lg">
           <CardContent className="p-8">
-
             {/* ── PASSO 1: escolha do tipo ─────────────────────────────── */}
             {step === 1 && (
               <div className="space-y-5">
                 <div className="space-y-1 text-center">
-                  <p className="font-semibold text-slate-800">Como você vai usar o sistema?</p>
-                  <p className="text-sm text-slate-500">Escolha o perfil que melhor descreve seu uso</p>
+                  <p className="font-semibold text-slate-800">
+                    Como você vai usar o sistema?
+                  </p>
+                  <p className="text-sm text-slate-500">
+                    Escolha o perfil que melhor descreve seu uso
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -113,8 +129,12 @@ export default function CadastroPage() {
                   >
                     <User className="h-7 w-7 text-slate-500" />
                     <div>
-                      <p className="font-semibold text-slate-800 text-sm">Uso pessoal</p>
-                      <p className="text-xs text-slate-500 mt-0.5">Para você ou um pequeno time, sem CNPJ</p>
+                      <p className="font-semibold text-slate-800 text-sm">
+                        Uso pessoal
+                      </p>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Para você ou um pequeno time, sem CNPJ
+                      </p>
                     </div>
                   </button>
 
@@ -125,8 +145,12 @@ export default function CadastroPage() {
                   >
                     <Building2 className="h-7 w-7 text-slate-500" />
                     <div>
-                      <p className="font-semibold text-slate-800 text-sm">Empresa</p>
-                      <p className="text-xs text-slate-500 mt-0.5">Para empresas com CNPJ e equipe SST</p>
+                      <p className="font-semibold text-slate-800 text-sm">
+                        Empresa
+                      </p>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Para empresas com CNPJ e equipe SST
+                      </p>
                     </div>
                   </button>
                 </div>
@@ -138,7 +162,9 @@ export default function CadastroPage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="flex items-center justify-between">
                   <p className="font-semibold text-slate-800">
-                    {tipo === "PESSOAL" ? "Criar conta pessoal" : "Criar conta empresarial"}
+                    {tipo === "PESSOAL"
+                      ? "Criar conta pessoal"
+                      : "Criar conta empresarial"}
                   </p>
                   <button
                     type="button"
@@ -165,7 +191,9 @@ export default function CadastroPage() {
                     <div className="space-y-1.5">
                       <Label htmlFor="fantasia">
                         Nome fantasia{" "}
-                        <span className="text-xs font-normal text-slate-400">(opcional)</span>
+                        <span className="text-xs font-normal text-slate-400">
+                          (opcional)
+                        </span>
                       </Label>
                       <Input
                         id="fantasia"
@@ -188,7 +216,9 @@ export default function CadastroPage() {
                     <div className="space-y-1.5">
                       <Label htmlFor="responsavel">
                         Nome do responsável{" "}
-                        <span className="text-xs font-normal text-slate-400">(opcional)</span>
+                        <span className="text-xs font-normal text-slate-400">
+                          (opcional)
+                        </span>
                       </Label>
                       <Input
                         id="responsavel"
@@ -205,7 +235,9 @@ export default function CadastroPage() {
                 {/* Campos do administrador */}
                 <div className="space-y-1.5">
                   <Label htmlFor="nome">
-                    {tipo === "PESSOAL" ? "Seu nome *" : "Nome do administrador *"}
+                    {tipo === "PESSOAL"
+                      ? "Seu nome *"
+                      : "Nome do administrador *"}
                   </Label>
                   <Input
                     id="nome"
@@ -269,7 +301,10 @@ export default function CadastroPage() {
 
         <p className="text-center text-sm text-slate-500">
           Já tem uma conta?{" "}
-          <Link href="/login" className="text-emerald-600 hover:underline font-medium">
+          <Link
+            href="/login"
+            className="text-emerald-600 hover:underline font-medium"
+          >
             Entrar
           </Link>
         </p>

@@ -8,7 +8,12 @@ import {
   isValidCNPJ,
 } from "@/lib/bootstrap-empresa";
 import { prisma } from "@/lib/db";
-import { PlanoEmpresa, StatusEmpresa, StatusUsuario, TipoCadastro } from "@prisma/client";
+import {
+  PlanoEmpresa,
+  StatusEmpresa,
+  StatusUsuario,
+  TipoCadastro,
+} from "@prisma/client";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
@@ -25,12 +30,17 @@ export async function POST(req: Request) {
   }
 
   // ── Campos comuns ────────────────────────────────────────────────────────
-  const email     = String(body?.email     ?? "").trim().toLowerCase();
-  const senha     = String(body?.senha     ?? "");
-  const nomeAdmin = String(body?.nome      ?? "").trim();
+  const email = String(body?.email ?? "")
+    .trim()
+    .toLowerCase();
+  const senha = String(body?.senha ?? "");
+  const nomeAdmin = String(body?.nome ?? "").trim();
 
   if (!email || !nomeAdmin) {
-    return NextResponse.json({ error: "Nome e e-mail são obrigatórios" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Nome e e-mail são obrigatórios" },
+      { status: 400 },
+    );
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: "E-mail inválido" }, { status: 400 });
@@ -43,32 +53,42 @@ export async function POST(req: Request) {
   }
 
   // ── Campos de empresa ────────────────────────────────────────────────────
-  let nomeEmpresa     = "";
+  let nomeEmpresa = "";
   let nomeFantasia: string | null = null;
   let cnpjFormatado: string | null = null;
   let nomeResponsavel: string | null = null;
 
   if (tipo === "EMPRESA") {
-    const razaoSocial = String(body?.razaoSocial  ?? "").trim();
-    nomeFantasia      = body?.nomeFantasia ? String(body.nomeFantasia).trim() : null;
-    const cnpjRaw     = String(body?.cnpj         ?? "").trim();
-    nomeResponsavel   = body?.nomeResponsavel ? String(body.nomeResponsavel).trim() : null;
+    const razaoSocial = String(body?.razaoSocial ?? "").trim();
+    nomeFantasia = body?.nomeFantasia ? String(body.nomeFantasia).trim() : null;
+    const cnpjRaw = String(body?.cnpj ?? "").trim();
+    nomeResponsavel = body?.nomeResponsavel
+      ? String(body.nomeResponsavel).trim()
+      : null;
 
     if (!razaoSocial) {
-      return NextResponse.json({ error: "Razão social é obrigatória" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Razão social é obrigatória" },
+        { status: 400 },
+      );
     }
     if (!cnpjRaw) {
-      return NextResponse.json({ error: "CNPJ é obrigatório" }, { status: 400 });
+      return NextResponse.json(
+        { error: "CNPJ é obrigatório" },
+        { status: 400 },
+      );
     }
     if (!isValidCNPJ(cnpjRaw)) {
       return NextResponse.json({ error: "CNPJ inválido" }, { status: 400 });
     }
 
     cnpjFormatado = formatCNPJ(cnpjRaw);
-    nomeEmpresa   = razaoSocial;
+    nomeEmpresa = razaoSocial;
 
     // CNPJ único global
-    const cnpjExistente = await prisma.empresa.findUnique({ where: { cnpj: cnpjFormatado } });
+    const cnpjExistente = await prisma.empresa.findUnique({
+      where: { cnpj: cnpjFormatado },
+    });
     if (cnpjExistente) {
       return NextResponse.json(
         { error: "Já existe uma conta cadastrada com este CNPJ" },
@@ -77,7 +97,7 @@ export async function POST(req: Request) {
     }
   } else {
     // PESSOAL — empresa nasce como "Workspace de {nome}"
-    nomeEmpresa   = `Workspace de ${nomeAdmin}`;
+    nomeEmpresa = `Workspace de ${nomeAdmin}`;
     nomeResponsavel = nomeAdmin;
   }
 
@@ -91,13 +111,14 @@ export async function POST(req: Request) {
   const novaEmpresa = await prisma.$transaction(async (tx) => {
     const empresa = await tx.empresa.create({
       data: {
-        nome:           nomeEmpresa,
+        nome: nomeEmpresa,
         slug,
-        cnpj:           cnpjFormatado,
-        status:         StatusEmpresa.ATIVA,
-        plano:          PlanoEmpresa.LITE,
-        tipoCadastro:   tipo === "PESSOAL" ? TipoCadastro.PESSOAL : TipoCadastro.EMPRESA,
-        nomeFantasia:   nomeFantasia,
+        cnpj: cnpjFormatado,
+        status: StatusEmpresa.ATIVA,
+        plano: PlanoEmpresa.LITE,
+        tipoCadastro:
+          tipo === "PESSOAL" ? TipoCadastro.PESSOAL : TipoCadastro.EMPRESA,
+        nomeFantasia: nomeFantasia,
         nomeResponsavel: nomeResponsavel,
       },
     });
@@ -108,13 +129,13 @@ export async function POST(req: Request) {
     // Cria usuário administrador principal
     const admin = await tx.usuario.create({
       data: {
-        empresaId:      empresa.id,
-        nome:           nomeAdmin,
-        login:          email,
-        email:          email,
-        senhaHash:      await hashPassword(senha),
+        empresaId: empresa.id,
+        nome: nomeAdmin,
+        login: email,
+        email: email,
+        senhaHash: await hashPassword(senha),
         isAccountOwner: true,
-        status:         StatusUsuario.ATIVO,
+        status: StatusUsuario.ATIVO,
       },
     });
 
@@ -127,12 +148,12 @@ export async function POST(req: Request) {
   });
 
   void createAuditLog({
-    empresaId:  novaEmpresa.empresa.id,
-    usuarioId:  novaEmpresa.adminId,
-    acao:       AUDIT_ACTIONS.EMPRESA_CRIADA,
-    entidade:   "empresa",
+    empresaId: novaEmpresa.empresa.id,
+    usuarioId: novaEmpresa.adminId,
+    acao: AUDIT_ACTIONS.EMPRESA_CRIADA,
+    entidade: "empresa",
     entidadeId: novaEmpresa.empresa.id,
-    descricao:  `Novo workspace criado: ${nomeEmpresa} (tipo: ${tipo})`,
+    descricao: `Novo workspace criado: ${nomeEmpresa} (tipo: ${tipo})`,
     ip,
     userAgent,
   });

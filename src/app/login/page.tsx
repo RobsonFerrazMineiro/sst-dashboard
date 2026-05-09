@@ -15,7 +15,10 @@ export default async function LoginPage() {
         <LoginForm />
         <p className="text-center text-sm text-slate-500">
           Não tem uma conta?{" "}
-          <a href="/cadastro" className="font-medium text-emerald-600 hover:underline">
+          <a
+            href="/cadastro"
+            className="font-medium text-emerald-600 hover:underline"
+          >
             Criar conta grátis
           </a>
         </p>

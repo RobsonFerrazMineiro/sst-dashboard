@@ -13,14 +13,42 @@ import type { Prisma } from "@prisma/client";
 
 // Permissoes globais do sistema (não pertencem a nenhuma empresa)
 export const PERMISSOES_PADRAO = [
-  { codigo: "dashboard.visualizar",          nome: "Visualizar dashboard",             modulo: "dashboard"    },
-  { codigo: "colaboradores.visualizar",      nome: "Visualizar colaboradores",         modulo: "colaboradores"},
-  { codigo: "colaboradores.gerenciar",       nome: "Gerenciar colaboradores",          modulo: "colaboradores"},
-  { codigo: "tipos-aso.gerenciar",           nome: "Gerenciar tipos de ASO",           modulo: "tipos-aso"   },
-  { codigo: "tipos-treinamento.gerenciar",   nome: "Gerenciar tipos de treinamento",   modulo: "tipos-treinamento"},
-  { codigo: "asos.gerenciar",                nome: "Gerenciar ASOs",                   modulo: "asos"        },
-  { codigo: "treinamentos.gerenciar",        nome: "Gerenciar treinamentos",           modulo: "treinamentos"},
-  { codigo: "colaborador.visualizar-proprio",nome: "Visualizar próprio perfil",        modulo: "perfil"      },
+  {
+    codigo: "dashboard.visualizar",
+    nome: "Visualizar dashboard",
+    modulo: "dashboard",
+  },
+  {
+    codigo: "colaboradores.visualizar",
+    nome: "Visualizar colaboradores",
+    modulo: "colaboradores",
+  },
+  {
+    codigo: "colaboradores.gerenciar",
+    nome: "Gerenciar colaboradores",
+    modulo: "colaboradores",
+  },
+  {
+    codigo: "tipos-aso.gerenciar",
+    nome: "Gerenciar tipos de ASO",
+    modulo: "tipos-aso",
+  },
+  {
+    codigo: "tipos-treinamento.gerenciar",
+    nome: "Gerenciar tipos de treinamento",
+    modulo: "tipos-treinamento",
+  },
+  { codigo: "asos.gerenciar", nome: "Gerenciar ASOs", modulo: "asos" },
+  {
+    codigo: "treinamentos.gerenciar",
+    nome: "Gerenciar treinamentos",
+    modulo: "treinamentos",
+  },
+  {
+    codigo: "colaborador.visualizar-proprio",
+    nome: "Visualizar próprio perfil",
+    modulo: "perfil",
+  },
 ] as const;
 
 // Papeis padrão e suas permissoes
@@ -71,7 +99,7 @@ export async function bootstrapEmpresaRBAC(
   // 1. Upsert permissoes globais (idempotente — já podem existir de outras empresas)
   for (const p of PERMISSOES_PADRAO) {
     await tx.permissao.upsert({
-      where:  { codigo: p.codigo },
+      where: { codigo: p.codigo },
       update: {},
       create: { codigo: p.codigo, nome: p.nome, modulo: p.modulo },
     });
@@ -80,7 +108,9 @@ export async function bootstrapEmpresaRBAC(
   const todasPermissoes = await tx.permissao.findMany({
     select: { id: true, codigo: true },
   });
-  const permissaoByCodigo = new Map(todasPermissoes.map((p) => [p.codigo, p.id]));
+  const permissaoByCodigo = new Map(
+    todasPermissoes.map((p) => [p.codigo, p.id]),
+  );
 
   // 2. Cria papeis para esta empresa e vincula as permissoes
   let papelAdminId = "";
@@ -89,9 +119,9 @@ export async function bootstrapEmpresaRBAC(
     const papel = await tx.papel.create({
       data: {
         empresaId,
-        nome:     papelBase.nome,
-        codigo:   papelBase.codigo,
-        descricao:papelBase.descricao,
+        nome: papelBase.nome,
+        codigo: papelBase.codigo,
+        descricao: papelBase.descricao,
       },
     });
 
@@ -103,7 +133,10 @@ export async function bootstrapEmpresaRBAC(
       .map((permissaoId) => ({ papelId: papel.id, permissaoId }));
 
     if (vinculosPermissao.length > 0) {
-      await tx.papelPermissao.createMany({ data: vinculosPermissao, skipDuplicates: true });
+      await tx.papelPermissao.createMany({
+        data: vinculosPermissao,
+        skipDuplicates: true,
+      });
     }
   }
 
@@ -117,9 +150,9 @@ export function generateSlug(nome: string): string {
   const base = nome
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")   // remove acentos
-    .replace(/[^a-z0-9]+/g, "-")       // não-alfanuméricos → hífen
-    .replace(/^-+|-+$/g, "")           // remove hífens nas bordas
+    .replace(/[\u0300-\u036f]/g, "") // remove acentos
+    .replace(/[^a-z0-9]+/g, "-") // não-alfanuméricos → hífen
+    .replace(/^-+|-+$/g, "") // remove hífens nas bordas
     .slice(0, 40);
   const suffix = Math.random().toString(36).slice(2, 7);
   return `${base || "workspace"}-${suffix}`;
