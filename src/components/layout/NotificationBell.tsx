@@ -36,7 +36,12 @@ async function fetchAlertas(): Promise<AlertaSST[]> {
 
 export default function NotificationBell() {
   const [open, setOpen] = useState(false);
-  const [panelPos, setPanelPos] = useState({ top: 0, left: 0 });
+  const [panelPos, setPanelPos] = useState({
+    top: 0,
+    left: 0,
+    width: 320,
+    anchoredLeft: false,
+  });
   const btnRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
@@ -77,10 +82,21 @@ export default function NotificationBell() {
   function handleToggle() {
     if (!open && btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect();
-      // Alinha pela direita do botão para não sair da viewport
       const top = rect.bottom + 8;
-      const right = window.innerWidth - rect.right;
-      setPanelPos({ top, left: right });
+      // Em mobile o painel tem largura máxima da viewport - 16px de margem.
+      // Calcula right pelo alinhamento à direita do botão, mas limita para
+      // nunca empurrar o painel além da borda esquerda da tela.
+      const panelWidth = Math.min(320, window.innerWidth - 16);
+      const rightEdge = window.innerWidth - rect.right;
+      // Se o painel estourar à esquerda, ancora-o na margem esquerda de 8px
+      const leftIfAnchored = 8;
+      const wouldOverflow = rect.right - panelWidth < 8;
+      setPanelPos({
+        top,
+        left: wouldOverflow ? leftIfAnchored : rightEdge,
+        width: panelWidth,
+        anchoredLeft: wouldOverflow,
+      });
     }
     setOpen((v) => !v);
   }
@@ -117,8 +133,14 @@ export default function NotificationBell() {
       {open && (
         <div
           ref={panelRef}
-          style={{ top: panelPos.top, right: panelPos.left }}
-          className="fixed z-200 w-80 rounded-xl border border-slate-200 bg-white shadow-xl"
+          style={{
+            top: panelPos.top,
+            width: panelPos.width,
+            ...(panelPos.anchoredLeft
+              ? { left: panelPos.left }
+              : { right: panelPos.left }),
+          }}
+          className="fixed z-200 rounded-xl border border-slate-200 bg-white shadow-xl"
         >
           {/* Header */}
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
