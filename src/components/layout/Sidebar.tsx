@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ClipboardCheck,
   ClipboardList,
   KeyRound,
   LayoutDashboard,
@@ -72,6 +73,12 @@ const navItems: NavItem[] = [
     icon: KeyRound,
     permission: "dashboard.visualizar",
     role: "ADMIN",
+  },
+  {
+    href: "/solicitacoes",
+    label: "Solicitações",
+    icon: ClipboardCheck,
+    permission: "dashboard.visualizar",
   },
 ];
 

@@ -5,11 +5,11 @@ import { RefreshCw, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 
 import ASOPanel from "@/components/dashboard/ASOPanel";
-import AlertsHub from "@/components/dashboard/AlertsHub";
 import GeneralPendencies from "@/components/dashboard/GeneralPendencies";
 import RiskIndicator from "@/components/dashboard/RiskIndicator";
 import TabNavigation from "@/components/dashboard/TabNavigation";
 import TreinamentoPanel from "@/components/dashboard/TreinamentoPanel";
+import NotificationBell from "@/components/layout/NotificationBell";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 
@@ -76,11 +76,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex items-center gap-4 self-start sm:self-auto">
-            <AlertsHub
-              asos={asos}
-              treinamentos={treinamentos}
-              isLoading={loadingASOs || loadingTreinamentos}
-            />
+            <NotificationBell />
             <Button
               onClick={handleRefresh}
               disabled={isRefreshing}

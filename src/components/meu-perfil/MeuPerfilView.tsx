@@ -2,6 +2,8 @@
 
 import RiskScoreBadge from "@/components/dashboard/RiskScoreBadge";
 import RiskScoreHoverCard from "@/components/dashboard/RiskScoreHoverCard";
+import NotificationBell from "@/components/layout/NotificationBell";
+import { SolicitarRegularizacaoButton } from "@/components/solicitacoes/SolicitarRegularizacaoButton";
 import { SSTProgressBar } from "@/components/ui/SSTProgressBar";
 import { StatusBadgeWithTemporal } from "@/components/ui/status-badge-with-temporal";
 import { api } from "@/lib/api";
@@ -23,6 +25,7 @@ import {
   CheckCircle2,
   ClipboardList,
   Hash,
+  Info,
   Mail,
   ShieldCheck,
   UserCircle,
@@ -30,6 +33,14 @@ import {
 import { useMemo } from "react";
 
 // ─── tipos locais ─────────────────────────────────────────────────────────────
+
+type SolicitacaoAberta = {
+  id: string;
+  referenciaId: string | null;
+  tipo: "ASO" | "TREINAMENTO";
+  status: "PENDENTE" | "EM_ANALISE" | "AGENDADA" | "CONCLUIDA" | "CANCELADA";
+  dataAgendada: string | null;
+};
 
 type ColaboradorInfo = {
   id: string;
@@ -73,6 +84,44 @@ const statusOrder: Record<string, number> = {
   Pendente: 3,
   "Sem vencimento": 4,
 };
+
+// ─── banner de solicitação aberta ─────────────────────────────────────────────
+
+function getSolicitacaoBanner(
+  sol: SolicitacaoAberta | undefined,
+  _tipo: "ASO" | "TREINAMENTO",
+): { texto: string; cls: string } | null {
+  if (!sol) return null;
+  if (sol.status === "CANCELADA" || sol.status === "CONCLUIDA") return null;
+
+  if (sol.status === "PENDENTE") {
+    return {
+      texto: "Solicitação enviada. Aguardando análise do SST.",
+      cls: "bg-amber-50 border border-amber-200 text-amber-700",
+    };
+  }
+  if (sol.status === "EM_ANALISE") {
+    return {
+      texto: "Sua solicitação está em análise pelo SST.",
+      cls: "bg-blue-50 border border-blue-200 text-blue-700",
+    };
+  }
+  if (sol.status === "AGENDADA" && sol.dataAgendada) {
+    const dataFmt = new Date(sol.dataAgendada).toLocaleDateString("pt-BR");
+    const tipoLabel = _tipo === "ASO" ? "ASO" : "Treinamento";
+    return {
+      texto: `Seu ${tipoLabel} está agendado para ${dataFmt}. Programe-se!`,
+      cls: "bg-violet-50 border border-violet-200 text-violet-700",
+    };
+  }
+  if (sol.status === "AGENDADA") {
+    return {
+      texto: "Agendamento confirmado. Aguarde mais detalhes.",
+      cls: "bg-violet-50 border border-violet-200 text-violet-700",
+    };
+  }
+  return null;
+}
 
 // ─── sub-componentes ──────────────────────────────────────────────────────────
 
@@ -183,55 +232,116 @@ function PendenciasAlert({ itens }: { itens: PendenciaItem[] }) {
   );
 }
 
-function TreinamentoCard({ t }: { t: TreinamentoRecord }) {
+function TreinamentoCard({
+  t,
+  solicitacao,
+}: {
+  t: TreinamentoRecord;
+  solicitacao?: SolicitacaoAberta;
+}) {
   const statusInfo = getTrainingStatusWithTemporal(t.validade);
+  const vencido = statusInfo.status === "Vencido";
+  const prestesVencer = statusInfo.status === "Prestes a vencer";
+  const podeSolicitar = vencido || prestesVencer;
+
+  // Mensagem de status da solicitação aberta
+  const solicitacaoBanner = getSolicitacaoBanner(solicitacao, "TREINAMENTO");
+
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-      <div className="min-w-0">
-        <p className="text-sm font-medium text-slate-800 truncate">
-          {t.tipoTreinamento_nome ?? "Treinamento"}
-        </p>
-        <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1">
-          {t.nr && <span className="font-mono">{t.nr}</span>}
-          {t.nr && t.validade && <span>·</span>}
-          {t.validade && (
-            <span className="flex items-center gap-1">
-              <CalendarDays className="h-3 w-3" />
-              Válido até {formatDate(t.validade, "—")}
-            </span>
+    <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 flex flex-col gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-slate-800 truncate">
+            {t.tipoTreinamento_nome ?? "Treinamento"}
+          </p>
+          <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1">
+            {t.nr && <span className="font-mono">{t.nr}</span>}
+            {t.nr && t.validade && <span>·</span>}
+            {t.validade && (
+              <span className="flex items-center gap-1">
+                <CalendarDays className="h-3 w-3" />
+                Válido até {formatDate(t.validade, "—")}
+              </span>
+            )}
+            {t.carga_horaria && <span>· {t.carga_horaria}h</span>}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <StatusBadgeWithTemporal statusInfo={statusInfo} showTemporalBelow />
+          {podeSolicitar && !solicitacaoBanner && (
+            <SolicitarRegularizacaoButton
+              tipo="TREINAMENTO"
+              referenciaId={t.id}
+              modo={vencido ? "vencido" : "prestes"}
+              label={t.tipoTreinamento_nome ?? "Treinamento"}
+            />
           )}
-          {t.carga_horaria && <span>· {t.carga_horaria}h</span>}
-        </p>
+        </div>
       </div>
-      <div className="shrink-0">
-        <StatusBadgeWithTemporal statusInfo={statusInfo} showTemporalBelow />
-      </div>
+      {solicitacaoBanner && (
+        <div
+          className={`flex items-start gap-2 rounded-md px-3 py-2 text-xs ${solicitacaoBanner.cls}`}
+        >
+          <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+          <span>{solicitacaoBanner.texto}</span>
+        </div>
+      )}
     </div>
   );
 }
 
-function AsoCard({ a }: { a: AsoRecord }) {
+function AsoCard({
+  a,
+  solicitacao,
+}: {
+  a: AsoRecord;
+  solicitacao?: SolicitacaoAberta;
+}) {
   const statusInfo = getAsoStatusWithTemporal(a.validade_aso, a.data_aso);
+  const vencido = statusInfo.status === "Vencido";
+  const prestesVencer = statusInfo.status === "Prestes a vencer";
+  const podeSolicitar = vencido || prestesVencer;
+
+  const solicitacaoBanner = getSolicitacaoBanner(solicitacao, "ASO");
+
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-      <div className="min-w-0">
-        <p className="text-sm font-medium text-slate-800 truncate">
-          {a.tipoASO_nome ?? "ASO"}
-        </p>
-        <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1">
-          {a.clinica && <span>{a.clinica}</span>}
-          {a.clinica && a.data_aso && <span>·</span>}
-          {a.data_aso && (
-            <span className="flex items-center gap-1">
-              <CalendarDays className="h-3 w-3" />
-              Realizado em {formatDate(a.data_aso, "—")}
-            </span>
+    <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 flex flex-col gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-slate-800 truncate">
+            {a.tipoASO_nome ?? "ASO"}
+          </p>
+          <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1">
+            {a.clinica && <span>{a.clinica}</span>}
+            {a.clinica && a.data_aso && <span>·</span>}
+            {a.data_aso && (
+              <span className="flex items-center gap-1">
+                <CalendarDays className="h-3 w-3" />
+                Realizado em {formatDate(a.data_aso, "—")}
+              </span>
+            )}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <StatusBadgeWithTemporal statusInfo={statusInfo} showTemporalBelow />
+          {podeSolicitar && !solicitacaoBanner && (
+            <SolicitarRegularizacaoButton
+              tipo="ASO"
+              referenciaId={a.id}
+              modo={vencido ? "vencido" : "prestes"}
+              label={a.tipoASO_nome ?? "ASO"}
+            />
           )}
-        </p>
+        </div>
       </div>
-      <div className="shrink-0">
-        <StatusBadgeWithTemporal statusInfo={statusInfo} showTemporalBelow />
-      </div>
+      {solicitacaoBanner && (
+        <div
+          className={`flex items-start gap-2 rounded-md px-3 py-2 text-xs ${solicitacaoBanner.cls}`}
+        >
+          <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+          <span>{solicitacaoBanner.texto}</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -480,6 +590,28 @@ export default function MeuPerfilView({
     queryFn: () => api.asos.list(colaborador.id),
   });
 
+  // Solicitações abertas do colaborador (para exibir status nos cards)
+  const { data: solicitacoesAbertas = [] } = useQuery<SolicitacaoAberta[]>({
+    queryKey: ["solicitacoes-abertas", colaborador.id],
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/solicitacoes?colaboradorId=${colaborador.id}`,
+      );
+      if (!res.ok) return [];
+      const data = (await res.json()) as SolicitacaoAberta[];
+      // Filtra apenas as não-finalizadas
+      return data.filter(
+        (s) => s.status !== "CONCLUIDA" && s.status !== "CANCELADA",
+      );
+    },
+    staleTime: 30_000,
+  });
+
+  // Helper: pega a solicitação aberta para um referenciaId
+  function getSolicitacaoAberta(referenciaId: string) {
+    return solicitacoesAbertas.find((s) => s.referenciaId === referenciaId);
+  }
+
   // Treinamentos atuais (um por tipo), ordenados por status
   const trAtual = useMemo(() => {
     const latest = splitLatestByKey(
@@ -554,15 +686,18 @@ export default function MeuPerfilView({
                 <span>{usuario.email}</span>
               </div>
             )}
-            <span
-              className={
-                usuario.status === "ATIVO"
-                  ? "inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium border-emerald-200 bg-emerald-50 text-emerald-700"
-                  : "inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium border-slate-200 bg-slate-100 text-slate-600"
-              }
-            >
-              {usuario.status === "ATIVO" ? "Ativo" : "Inativo"}
-            </span>
+            <div className="flex items-center justify-end gap-2">
+              <span
+                className={
+                  usuario.status === "ATIVO"
+                    ? "inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium border-emerald-200 bg-emerald-50 text-emerald-700"
+                    : "inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium border-slate-200 bg-slate-100 text-slate-600"
+                }
+              >
+                {usuario.status === "ATIVO" ? "Ativo" : "Inativo"}
+              </span>
+              <NotificationBell />
+            </div>
           </div>
         </div>
       </header>
@@ -589,7 +724,11 @@ export default function MeuPerfilView({
         ) : (
           <div className="space-y-2">
             {trAtual.map((t) => (
-              <TreinamentoCard key={t.id} t={t} />
+              <TreinamentoCard
+                key={t.id}
+                t={t}
+                solicitacao={getSolicitacaoAberta(t.id)}
+              />
             ))}
           </div>
         )}
@@ -606,7 +745,10 @@ export default function MeuPerfilView({
         ) : !asoAtual ? (
           <EmptyState label="Nenhum ASO registrado." />
         ) : (
-          <AsoCard a={asoAtual} />
+          <AsoCard
+            a={asoAtual}
+            solicitacao={getSolicitacaoAberta(asoAtual.id)}
+          />
         )}
       </section>
     </div>

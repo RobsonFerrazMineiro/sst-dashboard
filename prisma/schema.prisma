@@ -27,6 +27,19 @@ enum TipoCadastro {
   EMPRESA
 }
 
+enum StatusSolicitacao {
+  PENDENTE
+  EM_ANALISE
+  AGENDADA
+  CONCLUIDA
+  CANCELADA
+}
+
+enum TipoSolicitacao {
+  ASO
+  TREINAMENTO
+}
+
 enum NR {
   NR_01
   NR_02
@@ -86,6 +99,8 @@ model Empresa {
   asos             ASO[]
   tiposTreinamento TipoTreinamento[]
   treinamentos     Treinamento[]
+  solicitacoes     SolicitacaoRegularizacao[]
+  notificacoes     Notificacao[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -111,6 +126,7 @@ model Usuario {
   colaborador    Colaborador?  @relation(fields: [colaboradorId], references: [id], onDelete: SetNull)
 
   usuarioPapeis UsuarioPapel[]
+  notificacoes  Notificacao[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -194,6 +210,7 @@ model Colaborador {
 
   asos         ASO[]
   treinamentos Treinamento[]
+  solicitacoes SolicitacaoRegularizacao[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -310,6 +327,50 @@ model AuditLog {
   @@index([empresaId, acao])
   @@index([empresaId, entidade])
   @@index([usuarioId])
+  @@index([createdAt])
+}
+
+model SolicitacaoRegularizacao {
+  id              String             @id @default(cuid())
+  empresaId       String             @map("empresa_id")
+  empresa         Empresa            @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  colaboradorId   String             @map("colaborador_id")
+  colaborador     Colaborador        @relation(fields: [colaboradorId], references: [id], onDelete: Cascade)
+  solicitadoPorId String             @map("solicitado_por_id")
+  /// ASO ou TREINAMENTO
+  tipo            TipoSolicitacao
+  /// ID do ASO ou Treinamento referenciado
+  referenciaId    String             @map("referencia_id")
+  status          StatusSolicitacao  @default(PENDENTE)
+  observacao      String?
+  dataAgendada    DateTime?          @map("data_agendada")
+  criadoEm       DateTime            @default(now()) @map("criado_em")
+  atualizadoEm   DateTime            @updatedAt      @map("atualizado_em")
+
+  @@index([empresaId])
+  @@index([empresaId, status])
+  @@index([empresaId, tipo])
+  @@index([colaboradorId])
+  @@index([solicitadoPorId])
+  @@index([referenciaId])
+  @@index([criadoEm])
+}
+
+model Notificacao {
+  id        String   @id @default(cuid())
+  empresaId String   @map("empresa_id")
+  empresa   Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  usuarioId String   @map("usuario_id")
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  titulo    String
+  mensagem  String
+  tipo      String   @default("INFO")
+  lidaEm   DateTime? @map("lida_em")
+  createdAt DateTime @default(now())
+
+  @@index([empresaId])
+  @@index([usuarioId])
+  @@index([usuarioId, lidaEm])
   @@index([createdAt])
 }
 
