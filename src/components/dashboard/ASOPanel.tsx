@@ -18,7 +18,7 @@ import Pagination from "./Pagination";
 import StatCard from "./StatCard";
 
 import { StatusBadgeWithTemporal } from "@/components/ui/status-badge-with-temporal";
-import { formatDate } from "@/lib/utils";
+import { formatDate, parseLocalDate } from "@/lib/utils";
 import type { AsoRecord, ColumnDef } from "@/types/dashboard";
 import { exportToCSV } from "@/utils/csvExport";
 
@@ -32,8 +32,7 @@ type ProcessedAso = AsoRecord & {
 
 function toDateSafe(value: unknown): Date | null {
   if (!value) return null;
-  const d = new Date(String(value));
-  return Number.isNaN(d.getTime()) ? null : d;
+  return parseLocalDate(String(value));
 }
 
 function getStatus(

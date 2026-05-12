@@ -15,7 +15,7 @@ import {
   getStatusColorClasses,
   groupPendingsByColaborador,
 } from "@/lib/unified-pending";
-import { cn } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 import type { AsoRecord, TreinamentoRecord } from "@/types/dashboard";
 
 interface GeneralPendenciesProps {
@@ -35,13 +35,12 @@ function getStatusIcon(status: string) {
   }
 }
 
-function formatDate(dateStr: string | null | undefined): string {
-  if (!dateStr) return "-";
-  try {
-    return new Date(dateStr).toLocaleDateString("pt-BR");
-  } catch {
-    return "-";
-  }
+function getTodayIsoLocal(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function getStatusBadgeColor(status: string): string {
@@ -92,7 +91,7 @@ export default function GeneralPendencies({
   );
 
   // Contagens por filtro para enriquecer os botões
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = getTodayIsoLocal();
   const counts = useMemo(() => {
     const total = realPendingsList.length;
     const vencidos = realPendingsList.filter(

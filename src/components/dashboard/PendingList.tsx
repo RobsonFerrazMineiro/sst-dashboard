@@ -5,6 +5,7 @@ import { AlertCircle, CheckCircle2, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { PendingFilterType, PendingItem } from "@/lib/dashboard-analytics";
 import { getStatusColor } from "@/lib/dashboard-analytics";
+import { formatDate } from "@/lib/utils";
 
 interface PendingListProps {
   items: PendingItem[];
@@ -30,15 +31,6 @@ function getStatusIcon(status: string) {
       return <CheckCircle2 className="w-5 h-5" />;
     default:
       return <AlertCircle className="w-5 h-5" />;
-  }
-}
-
-function formatDate(dateStr: string | null | undefined): string {
-  if (!dateStr) return "-";
-  try {
-    return new Date(dateStr).toLocaleDateString("pt-BR");
-  } catch {
-    return "-";
   }
 }
 

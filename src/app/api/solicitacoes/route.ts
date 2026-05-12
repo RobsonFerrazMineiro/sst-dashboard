@@ -3,6 +3,10 @@ import { createAuditLog, extractRequestMeta } from "@/lib/audit";
 import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { createNotificationBatch } from "@/lib/notifications";
+import {
+  getAsoStatusWithTemporal,
+  getTrainingStatusWithTemporal,
+} from "@/lib/temporal-status";
 import { NextResponse } from "next/server";
 
 // ─── GET /api/solicitacoes ────────────────────────────────────────────────────
@@ -133,9 +137,6 @@ export async function POST(req: Request) {
   // ── Valida se a referência existe e pertence à empresa ──────────────────
   let colaboradorId: string;
   let descricaoItem: string;
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-
   if (tipo === "ASO") {
     const aso = await prisma.aSO.findFirst({
       where: { id: referenciaId, empresaId: session.empresaId },
@@ -152,8 +153,12 @@ export async function POST(req: Request) {
         { status: 422 },
       );
     }
-    // Verifica se está realmente vencido (validade < hoje)
-    if (aso.validade_aso && new Date(aso.validade_aso) >= hoje) {
+    // Permite apenas quando há pendência real: vencido ou prestes a vencer.
+    const asoStatus = getAsoStatusWithTemporal(aso.validade_aso, aso.data_aso);
+    if (
+      asoStatus.status !== "Vencido" &&
+      asoStatus.status !== "Prestes a vencer"
+    ) {
       return NextResponse.json(
         { error: "ASO ainda está vigente, regularização não necessária" },
         { status: 422 },
@@ -177,7 +182,14 @@ export async function POST(req: Request) {
         { status: 422 },
       );
     }
-    if (treinamento.validade && new Date(treinamento.validade) >= hoje) {
+    // Permite apenas quando há pendência real: vencido ou prestes a vencer.
+    const treinamentoStatus = getTrainingStatusWithTemporal(
+      treinamento.validade,
+    );
+    if (
+      treinamentoStatus.status !== "Vencido" &&
+      treinamentoStatus.status !== "Prestes a vencer"
+    ) {
       return NextResponse.json(
         {
           error: "Treinamento ainda está vigente, regularização não necessária",

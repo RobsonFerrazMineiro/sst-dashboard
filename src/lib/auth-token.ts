@@ -2,7 +2,7 @@ import { SignJWT, jwtVerify } from "jose";
 import { NextRequest, NextResponse } from "next/server";
 
 export const AUTH_COOKIE_NAME = "sstlite_auth";
-const AUTH_TOKEN_TTL_SECONDS = 60 * 60 * 24 * 7;
+const AUTH_TOKEN_TTL_SECONDS = 60 * 60 * 24;
 
 export type AuthSession = {
   userId: string;

@@ -3,6 +3,7 @@ import {
   getTrainingStatus,
   type ValidityStatus,
 } from "@/lib/validity";
+import { parseLocalDate } from "@/lib/utils";
 import type { AsoRecord, TreinamentoRecord } from "@/types/dashboard";
 
 /**
@@ -80,9 +81,11 @@ function filterCurrentAsos(asos: AsoRecord[]): AsoRecord[] {
     } else {
       // Mantém o mais recente (por data_aso)
       const currentDate = current.data_aso
-        ? new Date(current.data_aso)
+        ? (parseLocalDate(current.data_aso) ?? new Date(0))
         : new Date(0);
-      const asoDate = aso.data_aso ? new Date(aso.data_aso) : new Date(0);
+      const asoDate = aso.data_aso
+        ? (parseLocalDate(aso.data_aso) ?? new Date(0))
+        : new Date(0);
 
       if (asoDate > currentDate) {
         currentByColaborador.set(key, aso);
@@ -114,10 +117,10 @@ function filterCurrentTreinamentos(
     } else {
       // Mantém o mais recente (por data_treinamento)
       const currentDate = current.data_treinamento
-        ? new Date(current.data_treinamento)
+        ? (parseLocalDate(current.data_treinamento) ?? new Date(0))
         : new Date(0);
       const treDate = tre.data_treinamento
-        ? new Date(tre.data_treinamento)
+        ? (parseLocalDate(tre.data_treinamento) ?? new Date(0))
         : new Date(0);
 
       if (treDate > currentDate) {
@@ -147,7 +150,9 @@ export function createUnifiedPendingsList(
     if (priorityDiff !== 0) return priorityDiff;
 
     if (a.validade && b.validade) {
-      return new Date(a.validade).getTime() - new Date(b.validade).getTime();
+      const da = parseLocalDate(a.validade)?.getTime() ?? 0;
+      const db = parseLocalDate(b.validade)?.getTime() ?? 0;
+      return da - db;
     }
 
     return 0;
@@ -330,7 +335,7 @@ export function filterGroupsByStatus(
 ): PendingsByColaborador[] {
   if (filterType === "todos") return groups;
 
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = getTodayIsoLocal();
 
   return groups
     .map((group) => {
@@ -369,4 +374,11 @@ export function filterGroupsByStatus(
       };
     })
     .filter((g) => g !== null) as PendingsByColaborador[];
+}
+function getTodayIsoLocal(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }

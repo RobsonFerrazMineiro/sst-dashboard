@@ -1,7 +1,13 @@
 "use client";
 
 import { type RiskScore } from "@/lib/risk-score";
-import { useCallback, useRef, useState } from "react";
+import {
+  type MouseEvent as ReactMouseEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 import RiskScoreDetail from "./RiskScoreDetail";
 
@@ -24,21 +30,91 @@ export default function RiskScoreHoverCard({
     left: 0,
   });
   const triggerRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  const updatePosition = useCallback(() => {
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    const cardWidth = cardRef.current?.offsetWidth ?? 280;
+    const cardHeight = cardRef.current?.offsetHeight ?? 220;
+    const viewportW = window.innerWidth;
+    const viewportH = window.innerHeight;
+    const gap = 8;
+
+    let left = rect.left;
+    let top = rect.bottom + gap;
+
+    if (left + cardWidth > viewportW - gap) {
+      left = Math.max(gap, viewportW - cardWidth - gap);
+    }
+    if (top + cardHeight > viewportH - gap) {
+      top = Math.max(gap, rect.top - cardHeight - gap);
+    }
+
+    setPosition({ top, left });
+  }, []);
+
+  const openCard = useCallback(() => {
+    updatePosition();
+    setShowCard(true);
+  }, [updatePosition]);
 
   const handleMouseEnter = useCallback(() => {
-    if (triggerRef.current) {
-      const rect = triggerRef.current.getBoundingClientRect();
-      setPosition({
-        top: rect.top + window.scrollY - 16, // 16px acima
-        left: rect.left + window.scrollX,
-      });
-      setShowCard(true);
+    if (window.matchMedia("(hover: hover)").matches) {
+      openCard();
+    }
+  }, [openCard]);
+
+  const handleMouseLeave = useCallback(() => {
+    if (window.matchMedia("(hover: hover)").matches) {
+      setShowCard(false);
     }
   }, []);
 
-  const handleMouseLeave = useCallback(() => {
-    setShowCard(false);
-  }, []);
+  const handleTriggerClick = useCallback(
+    (event: ReactMouseEvent) => {
+      // Em mobile/touch abre/fecha por click; no desktop mantém hover.
+      if (!window.matchMedia("(hover: hover)").matches) {
+        event.preventDefault();
+        if (showCard) {
+          setShowCard(false);
+        } else {
+          openCard();
+        }
+      }
+    },
+    [openCard, showCard],
+  );
+
+  useEffect(() => {
+    if (!showCard) return;
+
+    const handleOutside = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as Node | null;
+      if (!target) return;
+      const clickedTrigger = triggerRef.current?.contains(target);
+      const clickedCard = cardRef.current?.contains(target);
+      if (!clickedTrigger && !clickedCard) {
+        setShowCard(false);
+      }
+    };
+
+    const handleViewportChange = () => {
+      updatePosition();
+    };
+
+    document.addEventListener("mousedown", handleOutside);
+    document.addEventListener("touchstart", handleOutside, { passive: true });
+    window.addEventListener("resize", handleViewportChange);
+    window.addEventListener("scroll", handleViewportChange, true);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutside);
+      document.removeEventListener("touchstart", handleOutside);
+      window.removeEventListener("resize", handleViewportChange);
+      window.removeEventListener("scroll", handleViewportChange, true);
+    };
+  }, [showCard, updatePosition]);
 
   return (
     <>
@@ -46,6 +122,7 @@ export default function RiskScoreHoverCard({
         ref={triggerRef}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        onClick={handleTriggerClick}
       >
         {children}
       </div>
@@ -55,6 +132,7 @@ export default function RiskScoreHoverCard({
         typeof document !== "undefined" &&
         createPortal(
           <div
+            ref={cardRef}
             className="fixed z-50 pointer-events-none"
             style={{
               top: `${position.top}px`,

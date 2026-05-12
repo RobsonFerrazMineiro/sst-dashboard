@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Building2, Loader2, User } from "lucide-react";
+import { Building2, Eye, EyeOff, Loader2, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -24,6 +24,8 @@ export default function CadastroPage() {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmar, setConfirmar] = useState("");
+  const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [mostrarConfirmar, setMostrarConfirmar] = useState(false);
 
   // Campos empresa
   const [razaoSocial, setRazaoSocial] = useState("");
@@ -255,27 +257,59 @@ export default function CadastroPage() {
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="senha">Senha *</Label>
-                  <Input
-                    id="senha"
-                    type="password"
-                    autoComplete="new-password"
-                    value={senha}
-                    onChange={(e) => setSenha(e.target.value)}
-                    placeholder="Mínimo 8 caracteres"
-                    required
-                  />
+                  <div className="relative">
+                    <Input
+                      id="senha"
+                      type={mostrarSenha ? "text" : "password"}
+                      autoComplete="new-password"
+                      value={senha}
+                      onChange={(e) => setSenha(e.target.value)}
+                      placeholder="Mínimo 8 caracteres"
+                      className="pr-10"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setMostrarSenha((prev) => !prev)}
+                      className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-500 hover:text-slate-700"
+                      aria-label={mostrarSenha ? "Ocultar senha" : "Mostrar senha"}
+                      aria-pressed={mostrarSenha}
+                    >
+                      {mostrarSenha ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="confirmar">Confirmar senha *</Label>
-                  <Input
-                    id="confirmar"
-                    type="password"
-                    autoComplete="new-password"
-                    value={confirmar}
-                    onChange={(e) => setConfirmar(e.target.value)}
-                    placeholder="Repita a senha"
-                    required
-                  />
+                  <div className="relative">
+                    <Input
+                      id="confirmar"
+                      type={mostrarConfirmar ? "text" : "password"}
+                      autoComplete="new-password"
+                      value={confirmar}
+                      onChange={(e) => setConfirmar(e.target.value)}
+                      placeholder="Repita a senha"
+                      className="pr-10"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setMostrarConfirmar((prev) => !prev)}
+                      className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-500 hover:text-slate-700"
+                      aria-label={mostrarConfirmar ? "Ocultar senha" : "Mostrar senha"}
+                      aria-pressed={mostrarConfirmar}
+                    >
+                      {mostrarConfirmar ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 <Button type="submit" className="w-full" disabled={loading}>

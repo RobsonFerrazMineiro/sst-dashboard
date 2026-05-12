@@ -4,7 +4,6 @@ import RiskScoreBadge from "@/components/dashboard/RiskScoreBadge";
 import RiskScoreHoverCard from "@/components/dashboard/RiskScoreHoverCard";
 import NotificationBell from "@/components/layout/NotificationBell";
 import { SolicitarRegularizacaoButton } from "@/components/solicitacoes/SolicitarRegularizacaoButton";
-import { SSTProgressBar } from "@/components/ui/SSTProgressBar";
 import { StatusBadgeWithTemporal } from "@/components/ui/status-badge-with-temporal";
 import { api } from "@/lib/api";
 import { calculateRiskScore } from "@/lib/risk-score";
@@ -13,7 +12,7 @@ import {
   getTrainingStatusWithTemporal,
 } from "@/lib/temporal-status";
 import { createRealPendingsList } from "@/lib/unified-pending";
-import { formatDate } from "@/lib/utils";
+import { formatDate, parseLocalDate } from "@/lib/utils";
 import type { AsoRecord, TreinamentoRecord } from "@/types/dashboard";
 import { useQuery } from "@tanstack/react-query";
 import { differenceInDays } from "date-fns";
@@ -65,8 +64,12 @@ function splitLatestByKey<T extends Record<string, unknown>>(
 ): T[] {
   const seenKeys = new Set<unknown>();
   const sorted = [...records].sort((a, b) => {
-    const da = a[dateField] ? new Date(a[dateField] as string).getTime() : 0;
-    const db = b[dateField] ? new Date(b[dateField] as string).getTime() : 0;
+    const da = a[dateField]
+      ? (parseLocalDate(a[dateField] as string)?.getTime() ?? 0)
+      : 0;
+    const db = b[dateField]
+      ? (parseLocalDate(b[dateField] as string)?.getTime() ?? 0)
+      : 0;
     return db - da;
   });
   return sorted.filter((r) => {
@@ -107,7 +110,7 @@ function getSolicitacaoBanner(
     };
   }
   if (sol.status === "AGENDADA" && sol.dataAgendada) {
-    const dataFmt = new Date(sol.dataAgendada).toLocaleDateString("pt-BR");
+    const dataFmt = formatDate(sol.dataAgendada, "—");
     const tipoLabel = _tipo === "ASO" ? "ASO" : "Treinamento";
     return {
       texto: `Seu ${tipoLabel} está agendado para ${dataFmt}. Programe-se!`,
@@ -176,61 +179,6 @@ function EmptyState({ label }: { label: string }) {
 }
 
 // ─── alerta de pendências ─────────────────────────────────────────────────────
-
-type PendenciaItem = {
-  label: string;
-  /** "critico" = vencido; "atencao" = prestes a vencer / pendente */
-  nivel: "critico" | "atencao";
-};
-
-function PendenciasAlert({ itens }: { itens: PendenciaItem[] }) {
-  if (itens.length === 0) return null;
-
-  const temCritico = itens.some((i) => i.nivel === "critico");
-
-  const containerCls = temCritico
-    ? "border-rose-200 bg-rose-50"
-    : "border-amber-200 bg-amber-50";
-  const iconCls = temCritico ? "text-rose-500" : "text-amber-500";
-  const titleCls = temCritico ? "text-rose-700" : "text-amber-700";
-  const itemCriticoCls = "text-rose-600 font-medium";
-  const itemAtencaoCls = "text-amber-600";
-
-  return (
-    <div
-      role="alert"
-      className={`rounded-lg border px-4 py-3 flex gap-3 ${containerCls}`}
-    >
-      <AlertTriangle
-        className={`h-4 w-4 shrink-0 mt-0.5 ${iconCls}`}
-        aria-hidden="true"
-      />
-      <div className="space-y-1 min-w-0">
-        <p className={`text-sm font-semibold ${titleCls}`}>
-          Pendências encontradas
-        </p>
-        <ul className="space-y-0.5">
-          {itens.map((item, idx) => (
-            <li
-              key={idx}
-              className={`text-xs flex items-center gap-1.5 ${
-                item.nivel === "critico" ? itemCriticoCls : itemAtencaoCls
-              }`}
-            >
-              <span
-                className={`inline-block h-1.5 w-1.5 rounded-full shrink-0 ${
-                  item.nivel === "critico" ? "bg-rose-500" : "bg-amber-400"
-                }`}
-                aria-hidden="true"
-              />
-              {item.label}
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
-  );
-}
 
 function TreinamentoCard({
   t,
@@ -379,8 +327,8 @@ function ResumoSST({
   const asoAtual = useMemo(() => {
     if (asos.length === 0) return null;
     return [...asos].sort((a, b) => {
-      const da = a.data_aso ? new Date(a.data_aso).getTime() : 0;
-      const db = b.data_aso ? new Date(b.data_aso).getTime() : 0;
+      const da = a.data_aso ? (parseLocalDate(a.data_aso)?.getTime() ?? 0) : 0;
+      const db = b.data_aso ? (parseLocalDate(b.data_aso)?.getTime() ?? 0) : 0;
       return db - da;
     })[0];
   }, [asos]);
@@ -392,45 +340,9 @@ function ResumoSST({
   ).length;
   const trPendentes = trAtual.length - trEmDia;
 
-  // Treinamentos vencidos vs "prestes a vencer"
-  const trVencidos = trAtual.filter(
-    (t) => getTrainingStatusWithTemporal(t.validade).status === "Vencido",
-  ).length;
-  const trPrestesVencer = trAtual.filter(
-    (t) =>
-      getTrainingStatusWithTemporal(t.validade).status === "Prestes a vencer",
-  ).length;
-
   const asoStatus = asoAtual
     ? getAsoStatusWithTemporal(asoAtual.validade_aso, asoAtual.data_aso).status
     : "Pendente";
-
-  // Monta lista de pendências para o alerta
-  const pendenciasAlerta = useMemo<PendenciaItem[]>(() => {
-    const lista: PendenciaItem[] = [];
-
-    if (trVencidos > 0) {
-      lista.push({
-        label: `${trVencidos} treinamento${trVencidos > 1 ? "s" : ""} vencido${trVencidos > 1 ? "s" : ""}`,
-        nivel: "critico",
-      });
-    }
-    if (trPrestesVencer > 0) {
-      lista.push({
-        label: `${trPrestesVencer} treinamento${trPrestesVencer > 1 ? "s" : ""} prestes a vencer`,
-        nivel: "atencao",
-      });
-    }
-    if (asoStatus === "Vencido") {
-      lista.push({ label: "ASO vencido", nivel: "critico" });
-    } else if (asoStatus === "Pendente") {
-      lista.push({ label: "ASO pendente", nivel: "atencao" });
-    } else if (asoStatus === "Prestes a vencer") {
-      lista.push({ label: "ASO prestes a vencer", nivel: "atencao" });
-    }
-
-    return lista;
-  }, [trVencidos, trPrestesVencer, asoStatus]);
 
   // Próximo vencimento (entre todos os itens — inclui vencidos para exibir "há X dias")
   const proximoVencimento = useMemo(() => {
@@ -442,8 +354,8 @@ function ResumoSST({
 
     for (const t of trAtual) {
       if (!t.validade) continue;
-      const d = new Date(t.validade);
-      d.setHours(0, 0, 0, 0);
+      const d = parseLocalDate(t.validade);
+      if (!d) continue;
       candidatos.push({
         label: t.tipoTreinamento_nome ?? "Treinamento",
         data: d,
@@ -451,13 +363,16 @@ function ResumoSST({
       });
     }
     if (asoAtual?.validade_aso) {
-      const d = new Date(asoAtual.validade_aso);
-      d.setHours(0, 0, 0, 0);
+      const d = parseLocalDate(asoAtual.validade_aso);
+      if (!d) {
+        // ignora validade inválida e segue com demais candidatos
+      } else {
       candidatos.push({
         label: asoAtual.tipoASO_nome ?? "ASO",
         data: d,
         diasRestantes: differenceInDays(d, today),
       });
+      }
     }
 
     if (candidatos.length === 0) return null;
@@ -486,12 +401,6 @@ function ResumoSST({
           <RiskScoreBadge riskScore={riskScore} size="sm" />
         </RiskScoreHoverCard>
       </div>
-
-      {/* barra de progresso do score */}
-      <SSTProgressBar score={riskScore.score} />
-
-      {/* alerta de pendências — oculto quando não há nenhuma */}
-      <PendenciasAlert itens={pendenciasAlerta} />
 
       {/* cards de resumo */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -552,7 +461,7 @@ function ResumoSST({
               </p>
               <p className="text-xs mt-0.5 flex items-center justify-center gap-1">
                 <CalendarDays className="h-3 w-3" />
-                {formatDate(proximoVencimento.data.toISOString(), "—")}
+                {formatDate(proximoVencimento.data, "—")}
               </p>
               <p className="text-xs mt-1 font-medium">
                 {proximoVencimento.diasRestantes === 0
@@ -630,8 +539,8 @@ export default function MeuPerfilView({
   const asoAtual = useMemo(() => {
     if (asos.length === 0) return null;
     return [...asos].sort((a, b) => {
-      const da = a.data_aso ? new Date(a.data_aso).getTime() : 0;
-      const db = b.data_aso ? new Date(b.data_aso).getTime() : 0;
+      const da = a.data_aso ? (parseLocalDate(a.data_aso)?.getTime() ?? 0) : 0;
+      const db = b.data_aso ? (parseLocalDate(b.data_aso)?.getTime() ?? 0) : 0;
       return db - da;
     })[0];
   }, [asos]);

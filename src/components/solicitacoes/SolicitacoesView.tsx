@@ -77,6 +77,12 @@ function StatusBadge({ status }: { status: StatusSolicitacao }) {
   );
 }
 
+function toDateInputValue(dateValue?: string | null): string {
+  if (!dateValue) return "";
+  const match = String(dateValue).match(/^(\d{4}-\d{2}-\d{2})/);
+  return match ? match[1] : "";
+}
+
 function EditarStatusModal({
   solicitacao,
   onClose,
@@ -89,9 +95,7 @@ function EditarStatusModal({
   const [status, setStatus] = useState<StatusSolicitacao>(solicitacao.status);
   const [observacao, setObservacao] = useState(solicitacao.observacao ?? "");
   const [dataAgendada, setDataAgendada] = useState(
-    solicitacao.dataAgendada
-      ? new Date(solicitacao.dataAgendada).toISOString().slice(0, 10)
-      : "",
+    toDateInputValue(solicitacao.dataAgendada),
   );
   const [loading, setLoading] = useState(false);
 

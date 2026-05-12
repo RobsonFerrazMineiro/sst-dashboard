@@ -3,6 +3,7 @@ import { createAuditLog, extractRequestMeta } from "@/lib/audit";
 import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
+import { formatDate, parseLocalDate } from "@/lib/utils";
 import { NextResponse } from "next/server";
 
 const STATUS_VALIDOS = [
@@ -49,8 +50,8 @@ export async function PATCH(
         { status: 400 },
       );
     }
-    const parsed = new Date(dataAgendadaRaw);
-    if (isNaN(parsed.getTime())) {
+    const parsed = parseLocalDate(dataAgendadaRaw);
+    if (!parsed) {
       return NextResponse.json(
         { error: "dataAgendada inválida" },
         { status: 400 },
@@ -121,7 +122,7 @@ export async function PATCH(
 
   const descricaoAudit =
     novoStatus === "AGENDADA" && dataAgendada
-      ? `Status alterado para AGENDADA. Data agendada: ${dataAgendada.toISOString().slice(0, 10)}`
+      ? `Status alterado para AGENDADA. Data agendada: ${formatDate(dataAgendada, "-")}`
       : `Status alterado para ${novoStatus}`;
 
   void createAuditLog({
@@ -147,7 +148,7 @@ export async function PATCH(
         const tipoLabel = solicitacao.tipo === "ASO" ? "ASO" : "Treinamento";
         let mensagem: string;
         if (novoStatus === "AGENDADA" && dataAgendada) {
-          const dataFmt = dataAgendada.toLocaleDateString("pt-BR");
+          const dataFmt = formatDate(dataAgendada, "-");
           mensagem = `Seu ${tipoLabel} está agendado para ${dataFmt}. Programe-se!`;
         } else {
           const statusLabel: Record<string, string> = {

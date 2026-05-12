@@ -1,5 +1,13 @@
 type ColumnDef = { header: string; accessor: string };
 
+function getTodayIsoLocal(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function escapeCSV(value: unknown): string {
   const s = String(value ?? "");
   if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
@@ -23,7 +31,7 @@ export function exportToCSV<T extends Record<string, unknown>>(
   const a = document.createElement("a");
   a.href = url;
 
-  const date = new Date().toISOString().slice(0, 10);
+  const date = getTodayIsoLocal();
   a.download = `${filenameBase}_${date}.csv`;
 
   document.body.appendChild(a);

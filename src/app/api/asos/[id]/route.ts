@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth";
+import { parseLocalDate } from "@/lib/utils";
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 
@@ -7,8 +8,7 @@ type Ctx = { params: Promise<{ id: string }> };
 
 function parseDateOrNull(value: unknown): Date | null {
   if (value === null || value === undefined || value === "") return null;
-  const d = new Date(String(value));
-  return Number.isNaN(d.getTime()) ? null : d;
+  return parseLocalDate(String(value));
 }
 
 function serializeASO(item: Awaited<ReturnType<typeof prisma.aSO.findFirstOrThrow>>) {

@@ -2,13 +2,13 @@ import { AUDIT_ACTIONS } from "@/constants/audit-actions";
 import { createAuditLog, extractRequestMeta } from "@/lib/audit";
 import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { parseLocalDate } from "@/lib/utils";
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 function parseDateOrNull(value: unknown): Date | null {
   if (value === null || value === undefined || value === "") return null;
-  const d = new Date(String(value));
-  return Number.isNaN(d.getTime()) ? null : d;
+  return parseLocalDate(String(value));
 }
 
 function serializeASO(

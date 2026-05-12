@@ -3,6 +3,7 @@ import {
   getTrainingStatus,
   type ValidityStatus,
 } from "@/lib/validity";
+import { parseLocalDate } from "@/lib/utils";
 import type { AsoRecord, TreinamentoRecord } from "@/types/dashboard";
 
 /**
@@ -112,7 +113,9 @@ export function createUnifiedPendingsList(
 
     // Se mesmo status, ordena por data de validade (mais próxima primeiro)
     if (a.validade && b.validade) {
-      return new Date(a.validade).getTime() - new Date(b.validade).getTime();
+      const da = parseLocalDate(a.validade)?.getTime() ?? 0;
+      const db = parseLocalDate(b.validade)?.getTime() ?? 0;
+      return da - db;
     }
 
     return 0;
@@ -136,7 +139,7 @@ export function filterPendingItems(
       return items.filter((item) => item.status === "Prestes a vencer");
 
     case "hoje": {
-      const todayStr = new Date().toISOString().slice(0, 10);
+      const todayStr = getTodayIsoLocal();
       return items.filter((item) => item.validade?.slice(0, 10) === todayStr);
     }
 
@@ -177,7 +180,7 @@ export function calculateIndicators(
     ).length;
 
   // Itens que vencem exatamente hoje
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = getTodayIsoLocal();
   const vencendoHoje =
     asos.filter((aso) => aso.validade_aso?.slice(0, 10) === todayStr).length +
     treinamentos.filter((tre) => tre.validade?.slice(0, 10) === todayStr)
@@ -249,4 +252,11 @@ export function getStatusColor(status: ValidityStatus): {
     },
   };
   return colors[status];
+}
+function getTodayIsoLocal(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
