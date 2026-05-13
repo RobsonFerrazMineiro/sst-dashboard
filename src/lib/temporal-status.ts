@@ -16,6 +16,8 @@ export interface StatusWithTemporal {
   temporalLabel: string; // ex: "há 5 dias", "em 10 dias", "45 dias restantes"
 }
 
+type DateLike = Date | string | null | undefined;
+
 function startOfToday(): Date {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
@@ -27,6 +29,17 @@ function diffDaysTo(date: Date): number {
   const d = new Date(date);
   d.setHours(0, 0, 0, 0);
   return Math.ceil((d.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function normalizeDateInput(value: DateLike): Date | null {
+  if (!value) return null;
+
+  if (value instanceof Date) {
+    const copy = new Date(value);
+    return Number.isNaN(copy.getTime()) ? null : copy;
+  }
+
+  return parseLocalDate(value);
 }
 
 /**
@@ -54,8 +67,8 @@ function getTemporalLabel(diffDays: number): string {
  * Calcula status e informação temporal para ASO
  */
 export function getAsoStatusWithTemporal(
-  validadeStr?: string | null,
-  dataStr?: string | null,
+  validadeStr?: DateLike,
+  dataStr?: DateLike,
 ): StatusWithTemporal {
   if (!validadeStr || !dataStr) {
     return {
@@ -65,7 +78,7 @@ export function getAsoStatusWithTemporal(
     };
   }
 
-  const validade = parseLocalDate(validadeStr);
+  const validade = normalizeDateInput(validadeStr);
   if (!validade) {
     return {
       status: "Pendente",
@@ -96,7 +109,7 @@ export function getAsoStatusWithTemporal(
  * Calcula status e informação temporal para Treinamento
  */
 export function getTrainingStatusWithTemporal(
-  validadeStr?: string | null,
+  validadeStr?: DateLike,
 ): StatusWithTemporal {
   if (!validadeStr) {
     return {
@@ -106,7 +119,7 @@ export function getTrainingStatusWithTemporal(
     };
   }
 
-  const validade = parseLocalDate(validadeStr);
+  const validade = normalizeDateInput(validadeStr);
   if (!validade) {
     return {
       status: "Sem vencimento",
@@ -137,10 +150,10 @@ export function getTrainingStatusWithTemporal(
  * Apenas retorna o rótulo temporal sem calcular status
  * Útil para quando você já tem o status e só quer o label
  */
-export function getTemporalLabelFromDate(validadeStr?: string | null): string {
+export function getTemporalLabelFromDate(validadeStr?: DateLike): string {
   if (!validadeStr) return "";
 
-  const validade = parseLocalDate(validadeStr);
+  const validade = normalizeDateInput(validadeStr);
   if (!validade) return "";
 
   const diffDays = diffDaysTo(validade);
