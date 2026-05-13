@@ -10,8 +10,47 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import { z } from "zod";
 
 type Tipo = "PESSOAL" | "EMPRESA";
+const cadastroSchema = z
+  .object({
+    tipo: z.enum(["PESSOAL", "EMPRESA"]),
+    nome: z.string().trim().min(1, "Informe o nome."),
+    email: z.string().trim().email("Informe um e-mail v?lido."),
+    senha: z
+      .string()
+      .min(8, "A senha deve ter pelo menos 8 caracteres")
+      .regex(/[A-Z]/, "A senha deve ter pelo menos uma letra maiúscula")
+      .regex(/[a-z]/, "A senha deve ter pelo menos uma letra minúscula")
+      .regex(/\d/, "A senha deve ter pelo menos um número"),
+    confirmar: z.string().min(1, "Confirme a senha."),
+    razaoSocial: z.string().trim().optional(),
+    cnpj: z.string().trim().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.tipo === "EMPRESA" && !data.razaoSocial) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["razaoSocial"],
+        message: "Informe a raz?o social.",
+      });
+    }
+    if (data.tipo === "EMPRESA" && !data.cnpj) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["cnpj"],
+        message: "Informe o CNPJ.",
+      });
+    }
+    if (data.senha !== data.confirmar) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["confirmar"],
+        message: "As senhas n?o coincidem",
+      });
+    }
+  });
 
 export default function CadastroPage() {
   const router = useRouter();
@@ -32,6 +71,7 @@ export default function CadastroPage() {
   const [nomeFantasia, setNomeFantasia] = useState("");
   const [cnpj, setCnpj] = useState("");
   const [nomeResponsavel, setNomeResponsavel] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   function handleEscolhaTipo(t: Tipo) {
     setTipo(t);
@@ -55,14 +95,30 @@ export default function CadastroPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (senha !== confirmar) {
-      toast.error("As senhas não coincidem");
+    if (!tipo) {
+      toast.error("Selecione o tipo de cadastro.");
       return;
     }
-    if (senha.length < 8) {
-      toast.error("A senha deve ter pelo menos 8 caracteres");
+    const parsed = cadastroSchema.safeParse({
+      tipo,
+      nome,
+      email,
+      senha,
+      confirmar,
+      razaoSocial,
+      cnpj,
+    });
+    if (!parsed.success) {
+      const nextErrors: Record<string, string> = {};
+      for (const issue of parsed.error.issues) {
+        const key = String(issue.path[0] ?? "form");
+        if (!nextErrors[key]) nextErrors[key] = issue.message;
+      }
+      setFieldErrors(nextErrors);
+      toast.error(parsed.error.issues[0]?.message || "Verifique os campos.");
       return;
     }
+    setFieldErrors({});
 
     setLoading(true);
     try {
@@ -155,7 +211,7 @@ export default function CadastroPage() {
 
             {/* ── PASSO 2: formulário dinâmico ─────────────────────────── */}
             {step === 2 && tipo && (
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form noValidate onSubmit={handleSubmit} className="space-y-4">
                 <div className="flex items-center justify-between">
                   <p className="font-semibold text-slate-800">
                     {tipo === "PESSOAL"
@@ -183,6 +239,11 @@ export default function CadastroPage() {
                         placeholder="Nome legal da empresa"
                         required
                       />
+                      {fieldErrors.razaoSocial && (
+                        <p className="text-xs text-rose-600">
+                          {fieldErrors.razaoSocial}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-1.5">
                       <Label htmlFor="fantasia">
@@ -208,6 +269,11 @@ export default function CadastroPage() {
                         inputMode="numeric"
                         required
                       />
+                      {fieldErrors.cnpj && (
+                        <p className="text-xs text-rose-600">
+                          {fieldErrors.cnpj}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-1.5">
                       <Label htmlFor="responsavel">
@@ -242,6 +308,9 @@ export default function CadastroPage() {
                     placeholder="Nome completo"
                     required
                   />
+                  {fieldErrors.nome && (
+                    <p className="text-xs text-rose-600">{fieldErrors.nome}</p>
+                  )}
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="email">E-mail *</Label>
@@ -254,6 +323,9 @@ export default function CadastroPage() {
                     placeholder="email@exemplo.com"
                     required
                   />
+                  {fieldErrors.email && (
+                    <p className="text-xs text-rose-600">{fieldErrors.email}</p>
+                  )}
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="senha">Senha *</Label>
@@ -282,6 +354,10 @@ export default function CadastroPage() {
                       )}
                     </button>
                   </div>
+                  <p className="text-xs text-slate-500">
+                    Obrigatório: mínimo de 8 caracteres, com letra maiúscula,
+                    letra minúscula e número.
+                  </p>
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="confirmar">Confirmar senha *</Label>
@@ -310,6 +386,11 @@ export default function CadastroPage() {
                       )}
                     </button>
                   </div>
+                  {fieldErrors.confirmar && (
+                    <p className="text-xs text-rose-600">
+                      {fieldErrors.confirmar}
+                    </p>
+                  )}
                 </div>
 
                 <Button type="submit" className="w-full" disabled={loading}>

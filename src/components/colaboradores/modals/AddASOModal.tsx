@@ -55,6 +55,7 @@ export default function AddASOModal({
   const [validade, setValidade] = useState("");
   const [clinica, setClinica] = useState("");
   const [observacao, setObservacao] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // ✅ Preenche o formulário quando abrir (e quando mudar o ASO selecionado)
   useEffect(() => {
@@ -73,6 +74,7 @@ export default function AddASOModal({
       setClinica("");
       setObservacao("");
     }
+    setFieldErrors({});
   }, [open, aso]);
 
   const tipoSelecionado = useMemo(() => {
@@ -85,6 +87,15 @@ export default function AddASOModal({
 
   const mutation = useMutation({
     mutationFn: async () => {
+      const nextErrors: Record<string, string> = {};
+      if (!tipoId) nextErrors.tipoId = "Tipo de ASO é obrigatório";
+      if (!dataASO) nextErrors.dataASO = "Data do ASO é obrigatória";
+      if (Object.keys(nextErrors).length > 0) {
+        setFieldErrors(nextErrors);
+        throw new Error(Object.values(nextErrors)[0]);
+      }
+      setFieldErrors({});
+
       const payload = {
         colaborador_id: colaborador.id,
         colaborador_nome: colaborador.nome,
@@ -155,6 +166,9 @@ export default function AddASOModal({
                 ))}
               </SelectContent>
             </Select>
+            {fieldErrors.tipoId && (
+              <p className="text-xs text-rose-600">{fieldErrors.tipoId}</p>
+            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -172,6 +186,9 @@ export default function AddASOModal({
                 value={dataASO}
                 onChange={(e) => setDataASO(e.target.value)}
               />
+              {fieldErrors.dataASO && (
+                <p className="text-xs text-rose-600">{fieldErrors.dataASO}</p>
+              )}
             </div>
 
             <div className="grid gap-2">
@@ -218,6 +235,9 @@ export default function AddASOModal({
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
+            <p className="mr-auto self-center text-xs text-slate-500">
+              * Campos obrigatórios
+            </p>
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>

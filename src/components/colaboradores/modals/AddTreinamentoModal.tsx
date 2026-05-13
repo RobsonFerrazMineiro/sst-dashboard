@@ -42,6 +42,7 @@ export default function AddTreinamentoModal({
   const [dataTreinamento, setDataTreinamento] = useState<string>("");
   const [validade, setValidade] = useState<string>("");
   const [carga, setCarga] = useState<string>("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // ✅ Prefill quando abrir pra editar
   useEffect(() => {
@@ -67,6 +68,7 @@ export default function AddTreinamentoModal({
       setValidade("");
       setCarga("");
     }
+    setFieldErrors({});
   }, [open, initial]);
 
   const tipoSelecionado = useMemo(() => {
@@ -80,6 +82,17 @@ export default function AddTreinamentoModal({
 
   const mutation = useMutation({
     mutationFn: async () => {
+      const nextErrors: Record<string, string> = {};
+      if (!tipoId) nextErrors.tipoId = "Tipo de treinamento é obrigatório";
+      if (!dataTreinamento) {
+        nextErrors.dataTreinamento = "Data do treinamento é obrigatória";
+      }
+      if (Object.keys(nextErrors).length > 0) {
+        setFieldErrors(nextErrors);
+        throw new Error(Object.values(nextErrors)[0]);
+      }
+      setFieldErrors({});
+
       const payload: Partial<TreinamentoRecord> = {
         colaborador_id: colaborador.id,
         colaborador_nome: colaborador.nome,
@@ -149,6 +162,9 @@ export default function AddTreinamentoModal({
                 ))}
               </SelectContent>
             </Select>
+            {fieldErrors.tipoId && (
+              <p className="text-xs text-rose-600">{fieldErrors.tipoId}</p>
+            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -166,6 +182,11 @@ export default function AddTreinamentoModal({
                 value={dataTreinamento}
                 onChange={(e) => setDataTreinamento(e.target.value)}
               />
+              {fieldErrors.dataTreinamento && (
+                <p className="text-xs text-rose-600">
+                  {fieldErrors.dataTreinamento}
+                </p>
+              )}
             </div>
             <div className="grid gap-2">
               <label
@@ -217,6 +238,9 @@ export default function AddTreinamentoModal({
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
+            <p className="mr-auto self-center text-xs text-slate-500">
+              * Campos obrigatórios
+            </p>
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>

@@ -4,26 +4,49 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { z } from "zod";
+
+const loginSchema = z.object({
+  login: z.string().trim().min(1, "Informe o login."),
+  senha: z
+    .string()
+    .min(1, "Informe a senha.")
+    .min(8, "A senha deve ter pelo menos 8 caracteres."),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
-  const [login, setLogin] = useState("");
-  const [senha, setSenha] = useState("");
   const [mostrarSenha, setMostrarSenha] = useState(false);
-  const [loading, setLoading] = useState(false);
 
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setLoading(true);
+  const {
+    register,
+    handleSubmit,
+    setError,
+    clearErrors,
+    formState: { isSubmitting, errors },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      login: "",
+      senha: "",
+    },
+  });
 
+  async function onSubmit({ login, senha }: LoginFormData) {
     try {
+      clearErrors("senha");
+
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -33,58 +56,65 @@ export default function LoginForm() {
       const payload = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        throw new Error(payload?.error || "Falha ao autenticar");
+        const errorMessage = String(payload?.error ?? "");
+        if (errorMessage.toLowerCase().includes("credenciais")) {
+          setError("senha", {
+            type: "server",
+            message: "Login ou senha incorretos.",
+          });
+          throw new Error("Login ou senha incorretos.");
+        }
+        throw new Error(errorMessage || "Falha ao autenticar");
       }
 
-      // Limpa o cache antes de navegar para garantir que o novo usuário
-      // não herde dados/permissões da sessão anterior armazenados em memória.
       queryClient.clear();
 
-      // Se o usuário for COLABORADOR, redireciona direto para /meu-perfil
-      // evitando o double-redirect (dashboard → meu-perfil)
       const roles: string[] = payload?.user?.roles ?? [];
       const isColaborador = roles.includes("COLABORADOR");
       const defaultNext = isColaborador ? "/meu-perfil" : "/dashboard";
       const next = searchParams.get("next") || defaultNext;
 
       router.replace(next);
-      // NÃO chamamos router.refresh() aqui — o replace já invalida o cache
-      // de rota, e o refresh extra causava round-trips desnecessários.
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Falha ao autenticar");
-    } finally {
-      setLoading(false);
     }
   }
 
   return (
     <Card className="w-full max-w-md border-slate-200 shadow-lg">
       <CardContent className="space-y-6 p-8">
-        {/* Banner de conta criada após cadastro */}
         {searchParams.get("cadastro") === "ok" && (
           <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
             <CheckCircle2 className="h-4 w-4 shrink-0" />
-            <span>Conta criada com sucesso! Faça login para continuar.</span>
+            <span>Conta criada com sucesso! Faca login para continuar.</span>
           </div>
         )}
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold text-slate-900">Entrar</h1>
           <p className="text-sm text-slate-600">
-            Acesse o SST Lite com seu e-mail ou matrícula.
+            Acesse o SST Lite com seu e-mail ou matricula.
           </p>
         </div>
-        <form onSubmit={onSubmit} className="space-y-4">
+        <form
+          noValidate
+          onSubmit={handleSubmit(onSubmit, (submitErrors) => {
+            const firstError = Object.values(submitErrors)[0];
+            toast.error(firstError?.message || "Verifique os dados informados.");
+          })}
+          className="space-y-4"
+        >
           <div className="space-y-2">
             <Label htmlFor="login">Login</Label>
             <Input
               id="login"
               type="text"
               autoComplete="username"
-              placeholder="E-mail ou matrícula"
-              value={login}
-              onChange={(event) => setLogin(event.target.value)}
-              required
+              placeholder="E-mail ou matricula"
+              {...register("login")}
             />
+            {errors.login?.message && (
+              <p className="text-xs text-rose-600">{errors.login.message}</p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="senha">Senha</Label>
@@ -93,10 +123,8 @@ export default function LoginForm() {
                 id="senha"
                 type={mostrarSenha ? "text" : "password"}
                 autoComplete="current-password"
-                value={senha}
-                onChange={(event) => setSenha(event.target.value)}
                 className="pr-10"
-                required
+                {...register("senha")}
               />
               <button
                 type="button"
@@ -112,9 +140,12 @@ export default function LoginForm() {
                 )}
               </button>
             </div>
+            {errors.senha?.message && (
+              <p className="text-xs text-rose-600">{errors.senha.message}</p>
+            )}
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Entrando..." : "Entrar"}
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? "Entrando..." : "Entrar"}
           </Button>
         </form>
       </CardContent>

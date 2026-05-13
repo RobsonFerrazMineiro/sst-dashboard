@@ -149,7 +149,7 @@ export default function TipoTreinamentoModal({
 
         <div className="grid gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="nr">NR</Label>
+            <Label htmlFor="nr">NR *</Label>
             <Input
               id="nr"
               name="nrTipoTreinamento"
@@ -165,7 +165,7 @@ export default function TipoTreinamentoModal({
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="nome">Nome</Label>
+            <Label htmlFor="nome">Nome *</Label>
             <Input
               id="nome"
               name="nomeTipoTreinamento"
@@ -218,6 +218,7 @@ export default function TipoTreinamentoModal({
               {(saveMutation.error as Error)?.message || "Erro ao salvar."}
             </div>
           )}
+          <p className="text-xs text-slate-500">* Campos obrigatórios</p>
         </div>
 
         <DialogFooter className="gap-2">

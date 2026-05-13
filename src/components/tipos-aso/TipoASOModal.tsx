@@ -42,6 +42,7 @@ export default function TipoASOModal({
   const [nome, setNome] = useState("");
   const [validadeMeses, setValidadeMeses] = useState<string>("");
   const [descricao, setDescricao] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!open) return;
@@ -53,6 +54,7 @@ export default function TipoASOModal({
         : "",
     );
     setDescricao(initial?.descricao ?? "");
+    setFieldErrors({});
   }, [open, initial]);
 
   const payload = useMemo(() => {
@@ -65,16 +67,22 @@ export default function TipoASOModal({
 
   const mutation = useMutation({
     mutationFn: async () => {
-      if (!payload.nome) throw new Error("Nome é obrigatório");
+      const nextErrors: Record<string, string> = {};
+      if (!payload.nome) nextErrors.nome = "Nome é obrigatório";
 
       if (payload.validadeMeses !== null) {
         if (
           !Number.isFinite(payload.validadeMeses) ||
           payload.validadeMeses < 0
         ) {
-          throw new Error("Validade inválida");
+          nextErrors.validadeMeses = "Validade inválida";
         }
       }
+      if (Object.keys(nextErrors).length > 0) {
+        setFieldErrors(nextErrors);
+        throw new Error(Object.values(nextErrors)[0]);
+      }
+      setFieldErrors({});
 
       if (isEdit) {
         return api.tiposASO.update(initial!.id, payload);
@@ -107,7 +115,7 @@ export default function TipoASOModal({
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="tipo-aso-nome">Nome</Label>
+            <Label htmlFor="tipo-aso-nome">Nome *</Label>
             <Input
               id="tipo-aso-nome"
               name="nomeTipoASO"
@@ -116,6 +124,9 @@ export default function TipoASOModal({
               placeholder="Ex: Admissional"
               className="bg-slate-50 border-slate-200"
             />
+            {fieldErrors.nome && (
+              <p className="text-xs text-rose-600">{fieldErrors.nome}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -132,6 +143,11 @@ export default function TipoASOModal({
             <p className="text-xs text-slate-500">
               Deixe vazio para “sem validade definida”.
             </p>
+            {fieldErrors.validadeMeses && (
+              <p className="text-xs text-rose-600">
+                {fieldErrors.validadeMeses}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -148,11 +164,7 @@ export default function TipoASOModal({
             />
           </div>
 
-          {mutation.isError && (
-            <div className="text-sm text-rose-600">
-              {(mutation.error as Error).message}
-            </div>
-          )}
+          <p className="text-xs text-slate-500">* Campos obrigatórios</p>
         </div>
 
         <DialogFooter className="gap-2">

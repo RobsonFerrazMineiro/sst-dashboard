@@ -91,8 +91,8 @@ export default function TiposASOPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <div className="flex items-center gap-3">
             <div className="rounded-xl bg-emerald-50 p-2.5 text-emerald-700">
               <HeartPulse className="h-8 w-8" />
@@ -104,7 +104,7 @@ export default function TiposASOPage() {
           </p>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 sm:justify-end">
           <Button
             onClick={() => refetch()}
             disabled={isFetching}

@@ -52,6 +52,7 @@ export default function UsuarioModal({
   const [senha, setSenha] = useState("");
   const [papelCodigo, setPapelCodigo] = useState("TECNICO_SST");
   const [status, setStatus] = useState<"ATIVO" | "INATIVO">("ATIVO");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!open) return;
@@ -66,6 +67,7 @@ export default function UsuarioModal({
       codigoAtual === CODIGO_COLABORADOR ? "TECNICO_SST" : codigoAtual,
     );
     setStatus(initial?.status === "INATIVO" ? "INATIVO" : "ATIVO");
+    setFieldErrors({});
   }, [open, initial]);
 
   const payload = useMemo(
@@ -82,13 +84,17 @@ export default function UsuarioModal({
 
   const mutation = useMutation({
     mutationFn: async () => {
-      if (!payload.nome || !payload.login) {
-        throw new Error("Nome e login são obrigatórios");
-      }
-
+      const nextErrors: Record<string, string> = {};
+      if (!payload.nome) nextErrors.nome = "Nome é obrigatório";
+      if (!payload.login) nextErrors.login = "Login é obrigatório";
       if (!isEdit && payload.senha.trim().length < 8) {
-        throw new Error("A senha deve ter pelo menos 8 caracteres");
+        nextErrors.senha = "A senha deve ter pelo menos 8 caracteres";
       }
+      if (Object.keys(nextErrors).length > 0) {
+        setFieldErrors(nextErrors);
+        throw new Error(Object.values(nextErrors)[0]);
+      }
+      setFieldErrors({});
 
       if (isEdit && initial) {
         return api.usuarios.update(initial.id, {
@@ -136,7 +142,7 @@ export default function UsuarioModal({
 
         <div className="space-y-4">
           <div className="grid gap-2">
-            <Label htmlFor="usuario-nome">Nome</Label>
+            <Label htmlFor="usuario-nome">Nome *</Label>
             <Input
               id="usuario-nome"
               name="nomeUsuarioEmpresa"
@@ -144,6 +150,9 @@ export default function UsuarioModal({
               onChange={(e) => setNome(e.target.value)}
               placeholder="Ex: Maria Oliveira"
             />
+            {fieldErrors.nome && (
+              <p className="text-xs text-rose-600">{fieldErrors.nome}</p>
+            )}
           </div>
 
           <div className="grid gap-2">
@@ -162,6 +171,9 @@ export default function UsuarioModal({
               placeholder="maria@empresa.com ou MAT-1001"
               disabled={isOwner}
             />
+            {fieldErrors.login && (
+              <p className="text-xs text-rose-600">{fieldErrors.login}</p>
+            )}
           </div>
 
           <div className="grid gap-2">
@@ -183,7 +195,7 @@ export default function UsuarioModal({
 
           {!isEdit ? (
             <div className="grid gap-2">
-              <Label htmlFor="usuario-senha">Senha inicial</Label>
+              <Label htmlFor="usuario-senha">Senha inicial *</Label>
               <Input
                 id="usuario-senha"
                 name="senhaUsuarioEmpresa"
@@ -192,11 +204,14 @@ export default function UsuarioModal({
                 onChange={(e) => setSenha(e.target.value)}
                 placeholder="Mínimo de 8 caracteres"
               />
+              {fieldErrors.senha && (
+                <p className="text-xs text-rose-600">{fieldErrors.senha}</p>
+              )}
             </div>
           ) : null}
 
           <div className="grid gap-2">
-            <Label htmlFor="usuario-papel">Perfil</Label>
+            <Label htmlFor="usuario-papel">Perfil *</Label>
             <Select
               value={papelCodigo}
               onValueChange={setPapelCodigo}
@@ -243,6 +258,7 @@ export default function UsuarioModal({
               </Select>
             </div>
           ) : null}
+          <p className="text-xs text-slate-500">* Campos obrigatórios</p>
         </div>
 
         <DialogFooter>

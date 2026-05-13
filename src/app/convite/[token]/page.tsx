@@ -8,6 +8,7 @@ import { AlertCircle, CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { z } from "zod";
 
 type InviteInfo = {
   colaborador: {
@@ -27,6 +28,21 @@ type PageState =
   | "expired"
   | "used"
   | "success";
+const conviteSchema = z
+  .object({
+    login: z.string().trim().min(1, "Informe o login."),
+    senha: z.string().min(8, "A senha deve ter pelo menos 8 caracteres"),
+    confirmar: z.string().min(1, "Confirme a senha."),
+  })
+  .superRefine((data, ctx) => {
+    if (data.senha !== data.confirmar) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["confirmar"],
+        message: "As senhas n?o coincidem",
+      });
+    }
+  });
 
 export default function ConvitePage({
   params,
@@ -43,6 +59,7 @@ export default function ConvitePage({
   const [login, setLogin] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmar, setConfirmar] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
 
   // Resolve o token do params (Next.js 15 - params é uma Promise)
@@ -80,15 +97,22 @@ export default function ConvitePage({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-
-    if (senha !== confirmar) {
-      toast.error("As senhas não coincidem");
+    const parsed = conviteSchema.safeParse({
+      login,
+      senha,
+      confirmar,
+    });
+    if (!parsed.success) {
+      const nextErrors: Record<string, string> = {};
+      for (const issue of parsed.error.issues) {
+        const key = String(issue.path[0] ?? "form");
+        if (!nextErrors[key]) nextErrors[key] = issue.message;
+      }
+      setFieldErrors(nextErrors);
+      toast.error(parsed.error.issues[0]?.message || "Verifique os campos.");
       return;
     }
-    if (senha.length < 8) {
-      toast.error("A senha deve ter pelo menos 8 caracteres");
-      return;
-    }
+    setFieldErrors({});
 
     setSubmitting(true);
     try {
@@ -192,7 +216,7 @@ export default function ConvitePage({
 
             {/* Formulário */}
             {pageState === "valid" && inviteInfo && (
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form noValidate onSubmit={handleSubmit} className="space-y-5">
                 {/* Info do colaborador */}
                 <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
                   <p className="font-semibold text-slate-800">
@@ -225,6 +249,9 @@ export default function ConvitePage({
                     onChange={(e) => setLogin(e.target.value)}
                     required
                   />
+                  {fieldErrors.login && (
+                    <p className="text-xs text-rose-600">{fieldErrors.login}</p>
+                  )}
                   <p className="text-xs text-slate-400">
                     Será usado para entrar no sistema.
                   </p>
@@ -242,6 +269,9 @@ export default function ConvitePage({
                     onChange={(e) => setSenha(e.target.value)}
                     required
                   />
+                  {fieldErrors.senha && (
+                    <p className="text-xs text-rose-600">{fieldErrors.senha}</p>
+                  )}
                 </div>
 
                 {/* Confirmar senha */}
@@ -256,6 +286,11 @@ export default function ConvitePage({
                     onChange={(e) => setConfirmar(e.target.value)}
                     required
                   />
+                  {fieldErrors.confirmar && (
+                    <p className="text-xs text-rose-600">
+                      {fieldErrors.confirmar}
+                    </p>
+                  )}
                 </div>
 
                 <Button type="submit" className="w-full" disabled={submitting}>

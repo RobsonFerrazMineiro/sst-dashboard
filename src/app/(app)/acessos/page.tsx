@@ -196,7 +196,6 @@ export default function AcessosPage() {
               setEditing(null);
               setOpenNovoUsuario(true);
             }}
-            variant="outline"
             className="gap-2"
           >
             <Plus className="h-4 w-4" />

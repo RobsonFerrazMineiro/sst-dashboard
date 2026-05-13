@@ -45,8 +45,8 @@ export default function ColaboradorModal({
     setor: "",
     cargo: "",
     matricula: "",
-    error: null as string | null,
   });
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const resetForm = useCallback(() => {
     setFormData({
@@ -54,8 +54,8 @@ export default function ColaboradorModal({
       setor: initial?.setor ?? "",
       cargo: initial?.cargo ?? "",
       matricula: initial?.matricula ?? "",
-      error: null,
     });
+    setFieldErrors({});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initial?.id]);
 
@@ -76,11 +76,15 @@ export default function ColaboradorModal({
 
   const mutation = useMutation({
     mutationFn: async () => {
-      setFormData((prev) => ({ ...prev, error: null }));
-
-      if (!payload.nome) throw new Error("Nome é obrigatório");
-      if (!payload.setor) throw new Error("Setor é obrigatório");
-      if (!payload.cargo) throw new Error("Cargo é obrigatório");
+      const nextErrors: Record<string, string> = {};
+      if (!payload.nome) nextErrors.nome = "Nome é obrigatório";
+      if (!payload.setor) nextErrors.setor = "Setor é obrigatório";
+      if (!payload.cargo) nextErrors.cargo = "Cargo é obrigatório";
+      if (Object.keys(nextErrors).length > 0) {
+        setFieldErrors(nextErrors);
+        throw new Error(Object.values(nextErrors)[0]);
+      }
+      setFieldErrors({});
 
       if (isEdit && initial?.id) {
         return api.colaboradores.update(initial.id, payload);
@@ -96,7 +100,6 @@ export default function ColaboradorModal({
     },
     onError: (err: unknown) => {
       const message = err instanceof Error ? err.message : "Erro ao salvar";
-      setFormData((prev) => ({ ...prev, error: message }));
       toast.error(message);
     },
   });
@@ -125,6 +128,9 @@ export default function ColaboradorModal({
               }
               placeholder="Ex: João da Silva"
             />
+            {fieldErrors.nome && (
+              <p className="text-xs text-rose-600">{fieldErrors.nome}</p>
+            )}
           </div>
 
           <div className="grid gap-2">
@@ -138,6 +144,9 @@ export default function ColaboradorModal({
               }
               placeholder="Ex: Operação"
             />
+            {fieldErrors.setor && (
+              <p className="text-xs text-rose-600">{fieldErrors.setor}</p>
+            )}
           </div>
 
           <div className="grid gap-2">
@@ -151,6 +160,9 @@ export default function ColaboradorModal({
               }
               placeholder="Ex: Operador"
             />
+            {fieldErrors.cargo && (
+              <p className="text-xs text-rose-600">{fieldErrors.cargo}</p>
+            )}
           </div>
 
           <div className="grid gap-2">
@@ -166,13 +178,10 @@ export default function ColaboradorModal({
             />
           </div>
 
-          {formData.error && (
-            <div className="text-sm text-rose-600 bg-rose-50 border border-rose-200 rounded-lg p-3">
-              {formData.error}
-            </div>
-          )}
-
           <div className="flex justify-end gap-2 pt-2">
+            <p className="mr-auto self-center text-xs text-slate-500">
+              * Campos obrigatórios
+            </p>
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
