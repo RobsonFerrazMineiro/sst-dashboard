@@ -273,7 +273,7 @@ export default function SolicitacoesView() {
       <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-amber-50 p-2.5 text-amber-600">
+            <div className="rounded-xl bg-emerald-50 p-2.5 text-slate-700">
               <ClipboardCheck className="h-8 w-8" />
             </div>
             <div>
